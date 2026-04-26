@@ -1011,6 +1011,33 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── OPERATOR CROSS-LINK ── */}
+      <section style={{ padding: "56px 0", background: C.white, borderTop: `1px solid ${C.border}` }}>
+        <div className="container" style={{ textAlign: "center" }}>
+          <div style={{ fontFamily: T.label, fontSize: "0.7rem", fontWeight: 700, color: C.blue, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.6rem" }}>
+            For Operators
+          </div>
+          <h3 style={{ fontSize: "1.4rem", color: C.navy, margin: "0 0 0.5rem", fontWeight: 600, fontFamily: T.display }}>
+            Want to train robots from your couch?
+          </h3>
+          <p style={{ color: C.gray, fontSize: "0.92rem", lineHeight: 1.6, maxWidth: "520px", margin: "0 auto 1.4rem" }}>
+            We pay weekly to consumer-VR users who teleoperate humanoids inside our simulation. Quest 3 or Vision Pro, no prior robotics experience needed.
+          </p>
+          <a
+            href="/operator/"
+            style={{
+              fontFamily: T.label, fontWeight: 600, fontSize: "0.85rem",
+              color: C.white, background: C.blue,
+              padding: "0.7rem 1.5rem", borderRadius: "8px",
+              textDecoration: "none", letterSpacing: "0.02em",
+              display: "inline-block",
+            }}
+          >
+            Apply to operate →
+          </a>
+        </div>
+      </section>
+
       {/* ── FOOTER ── */}
       <footer style={{ background: C.grayLight, borderTop: `1px solid ${C.border}`, padding: "2rem 0" }}>
         <div className="container" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>

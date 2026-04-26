@@ -7,7 +7,7 @@
 <meta name="description" content="The operator side of Sim XR. Teleoperate humanoid robots in VR, claim tasks from leading robotics labs, get paid weekly.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
 tailwind.config = {
@@ -17,9 +17,9 @@ tailwind.config = {
         ink: '#0A0E27',
         surface: '#141937',
         stroke: '#1F2747',
-        volt: '#4361FF',
-        voltLight: '#6A85FF',
-        voltDeep: '#2940C9',
+        volt: '#0057FF',
+        voltLight: '#4D80FF',
+        voltDeep: '#003ACC',
         sky: '#A0C4FF',
         cream: '#F7F4EE',
         paper: '#FBF9F4',
@@ -54,8 +54,8 @@ tailwind.config = {
 
   /* Pulsing dot */
   @keyframes pulse-live {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(67,97,255,0.6); }
-    70% { box-shadow: 0 0 0 8px rgba(67,97,255,0); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0,87,255,0.6); }
+    70% { box-shadow: 0 0 0 8px rgba(0,87,255,0); }
   }
   .pulse-live { animation: pulse-live 1.8s ease-out infinite; }
 
@@ -73,11 +73,11 @@ tailwind.config = {
   .ticker-track { animation: ticker 40s linear infinite; }
 
   /* Voltage focus ring */
-  *:focus-visible { outline: 2px solid #4361FF; outline-offset: 2px; border-radius: 2px; }
+  *:focus-visible { outline: 2px solid #0057FF; outline-offset: 2px; border-radius: 2px; }
 
   /* Card lift */
   .card-lift { transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
-  .card-lift:hover { transform: translateY(-2px); box-shadow: 0 16px 40px -20px rgba(67,97,255,0.25); border-color: rgba(67,97,255,0.35) !important; }
+  .card-lift:hover { transform: translateY(-2px); box-shadow: 0 16px 40px -20px rgba(0,87,255,0.25); border-color: rgba(0,87,255,0.35) !important; }
 
   /* Number shuffle */
   .tabular { font-variant-numeric: tabular-nums; }
@@ -86,7 +86,7 @@ tailwind.config = {
   .robot-stage {
     position: relative;
     background:
-      radial-gradient(ellipse at 50% 40%, rgba(67,97,255,0.18), transparent 60%),
+      radial-gradient(ellipse at 50% 40%, rgba(0,87,255,0.18), transparent 60%),
       linear-gradient(180deg, #0A0E27 0%, #141937 100%);
     overflow: hidden;
   }
@@ -113,7 +113,7 @@ tailwind.config = {
 
   /* Voltage button */
   .btn-volt {
-    background: #4361FF;
+    background: #0057FF;
     color: white;
     transition: background .2s ease, transform .15s ease;
   }
@@ -134,14 +134,14 @@ tailwind.config = {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 4px 10px; border-radius: 999px; font-size: 12px;
     border: 1px solid rgba(17,18,23,0.1);
-    background: rgba(67,97,255,0.04);
+    background: rgba(0,87,255,0.04);
     color: #111217;
     font-family: 'IBM Plex Mono', monospace;
   }
 
   /* Mini spark */
-  .spark path { stroke: #4361FF; stroke-width: 1.5; fill: none; }
-  .spark .fill { fill: rgba(67,97,255,0.1); stroke: none; }
+  .spark path { stroke: #0057FF; stroke-width: 1.5; fill: none; }
+  .spark .fill { fill: rgba(0,87,255,0.1); stroke: none; }
 
   /* Section fade */
   .section-divider {
@@ -155,14 +155,11 @@ tailwind.config = {
 <!-- ============ NAV ============ -->
 <header class="sticky top-0 z-40 bg-cream/85 backdrop-blur border-b border-charcoal/5">
   <div class="max-w-[1280px] mx-auto px-6 h-16 flex items-center justify-between">
-    <a href="#top" class="flex items-center gap-2.5 group">
-      <!-- Logo: voltage bolt inside a soft square -->
-      <div class="w-8 h-8 rounded-md bg-charcoal flex items-center justify-center">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="#4361FF"/>
-        </svg>
-      </div>
-      <span class="mono text-sm font-semibold tracking-tight">SIM&nbsp;XR</span>
+    <a href="#top" class="flex items-baseline gap-2.5 group">
+      <!-- Wordmark — matches simxr.tech main page -->
+      <span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.15rem; letter-spacing: -0.02em;" class="text-charcoal">
+        SIM <span style="color: #0057FF;">XR.</span>
+      </span>
       <span class="mono text-xs text-charcoal/40 font-medium tracking-wider">/&nbsp;OPERATORS</span>
     </a>
     <nav class="hidden md:flex items-center gap-8 text-sm">
@@ -219,7 +216,7 @@ tailwind.config = {
       <div class="robot-stage aspect-[4/3] rounded-2xl border border-charcoal/10 relative">
         <!-- Scan sweep -->
         <div class="scan-once absolute left-0 right-0 h-24 pointer-events-none"
-             style="background: linear-gradient(180deg, transparent, rgba(67,97,255,0.25), transparent);"></div>
+             style="background: linear-gradient(180deg, transparent, rgba(0,87,255,0.25), transparent);"></div>
         <!-- Operator photo -->
         <img src="images/simxr_operator_1.png"
              alt="Operator at home in a Quest 3 headset, hands raised mid-gesture for hand-tracked teleoperation"
@@ -510,19 +507,19 @@ tailwind.config = {
       <div class="space-y-3">
         <div class="flex items-start gap-3">
           <span class="mt-1 w-4 h-4 rounded-full bg-volt/10 flex items-center justify-center flex-shrink-0">
-            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#4361FF" stroke-width="4"><path d="M20 6L9 17l-5-5"/></svg>
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#0057FF" stroke-width="4"><path d="M20 6L9 17l-5-5"/></svg>
           </span>
           <p class="text-sm text-charcoal/70"><span class="font-medium">Hourly rate</span> by task &mdash; $14 to $36 per hour, set by difficulty.</p>
         </div>
         <div class="flex items-start gap-3">
           <span class="mt-1 w-4 h-4 rounded-full bg-volt/10 flex items-center justify-center flex-shrink-0">
-            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#4361FF" stroke-width="4"><path d="M20 6L9 17l-5-5"/></svg>
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#0057FF" stroke-width="4"><path d="M20 6L9 17l-5-5"/></svg>
           </span>
           <p class="text-sm text-charcoal/70"><span class="font-medium">Quality bonus</span> up to +40% when your episodes land in the top training tier.</p>
         </div>
         <div class="flex items-start gap-3">
           <span class="mt-1 w-4 h-4 rounded-full bg-volt/10 flex items-center justify-center flex-shrink-0">
-            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#4361FF" stroke-width="4"><path d="M20 6L9 17l-5-5"/></svg>
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#0057FF" stroke-width="4"><path d="M20 6L9 17l-5-5"/></svg>
           </span>
           <p class="text-sm text-charcoal/70"><span class="font-medium">Streak &amp; tier</span> multipliers compound. Diamond operators earn 1.6× base on every claim.</p>
         </div>
@@ -717,14 +714,18 @@ tailwind.config = {
 <footer class="bg-ink text-sky/60 border-t border-stroke">
   <div class="max-w-[1280px] mx-auto px-6 py-10 grid md:grid-cols-4 gap-8">
     <div class="md:col-span-2">
-      <div class="flex items-center gap-2.5 mb-4">
-        <div class="w-7 h-7 rounded-md bg-cream flex items-center justify-center">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="#4361FF"/></svg>
-        </div>
-        <span class="mono text-sm font-semibold tracking-tight text-cream">SIM XR</span>
+      <div class="flex items-baseline gap-2.5 mb-4">
+        <!-- Wordmark — matches simxr.tech main page -->
+        <span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.15rem; letter-spacing: -0.02em;" class="text-cream">
+          SIM <span style="color: #4D80FF;">XR.</span>
+        </span>
         <span class="mono text-xs text-sky/50 font-medium tracking-wider">/&nbsp;OPERATORS</span>
       </div>
-      <p class="text-sm max-w-sm">The operator platform for training humanoid robots. Built by former roboticists in Paris &amp; California.</p>
+      <p class="text-sm max-w-sm mb-4">The operator platform for training humanoid robots. Built by former roboticists in Paris &amp; California.</p>
+      <p class="text-sm">
+        <span class="text-sky/40 mono text-[11px] tracking-wider mr-2">FOR ROBOTICS LABS</span>
+        <a href="/" class="text-cream hover:text-volt transition underline-offset-2 hover:underline">simxr.tech &rarr;</a>
+      </p>
     </div>
     <div>
       <div class="mono text-[11px] text-sky/40 tracking-wider mb-3">PLATFORM</div>
