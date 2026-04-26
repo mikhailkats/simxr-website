@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sim XR — Application received</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0A0E27;
+    --paper: #FBF9F4;
+    --cream: #F7F4EE;
+    --volt: #4361FF;
+    --charcoal: #111217;
+    --muted: #8891AE;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    background: var(--paper);
+    color: var(--charcoal);
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    display: flex; flex-direction: column; min-height: 100vh;
+  }
+  header { padding: 20px 24px; border-bottom: 1px solid rgba(17,18,23,0.06); }
+  .wordmark { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--charcoal); }
+  .wordmark .bolt { width: 32px; height: 32px; border-radius: 6px; background: var(--charcoal); display: flex; align-items: center; justify-content: center; }
+  .wordmark span { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600; }
+  main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 48px 24px; }
+  .card { max-width: 560px; text-align: left; }
+  .eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--volt); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 16px; }
+  h1 { font-size: clamp(32px, 4vw, 48px); font-weight: 600; line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 16px; }
+  p { font-size: 17px; color: rgba(17,18,23,0.7); line-height: 1.6; margin: 0 0 14px; max-width: 48ch; }
+  .back { margin-top: 32px; display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; background: var(--volt); color: white; border-radius: 8px; text-decoration: none; font-weight: 500; font-size: 15px; }
+  .back:hover { background: #2940C9; }
+  footer { padding: 16px 24px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); border-top: 1px solid rgba(17,18,23,0.06); }
+</style>
+</head>
+<body>
+  <header>
+    <a href="/" class="wordmark">
+      <span class="bolt">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="#4361FF"/></svg>
+      </span>
+      <span>SIM XR</span>
+    </a>
+  </header>
+
+  <main>
+    <div class="card">
+      <div class="eyebrow">Application received</div>
+      <h1>Thanks &mdash; we'll be in touch.</h1>
+      <p>We read every application. Expect a reply at the email you provided within 48 hours, with the next step (a short calibration call) booked from there.</p>
+      <p>If you don't see anything in your inbox, check spam, then ping <a href="mailto:mk@simxr.tech" style="color: var(--volt);">mk@simxr.tech</a> directly.</p>
+      <a href="/" class="back">Back to the page</a>
+    </div>
+  </main>
+
+  <footer>&copy; 2026 Sim XR Labs</footer>
+</body>
+</html>

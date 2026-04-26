@@ -1,0 +1,1902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sim XR — Operator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        ink: '#0E1014',
+        inkDeep: '#08090C',
+        surface: '#17181E',
+        surfaceHi: '#1D1F26',
+        stroke: '#22242C',
+        strokeHi: '#2D303A',
+        volt: '#4361FF',
+        voltLight: '#6A85FF',
+        voltDeep: '#2940C9',
+        sky: '#A0C4FF',
+        skyDim: '#8A9BCF',
+        cream: '#F7F4EE',
+        charcoal: '#111217',
+        success: '#4ECE8C',
+        warn: '#F5B842',
+        danger: '#FF4A5C',
+        muted: '#6B7280',
+        text: '#E7E8EC',
+        textDim: '#A1A4AD'
+      },
+      fontFamily: {
+        mono: ['"IBM Plex Mono"', 'monospace'],
+        sans: ['Inter', 'system-ui', 'sans-serif']
+      }
+    }
+  }
+}
+</script>
+<style>
+  html, body { background: #0E1014; color: #E7E8EC; }
+  body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+  .mono { font-family: 'IBM Plex Mono', monospace; font-feature-settings: 'tnum'; }
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* Subtle grid on main bg — neutral, nearly invisible */
+  .grid-dark {
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,0.018) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.018) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* Pulses */
+  @keyframes pulse-volt {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(67,97,255,0.5); }
+    70% { box-shadow: 0 0 0 7px rgba(67,97,255,0); }
+  }
+  .pulse-volt { animation: pulse-volt 1.8s ease-out infinite; }
+
+  @keyframes pulse-rec {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(0.85); }
+  }
+  .pulse-rec { animation: pulse-rec 1.2s ease-in-out infinite; }
+
+  @keyframes pulse-success {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(78,206,140,0.5); }
+    70% { box-shadow: 0 0 0 6px rgba(78,206,140,0); }
+  }
+  .pulse-success { animation: pulse-success 2.4s ease-out infinite; }
+
+  @keyframes flame {
+    0%, 100% { transform: rotate(-3deg) scale(1); }
+    50% { transform: rotate(3deg) scale(1.1); }
+  }
+  .flame { animation: flame 1.5s ease-in-out infinite; transform-origin: bottom center; }
+
+  /* Scan sweep for cockpit */
+  @keyframes scan-sweep {
+    0% { transform: translateY(-20%); opacity: 0; }
+    30% { opacity: 0.6; }
+    100% { transform: translateY(120%); opacity: 0; }
+  }
+  .scan-sweep { animation: scan-sweep 3s ease-in-out infinite; }
+
+  /* Focus */
+  *:focus-visible { outline: 2px solid #4361FF; outline-offset: 2px; border-radius: 2px; }
+
+  /* Scroll */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #1F2747; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #2B3463; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  /* Card lift */
+  .card-lift { transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
+  .card-lift:hover { transform: translateY(-1px); border-color: rgba(67,97,255,0.45); box-shadow: 0 14px 32px -18px rgba(67,97,255,0.35); }
+
+  /* Buttons */
+  .btn-volt { background: #4361FF; color: white; transition: background .2s ease, transform .12s ease; }
+  .btn-volt:hover { background: #2940C9; }
+  .btn-volt:active { transform: translateY(1px); }
+
+  .btn-ghost-d {
+    border: 1px solid #2B3463;
+    color: #E6EAF5;
+    background: transparent;
+    transition: background .2s ease, border-color .2s ease;
+  }
+  .btn-ghost-d:hover { background: #141937; border-color: #4361FF; }
+
+  .btn-danger {
+    background: rgba(255,74,92,0.08);
+    border: 1px solid rgba(255,74,92,0.4);
+    color: #FF4A5C;
+    transition: background .2s ease;
+  }
+  .btn-danger:hover { background: rgba(255,74,92,0.2); }
+
+  /* Chip */
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 999px; font-size: 11px;
+    border: 1px solid #2D303A;
+    background: transparent;
+    color: #A1A4AD;
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .chip:hover { border-color: #3A3D48; color: #E7E8EC; background: rgba(255,255,255,0.02); }
+  .chip.active { background: rgba(67,97,255,0.1); border-color: #4361FF; color: #E7E8EC; }
+
+  /* Progress bar */
+  .bar-track { background: rgba(255,255,255,0.05); height: 4px; border-radius: 2px; overflow: hidden; }
+  .bar-fill { background: #4361FF; height: 100%; border-radius: 2px; }
+
+  /* Telemetry bar */
+  .tel-bar { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
+  .tel-bar-fill { height: 100%; background: #4361FF; border-radius: 2px; }
+
+  /* Status dots */
+  .dot-ok { background: #4ECE8C; box-shadow: 0 0 8px rgba(78,206,140,0.55); }
+  .dot-warn { background: #F5B842; box-shadow: 0 0 8px rgba(245,184,66,0.45); }
+  .dot-err { background: #FF4A5C; box-shadow: 0 0 8px rgba(255,74,92,0.45); }
+  .dot-idle { background: #2D303A; }
+
+  /* Nav item */
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 8px;
+    color: #A1A4AD; font-size: 14px;
+    transition: background .15s ease, color .15s ease;
+    cursor: pointer;
+    position: relative;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.03); color: #E7E8EC; }
+  .nav-item.active { background: rgba(255,255,255,0.04); color: #E7E8EC; }
+  .nav-item.active::before {
+    content: ''; position: absolute; left: -12px; top: 8px; bottom: 8px;
+    width: 2px; background: #4361FF; border-radius: 0 2px 2px 0;
+  }
+  .nav-item.active svg { stroke: #E7E8EC; }
+
+  /* Table */
+  .t-row { transition: background .15s ease; }
+  .t-row:hover { background: rgba(255,255,255,0.025); }
+
+  /* Value shimmer (live) */
+  @keyframes val-blink {
+    0%, 100% { color: #4ECE8C; }
+    50% { color: #6FE3A3; }
+  }
+  .live-val { animation: val-blink 2s ease-in-out infinite; }
+
+  /* Route animation */
+  @keyframes view-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .view.active { animation: view-in .22s ease-out; }
+
+  /* Preflight ring */
+  .ring-track { stroke: rgba(255,255,255,0.06); }
+  .ring-fill { stroke: #4361FF; transition: stroke-dashoffset .8s ease; }
+
+  /* Episode slot */
+  .ep-slot {
+    flex: 1; height: 48px; border-radius: 6px;
+    border: 1px solid #2D303A;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+    color: #A1A4AD;
+    transition: border-color .15s ease;
+  }
+  .ep-good { background: rgba(78,206,140,0.08); border-color: rgba(78,206,140,0.35); color: #4ECE8C; }
+  .ep-flag { background: rgba(245,184,66,0.08); border-color: rgba(245,184,66,0.35); color: #F5B842; }
+  .ep-fail { background: rgba(255,74,92,0.08); border-color: rgba(255,74,92,0.35); color: #FF4A5C; }
+  .ep-active { background: rgba(67,97,255,0.12); border-color: #4361FF; color: #E7E8EC; }
+
+  /* =========================================
+     LIGHT MODE — warm cream base, Volt preserved
+     Sim viewport areas stay dark (they're media)
+     ========================================= */
+  body.light { background: #FAFAF8; color: #111217; }
+  body.light .bg-ink { background-color: #FAFAF8 !important; }
+  body.light .bg-inkDeep { background-color: #F2F0EB !important; }
+  body.light .bg-inkDeep\/60 { background-color: rgba(250,250,248,0.85) !important; }
+  body.light .bg-surface { background-color: #FFFFFF !important; }
+  body.light .bg-surfaceHi { background-color: #F4F2EC !important; }
+  body.light .bg-ink\/80 { background-color: rgba(17,18,23,0.75) !important; }
+
+  body.light .border-stroke { border-color: #E5E2DA !important; }
+  body.light .border-strokeHi { border-color: #D4D0C6 !important; }
+  body.light .border-ink { border-color: #FFFFFF !important; }
+
+  body.light .text-text { color: #111217 !important; }
+  body.light .text-textDim { color: #4B5563 !important; }
+  body.light .text-muted { color: #6B7280 !important; }
+  body.light .text-muted\/60 { color: rgba(107,114,128,0.5) !important; }
+  body.light .text-muted\/50 { color: rgba(107,114,128,0.4) !important; }
+
+  /* Subtle grid on main bg — light variant */
+  body.light .grid-dark {
+    background-image:
+      linear-gradient(to right, rgba(17,18,23,0.035) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(17,18,23,0.035) 1px, transparent 1px);
+  }
+
+  /* Nav items */
+  body.light .nav-item { color: #4B5563; }
+  body.light .nav-item:hover { background: rgba(17,18,23,0.04); color: #111217; }
+  body.light .nav-item.active { background: rgba(17,18,23,0.05); color: #111217; }
+  body.light .nav-item.active svg { stroke: #111217; }
+
+  /* Chips */
+  body.light .chip { border-color: #D4D0C6; color: #4B5563; background: transparent; }
+  body.light .chip:hover { border-color: #A1A4AD; color: #111217; background: rgba(17,18,23,0.02); }
+  body.light .chip.active { background: rgba(67,97,255,0.08); border-color: #4361FF; color: #111217; }
+
+  /* Progress & telemetry tracks */
+  body.light .bar-track { background: rgba(17,18,23,0.06); }
+  body.light .tel-bar { background: rgba(17,18,23,0.06); }
+  body.light .ring-track { stroke: rgba(17,18,23,0.1); }
+
+  /* Episode slots */
+  body.light .ep-slot { border-color: #D4D0C6; color: #6B7280; }
+  body.light .ep-active { background: rgba(67,97,255,0.1); border-color: #4361FF; color: #111217; }
+
+  /* Dots */
+  body.light .dot-idle { background: #D4D0C6; }
+
+  /* Rows */
+  body.light .t-row:hover { background: rgba(17,18,23,0.03); }
+
+  /* Scrollbar */
+  body.light ::-webkit-scrollbar-thumb { background: #D4D0C6; }
+  body.light ::-webkit-scrollbar-thumb:hover { background: #A1A4AD; }
+
+  /* Card lift shadow for light mode */
+  body.light .card-lift:hover { border-color: rgba(67,97,255,0.5); box-shadow: 0 12px 28px -14px rgba(17,18,23,0.18); }
+
+  /* Buttons */
+  body.light .btn-ghost-d { border: 1px solid #D4D0C6; color: #111217; }
+  body.light .btn-ghost-d:hover { background: #F2F0EB; border-color: #4361FF; }
+
+  /* Backdrop-blur variants need a fallback bg */
+  body.light .backdrop-blur.bg-inkDeep\/60 { background-color: rgba(250,250,248,0.78) !important; }
+
+  /* Sim viewports stay dark in both modes — HUD chips inside stay light-on-dark */
+  body.light .sim-viewport .text-text { color: #E7E8EC !important; }
+  body.light .sim-viewport .text-textDim { color: #A1A4AD !important; }
+  body.light .sim-viewport .text-muted { color: #8891AE !important; }
+  body.light .sim-viewport .text-sky { color: #A0C4FF !important; }
+  body.light .sim-viewport .border-stroke { border-color: #22242C !important; }
+  body.light .sim-viewport .bg-ink\/80 { background-color: rgba(14,16,20,0.75) !important; }
+
+  /* Theme toggle icon swap */
+  body:not(.light) .theme-icon-sun { display: none; }
+  body.light .theme-icon-moon { display: none; }
+</style>
+</head>
+<body>
+
+<div class="min-h-screen flex">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="w-[240px] bg-inkDeep border-r border-stroke flex flex-col sticky top-0 h-screen">
+    <!-- Logo -->
+    <div class="h-16 px-5 flex items-center border-b border-stroke">
+      <a href="index.html" class="flex items-center gap-2.5 group">
+        <div class="w-8 h-8 rounded-md bg-surface flex items-center justify-center">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="#4361FF"/>
+          </svg>
+        </div>
+        <span class="mono text-sm font-semibold tracking-tight">SIM&nbsp;XR</span>
+      </a>
+    </div>
+
+    <!-- Nav -->
+    <nav class="p-3 space-y-1 flex-1">
+      <div class="px-3 py-2 mono text-[10px] text-muted tracking-wider">OPERATOR</div>
+      <a data-route="#dashboard" class="nav-item active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+        <span>Tasks</span>
+        <span class="ml-auto mono text-[10px] text-textDim bg-surfaceHi px-1.5 py-0.5 rounded">69</span>
+      </a>
+      <a data-route="#session" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><polygon points="10 8 16 12 10 16" fill="currentColor"/></svg>
+        <span>Live session</span>
+        <span class="ml-auto"><span class="w-1.5 h-1.5 rounded-full inline-block dot-ok pulse-success"></span></span>
+      </a>
+      <a data-route="#earnings" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <span>Earnings</span>
+      </a>
+      <a class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
+        <span>Profile</span>
+      </a>
+
+      <div class="px-3 pt-8 pb-2 mono text-[10px] text-muted tracking-wider">LIBRARY</div>
+      <a class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>
+        <span>Completed</span>
+        <span class="ml-auto mono text-[10px] text-muted">412</span>
+      </a>
+      <a class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 20h20M6 20V10M11 20V4M16 20v-8M21 20v-5"/></svg>
+        <span>Stats</span>
+      </a>
+    </nav>
+
+    <!-- Gear status -->
+    <div class="p-3 border-t border-stroke">
+      <div class="bg-surface rounded-lg p-3">
+        <div class="flex items-center justify-between mb-2">
+          <span class="mono text-[10px] text-muted tracking-wider">GEAR</span>
+          <span class="mono text-[10px] text-success flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full dot-ok"></span>READY</span>
+        </div>
+        <div class="space-y-1.5 mono text-[11px]">
+          <div class="flex items-center justify-between">
+            <span class="text-textDim">Quest 3</span>
+            <span class="w-1.5 h-1.5 rounded-full dot-ok"></span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-textDim">Certificate</span>
+            <span class="w-1.5 h-1.5 rounded-full dot-ok"></span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-textDim">Sim link</span>
+            <span class="w-1.5 h-1.5 rounded-full dot-ok"></span>
+          </div>
+        </div>
+      </div>
+      <div class="mt-3 flex items-center gap-2.5 px-2">
+        <div class="w-8 h-8 rounded-full bg-volt/15 flex items-center justify-center mono text-xs font-semibold text-volt">MK</div>
+        <div class="flex-1 min-w-0">
+          <div class="text-sm text-text truncate">Mike K.</div>
+          <div class="mono text-[10px] text-volt">DIAMOND · T-4</div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8891AE" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN ================= -->
+  <main class="flex-1 min-w-0">
+
+    <!-- Top bar -->
+    <div class="h-16 border-b border-stroke bg-inkDeep/60 backdrop-blur sticky top-0 z-30 px-8 flex items-center justify-between">
+      <div class="flex items-center gap-6">
+        <div>
+          <div class="text-sm font-medium text-text">Welcome back, Mike.</div>
+          <div class="mono text-[11px] text-muted">Saturday, April 18 &middot; 14:32 PT</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <!-- Streak -->
+        <div class="flex items-center gap-2 px-3 py-1.5 bg-surface border border-stroke rounded-md">
+          <svg width="14" height="14" viewBox="0 0 24 24" class="flame"><path d="M12 2 S8 7 8 12 a4 4 0 0 0 8 0 c0-3 -2-5 -4-10z" fill="#F5B842"/><path d="M12 8 S10 11 10 14 a2 2 0 0 0 4 0 c0-2 -1-3 -2-6z" fill="#FF4A5C"/></svg>
+          <span class="mono text-xs"><span class="text-warn font-semibold">14</span><span class="text-muted"> day streak</span></span>
+        </div>
+        <!-- Earnings pill -->
+        <div class="flex items-center gap-2 px-3 py-1.5 bg-volt/10 border border-volt/30 rounded-md">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4361FF" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <span class="mono text-xs text-text">This week <span class="text-volt font-semibold">+$284</span></span>
+        </div>
+        <!-- Theme toggle -->
+        <button id="theme-toggle" class="w-9 h-9 rounded-md bg-surface border border-stroke hover:border-volt/40 flex items-center justify-center transition text-textDim" title="Toggle theme">
+          <svg class="theme-icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+          <svg class="theme-icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </button>
+        <!-- Notif -->
+        <button class="w-9 h-9 rounded-md bg-surface border border-stroke hover:border-volt/40 flex items-center justify-center relative transition">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-textDim"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
+          <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-volt pulse-volt"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ========== DASHBOARD VIEW ========== -->
+    <section id="dashboard" class="view active grid-dark min-h-screen">
+      <div class="max-w-[1480px] mx-auto px-8 py-8">
+
+        <!-- Header row -->
+        <div class="flex items-end justify-between mb-6">
+          <div>
+            <div class="mono text-[11px] text-muted tracking-wider mb-1">LAST 7 DAYS</div>
+            <h1 class="text-2xl font-semibold tracking-tight">Your cockpit.</h1>
+          </div>
+          <div class="mono text-[11px] text-muted flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full dot-ok pulse-success"></span>
+            Systems nominal
+          </div>
+        </div>
+
+        <!-- Stats row -->
+        <div class="grid grid-cols-4 gap-4 mb-6">
+          <div class="bg-surface border border-stroke rounded-xl p-5">
+            <div class="mono text-[10px] text-muted tracking-wider mb-2">EARNINGS · WK</div>
+            <div class="mono text-3xl font-semibold text-text tabular">$284<span class="text-lg text-muted">.50</span></div>
+            <div class="mt-3 flex items-center gap-1.5 text-[11px] mono text-success">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M7 14l5-5 5 5"/></svg>
+              +22% vs last wk
+            </div>
+          </div>
+          <div class="bg-surface border border-stroke rounded-xl p-5">
+            <div class="mono text-[10px] text-muted tracking-wider mb-2">EPISODES · WK</div>
+            <div class="mono text-3xl font-semibold text-text tabular">18</div>
+            <div class="mt-3 flex items-center gap-1.5 text-[11px] mono text-muted">
+              <span class="text-success">14 approved</span> · <span class="text-warn">3 pending</span> · <span class="text-danger">1 flagged</span>
+            </div>
+          </div>
+          <div class="bg-surface border border-stroke rounded-xl p-5">
+            <div class="mono text-[10px] text-muted tracking-wider mb-2">QUALITY SCORE</div>
+            <div class="mono text-3xl font-semibold text-text tabular">94.2</div>
+            <div class="mt-3">
+              <div class="bar-track"><div class="bar-fill" style="width:94%"></div></div>
+              <div class="mt-1 mono text-[10px] text-muted">Top 8% this month</div>
+            </div>
+          </div>
+          <div class="bg-surface border border-stroke rounded-xl p-5">
+            <div class="mono text-[10px] text-muted tracking-wider mb-2">AVG TIME / EP</div>
+            <div class="mono text-3xl font-semibold text-text tabular">5:42</div>
+            <div class="mt-3 flex items-center gap-1.5 text-[11px] mono text-success">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M17 10l-5 5-5-5"/></svg>
+              -38s vs avg
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-6">
+          <!-- Main column -->
+          <div class="col-span-9 space-y-6">
+
+            <!-- Active task banner -->
+            <div class="bg-surface border border-stroke rounded-xl p-5 flex items-center gap-5 relative overflow-hidden">
+              <div class="absolute left-0 top-0 bottom-0 w-1 bg-volt"></div>
+              <div class="w-14 h-14 rounded-lg bg-volt/10 flex items-center justify-center flex-shrink-0">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4361FF" stroke-width="1.8"><polygon points="5 3 19 12 5 21" fill="#4361FF"/></svg>
+              </div>
+              <div class="flex-1">
+                <div class="mono text-[10px] text-muted tracking-wider mb-1">IN PROGRESS · 3 OF 5 EPISODES RECORDED</div>
+                <div class="text-base font-semibold text-text">Pour coffee from kettle to mug</div>
+                <div class="mono text-[11px] text-textDim mt-1">GR1T2 · Fine manipulation · $32.00 · Started 12 min ago</div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="text-right">
+                  <div class="mono text-[10px] text-muted">EARNED SO FAR</div>
+                  <div class="mono text-lg text-volt font-semibold tabular">$19.20</div>
+                </div>
+                <a data-route="#session" class="btn-volt px-5 py-2.5 rounded-md text-sm font-medium flex items-center gap-2 cursor-pointer">
+                  Resume
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                </a>
+              </div>
+            </div>
+
+            <!-- Available tasks -->
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <h2 class="text-lg font-semibold">Available tasks</h2>
+                  <div class="mono text-[11px] text-muted mt-0.5">69 open · matched to your tier &amp; skills</div>
+                </div>
+                <div class="flex items-center gap-2 mono text-[11px] text-muted">
+                  <span>Sort</span>
+                  <button class="chip active">Highest payout</button>
+                </div>
+              </div>
+
+              <!-- Filter chips -->
+              <div class="flex items-center gap-2 mb-4 flex-wrap">
+                <span class="mono text-[10px] text-muted tracking-wider pr-2">ROBOT</span>
+                <button class="chip active" data-filter="robot" data-val="all">All</button>
+                <button class="chip" data-filter="robot" data-val="gr1t2">GR1T2</button>
+                <button class="chip" data-filter="robot" data-val="g1">G1</button>
+                <button class="chip" data-filter="robot" data-val="apollo">Apollo</button>
+                <span class="w-px h-4 bg-stroke mx-2"></span>
+                <span class="mono text-[10px] text-muted tracking-wider pr-2">SKILL</span>
+                <button class="chip active">All</button>
+                <button class="chip">Pick-place</button>
+                <button class="chip">Fine manip</button>
+                <button class="chip">Deformable</button>
+                <button class="chip">Bimanual</button>
+              </div>
+
+              <!-- Task grid -->
+              <div class="grid grid-cols-2 xl:grid-cols-3 gap-4" id="task-grid">
+                <!-- Card 1 -->
+                <a data-route="#task/t-042" class="bg-surface border border-stroke rounded-xl overflow-hidden card-lift cursor-pointer block">
+                  <div class="aspect-[16/10] relative" style="background: linear-gradient(135deg, #1D1F26, #0E1014);">
+                    <svg viewBox="0 0 200 125" class="absolute inset-0 w-full h-full">
+                      <g opacity="0.55">
+                        <rect x="40" y="72" width="120" height="6" fill="#4361FF" opacity="0.3"/>
+                        <rect x="85" y="42" width="30" height="30" rx="3" fill="none" stroke="#A0C4FF" stroke-width="1"/>
+                        <rect x="50" y="57" width="12" height="15" rx="2" fill="none" stroke="#4361FF" stroke-width="1"/>
+                        <rect x="140" y="50" width="14" height="22" rx="2" fill="none" stroke="#4361FF" stroke-width="1"/>
+                      </g>
+                      <g font-family="IBM Plex Mono" font-size="6" fill="#A0C4FF" opacity="0.6">
+                        <text x="10" y="15">SCENE · KITCHEN_02</text>
+                        <text x="10" y="118">GRASP · 0.34 N</text>
+                      </g>
+                    </svg>
+                    <div class="absolute top-2 left-2 chip bg-volt/10 border-volt/40 text-voltLight">NEW</div>
+                    <div class="absolute bottom-2 right-2 mono text-[10px] text-muted">EP 0/5</div>
+                  </div>
+                  <div class="p-4">
+                    <div class="mono text-[10px] text-muted tracking-wider mb-1">GR1T2 · PICK-PLACE</div>
+                    <div class="font-semibold text-text leading-snug text-[15px]">Pick mug, place on coaster</div>
+                    <!-- Live telemetry strip -->
+                    <div class="mt-3 pt-3 border-t border-stroke grid grid-cols-3 gap-2">
+                      <div>
+                        <div class="mono text-[9px] text-muted">QUEUE</div>
+                        <div class="mono text-xs text-textDim">4 ahead</div>
+                      </div>
+                      <div>
+                        <div class="mono text-[9px] text-muted">$/MIN</div>
+                        <div class="mono text-xs text-success live-val">$3.00</div>
+                      </div>
+                      <div>
+                        <div class="mono text-[9px] text-muted">CONFIDENCE</div>
+                        <div class="mono text-xs text-textDim">●●●<span class="text-muted/50">○○</span></div>
+                      </div>
+                    </div>
+                    <div class="mt-3 flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <span class="chip">●● EASY</span>
+                        <span class="mono text-[10px] text-muted">~4 min</span>
+                      </div>
+                      <span class="mono text-volt font-semibold">$12.00</span>
+                    </div>
+                  </div>
+                </a>
+
+                <!-- Card 2 -->
+                <a data-route="#task/t-117" class="bg-surface border border-stroke rounded-xl overflow-hidden card-lift cursor-pointer block">
+                  <div class="aspect-[16/10] relative" style="background: linear-gradient(135deg, #1D1F26, #0E1014);">
+                    <svg viewBox="0 0 200 125" class="absolute inset-0 w-full h-full">
+                      <g opacity="0.55">
+                        <path d="M30 80 Q100 40 170 80" fill="none" stroke="#A0C4FF" stroke-width="1"/>
+                        <circle cx="60" cy="70" r="8" fill="none" stroke="#4361FF" stroke-width="1"/>
+                        <path d="M130 60 L150 85 L115 88 Z" fill="none" stroke="#4361FF" stroke-width="1"/>
+                      </g>
+                      <g font-family="IBM Plex Mono" font-size="6" fill="#A0C4FF" opacity="0.6">
+                        <text x="10" y="15">SCENE · CAFE_A</text>
+                        <text x="10" y="118">POUR · 120ml</text>
+                      </g>
+                    </svg>
+                    <div class="absolute top-2 left-2 chip bg-warn/20 border-warn/40 text-warn">HIGH PAY</div>
+                    <div class="absolute bottom-2 right-2 mono text-[10px] text-muted">EP 0/5</div>
+                  </div>
+                  <div class="p-4">
+                    <div class="mono text-[10px] text-muted tracking-wider mb-1">GR1T2 · FINE MANIPULATION</div>
+                    <div class="font-semibold text-text leading-snug text-[15px]">Pour coffee from kettle to mug</div>
+                    <div class="mt-3 pt-3 border-t border-stroke grid grid-cols-3 gap-2">
+                      <div>
+                        <div class="mono text-[9px] text-muted">QUEUE</div>
+                        <div class="mono text-xs text-textDim">1 ahead</div>
+                      </div>
+                      <div>
+                        <div class="mono text-[9px] text-muted">$/MIN</div>
+                        <div class="mono text-xs text-success live-val">$3.55</div>
+                      </div>
+                      <div>
+                        <div class="mono text-[9px] text-muted">CONFIDENCE</div>
+                        <div class="mono text-xs text-textDim">●●●●<span class="text-muted/50">○</span></div>
+                      </div>
+                    </div>
+                    <div class="mt-3 flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <span class="chip">●●● HARD</span>
+                        <span class="mono text-[10px] text-muted">~9 min</span>
+                      </div>
+                      <span class="mono text-volt font-semibold">$32.00</span>
+                    </div>
+                  </div>
+                </a>
+
+                <!-- Card 3 -->
+                <a data-route="#task/t-204" class="bg-surface border border-stroke rounded-xl overflow-hidden card-lift cursor-pointer block">
+                  <div class="aspect-[16/10] relative" style="background: linear-gradient(135deg, #1D1F26, #0E1014);">
+                    <svg viewBox="0 0 200 125" class="absolute inset-0 w-full h-full">
+                      <g opacity="0.55">
+                        <rect x="40" y="50" width="120" height="50" rx="4" fill="none" stroke="#A0C4FF" stroke-width="1"/>
+                        <path d="M60 75 L100 55 L140 75" fill="none" stroke="#4361FF" stroke-width="1"/>
+                      </g>
+                      <g font-family="IBM Plex Mono" font-size="6" fill="#A0C4FF" opacity="0.6">
+                        <text x="10" y="15">SCENE · LAUNDRY_01</text>
+                        <text x="10" y="118">FOLD · T-SHIRT</text>
+                      </g>
+                    </svg>
+                    <div class="absolute bottom-2 right-2 mono text-[10px] text-muted">EP 0/5</div>
+                  </div>
+                  <div class="p-4">
+                    <div class="mono text-[10px] text-muted tracking-wider mb-1">G1 · DEFORMABLE</div>
+                    <div class="font-semibold text-text leading-snug text-[15px]">Fold t-shirt, place in basket</div>
+                    <div class="mt-3 pt-3 border-t border-stroke grid grid-cols-3 gap-2">
+                      <div>
+                        <div class="mono text-[9px] text-muted">QUEUE</div>
+                        <div class="mono text-xs text-textDim">7 ahead</div>
+                      </div>
+                      <div>
+                        <div class="mono text-[9px] text-muted">$/MIN</div>
+                        <div class="mono text-xs text-success live-val">$3.08</div>
+                      </div>
+                      <div>
+                        <div class="mono text-[9px] text-muted">CONFIDENCE</div>
+                        <div class="mono text-xs text-textDim">●●●<span class="text-muted/50">○○</span></div>
+                      </div>
+                    </div>
+                    <div class="mt-3 flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <span class="chip">●● MED</span>
+                        <span class="mono text-[10px] text-muted">~6 min</span>
+                      </div>
+                      <span class="mono text-volt font-semibold">$18.50</span>
+                    </div>
+                  </div>
+                </a>
+
+                <!-- Card 4 -->
+                <a data-route="#task/t-319" class="bg-surface border border-stroke rounded-xl overflow-hidden card-lift cursor-pointer block">
+                  <div class="aspect-[16/10] relative" style="background: linear-gradient(135deg, #1D1F26, #0E1014);">
+                    <svg viewBox="0 0 200 125" class="absolute inset-0 w-full h-full">
+                      <g opacity="0.55">
+                        <rect x="60" y="40" width="80" height="55" rx="4" fill="none" stroke="#A0C4FF" stroke-width="1"/>
+                        <circle cx="85" cy="67" r="6" fill="none" stroke="#4361FF" stroke-width="1"/>
+                        <circle cx="115" cy="67" r="6" fill="none" stroke="#4361FF" stroke-width="1"/>
+                      </g>
+                      <g font-family="IBM Plex Mono" font-size="6" fill="#A0C4FF" opacity="0.6">
+                        <text x="10" y="15">SCENE · DESK_B</text>
+                        <text x="10" y="118">SORT · 12 ITEMS</text>
+                      </g>
+                    </svg>
+                    <div class="absolute top-2 left-2 chip bg-volt/10 border-volt/40 text-voltLight">NEW</div>
+                    <div class="absolute bottom-2 right-2 mono text-[10px] text-muted">EP 0/5</div>
+                  </div>
+                  <div class="p-4">
+                    <div class="mono text-[10px] text-muted tracking-wider mb-1">GR1T2 · BIMANUAL</div>
+                    <div class="font-semibold text-text leading-snug text-[15px]">Sort kitchen utensils into drawer</div>
+                    <div class="mt-3 pt-3 border-t border-stroke grid grid-cols-3 gap-2">
+                      <div>
+                        <div class="mono text-[9px] text-muted">QUEUE</div>
+                        <div class="mono text-xs text-textDim">2 ahead</div>
+                      </div>
+                      <div>
+                        <div class="mono text-[9px] text-muted">$/MIN</div>
+                        <div class="mono text-xs text-success live-val">$2.90</div>
+                      </div>
+                      <div>
+                        <div class="mono text-[9px] text-muted">CONFIDENCE</div>
+                        <div class="mono text-xs text-textDim">●●●<span class="text-muted/50">○○</span></div>
+                      </div>
+                    </div>
+                    <div class="mt-3 flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <span class="chip">●● MED</span>
+                        <span class="mono text-[10px] text-muted">~7 min</span>
+                      </div>
+                      <span class="mono text-volt font-semibold">$20.50</span>
+                    </div>
+                  </div>
+                </a>
+
+                <!-- Card 5 -->
+                <a data-route="#task/t-455" class="bg-surface border border-stroke rounded-xl overflow-hidden card-lift cursor-pointer block">
+                  <div class="aspect-[16/10] relative" style="background: linear-gradient(135deg, #1D1F26, #0E1014);">
+                    <svg viewBox="0 0 200 125" class="absolute inset-0 w-full h-full">
+                      <g opacity="0.55">
+                        <path d="M40 90 L160 90" stroke="#A0C4FF" stroke-width="1"/>
+                        <rect x="70" y="55" width="60" height="35" rx="3" fill="none" stroke="#4361FF" stroke-width="1"/>
+                        <path d="M90 55 L90 40 L110 40 L110 55" fill="none" stroke="#4361FF" stroke-width="1"/>
+                      </g>
+                      <g font-family="IBM Plex Mono" font-size="6" fill="#A0C4FF" opacity="0.6">
+                        <text x="10" y="15">SCENE · PANTRY_A</text>
+                        <text x="10" y="118">OPEN · HINGE</text>
+                      </g>
+                    </svg>
+                    <div class="absolute bottom-2 right-2 mono text-[10px] text-muted">EP 0/5</div>
+                  </div>
+                  <div class="p-4">
+                    <div class="mono text-[10px] text-muted tracking-wider mb-1">APOLLO · ARTICULATED</div>
+                    <div class="font-semibold text-text leading-snug text-[15px]">Open drawer, retrieve spice jar</div>
+                    <div class="mt-3 pt-3 border-t border-stroke grid grid-cols-3 gap-2">
+                      <div>
+                        <div class="mono text-[9px] text-muted">QUEUE</div>
+                        <div class="mono text-xs text-textDim">0 ahead</div>
+                      </div>
+                      <div>
+                        <div class="mono text-[9px] text-muted">$/MIN</div>
+                        <div class="mono text-xs text-success live-val">$3.75</div>
+                      </div>
+                      <div>
+                        <div class="mono text-[9px] text-muted">CONFIDENCE</div>
+                        <div class="mono text-xs text-textDim">●●●●<span class="text-muted/50">○</span></div>
+                      </div>
+                    </div>
+                    <div class="mt-3 flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <span class="chip">●● MED</span>
+                        <span class="mono text-[10px] text-muted">~6 min</span>
+                      </div>
+                      <span class="mono text-volt font-semibold">$22.50</span>
+                    </div>
+                  </div>
+                </a>
+
+                <!-- Card 6 -->
+                <a data-route="#task/t-512" class="bg-surface border border-stroke rounded-xl overflow-hidden card-lift cursor-pointer block">
+                  <div class="aspect-[16/10] relative" style="background: linear-gradient(135deg, #1D1F26, #0E1014);">
+                    <svg viewBox="0 0 200 125" class="absolute inset-0 w-full h-full">
+                      <g opacity="0.55">
+                        <circle cx="100" cy="65" r="20" fill="none" stroke="#A0C4FF" stroke-width="1"/>
+                        <path d="M85 65 L95 75 L115 55" fill="none" stroke="#4361FF" stroke-width="1.5"/>
+                      </g>
+                      <g font-family="IBM Plex Mono" font-size="6" fill="#A0C4FF" opacity="0.6">
+                        <text x="10" y="15">SCENE · WORKSHOP_C</text>
+                        <text x="10" y="118">ASSEMBLE · 4 STEPS</text>
+                      </g>
+                    </svg>
+                    <div class="absolute top-2 left-2 chip bg-volt/10 border-volt/40 text-voltLight">FIRST-TIME BONUS</div>
+                    <div class="absolute bottom-2 right-2 mono text-[10px] text-muted">EP 0/5</div>
+                  </div>
+                  <div class="p-4">
+                    <div class="mono text-[10px] text-muted tracking-wider mb-1">GR1T2 · ASSEMBLY</div>
+                    <div class="font-semibold text-text leading-snug text-[15px]">Assemble desk organizer, 4 parts</div>
+                    <div class="mt-3 pt-3 border-t border-stroke grid grid-cols-3 gap-2">
+                      <div>
+                        <div class="mono text-[9px] text-muted">QUEUE</div>
+                        <div class="mono text-xs text-textDim">0 ahead</div>
+                      </div>
+                      <div>
+                        <div class="mono text-[9px] text-muted">$/MIN</div>
+                        <div class="mono text-xs text-success live-val">$4.50</div>
+                      </div>
+                      <div>
+                        <div class="mono text-[9px] text-muted">CONFIDENCE</div>
+                        <div class="mono text-xs text-textDim">●●<span class="text-muted/50">○○○</span></div>
+                      </div>
+                    </div>
+                    <div class="mt-3 flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <span class="chip">●●●● EXPERT</span>
+                        <span class="mono text-[10px] text-muted">~11 min</span>
+                      </div>
+                      <span class="mono text-volt font-semibold">$45.00</span>
+                    </div>
+                  </div>
+                </a>
+              </div>
+            </div>
+
+            <!-- History -->
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold">Recently completed</h2>
+                <a class="mono text-[11px] text-textDim hover:text-text cursor-pointer transition">See all 412 &rarr;</a>
+              </div>
+              <div class="bg-surface border border-stroke rounded-xl overflow-hidden">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="text-left mono text-[10px] text-muted tracking-wider border-b border-stroke">
+                      <th class="px-5 py-3 font-normal">TASK</th>
+                      <th class="px-5 py-3 font-normal">ROBOT</th>
+                      <th class="px-5 py-3 font-normal">EPISODES</th>
+                      <th class="px-5 py-3 font-normal">QUALITY</th>
+                      <th class="px-5 py-3 font-normal text-right">PAYOUT</th>
+                      <th class="px-5 py-3 font-normal text-right">WHEN</th>
+                    </tr>
+                  </thead>
+                  <tbody class="text-textDim">
+                    <tr class="t-row border-b border-stroke/70">
+                      <td class="px-5 py-3 text-text">Pick mug, place on coaster</td>
+                      <td class="px-5 py-3 mono text-xs">GR1T2</td>
+                      <td class="px-5 py-3 mono text-xs">5 / 5</td>
+                      <td class="px-5 py-3"><span class="chip" style="background:rgba(78,206,140,0.08);border-color:rgba(78,206,140,0.3);color:#4ECE8C">A+ · 96.1</span></td>
+                      <td class="px-5 py-3 mono text-right text-text">+$14.40</td>
+                      <td class="px-5 py-3 mono text-right text-muted text-xs">2h ago</td>
+                    </tr>
+                    <tr class="t-row border-b border-stroke/70">
+                      <td class="px-5 py-3 text-text">Close microwave door</td>
+                      <td class="px-5 py-3 mono text-xs">GR1T2</td>
+                      <td class="px-5 py-3 mono text-xs">5 / 5</td>
+                      <td class="px-5 py-3"><span class="chip" style="background:rgba(78,206,140,0.08);border-color:rgba(78,206,140,0.3);color:#4ECE8C">A · 91.8</span></td>
+                      <td class="px-5 py-3 mono text-right text-text">+$8.40</td>
+                      <td class="px-5 py-3 mono text-right text-muted text-xs">5h ago</td>
+                    </tr>
+                    <tr class="t-row border-b border-stroke/70">
+                      <td class="px-5 py-3 text-text">Pour coffee (small mug)</td>
+                      <td class="px-5 py-3 mono text-xs">GR1T2</td>
+                      <td class="px-5 py-3 mono text-xs">4 / 5</td>
+                      <td class="px-5 py-3"><span class="chip" style="background:rgba(245,184,66,0.08);border-color:rgba(245,184,66,0.3);color:#F5B842">B+ · 84.2</span></td>
+                      <td class="px-5 py-3 mono text-right text-text">+$25.60</td>
+                      <td class="px-5 py-3 mono text-right text-muted text-xs">Yesterday</td>
+                    </tr>
+                    <tr class="t-row border-b border-stroke/70">
+                      <td class="px-5 py-3 text-text">Fold napkin, place on tray</td>
+                      <td class="px-5 py-3 mono text-xs">G1</td>
+                      <td class="px-5 py-3 mono text-xs">5 / 5</td>
+                      <td class="px-5 py-3"><span class="chip" style="background:rgba(78,206,140,0.08);border-color:rgba(78,206,140,0.3);color:#4ECE8C">A+ · 95.7</span></td>
+                      <td class="px-5 py-3 mono text-right text-text">+$16.20</td>
+                      <td class="px-5 py-3 mono text-right text-muted text-xs">Yesterday</td>
+                    </tr>
+                    <tr class="t-row">
+                      <td class="px-5 py-3 text-text">Stack 3 cups</td>
+                      <td class="px-5 py-3 mono text-xs">GR1T2</td>
+                      <td class="px-5 py-3 mono text-xs">5 / 5</td>
+                      <td class="px-5 py-3"><span class="chip" style="background:rgba(78,206,140,0.08);border-color:rgba(78,206,140,0.3);color:#4ECE8C">A · 90.4</span></td>
+                      <td class="px-5 py-3 mono text-right text-text">+$11.00</td>
+                      <td class="px-5 py-3 mono text-right text-muted text-xs">2 days ago</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right rail -->
+          <div class="col-span-3 space-y-6">
+            <!-- Earnings spark -->
+            <div class="bg-surface border border-stroke rounded-xl p-5">
+              <div class="flex items-center justify-between mb-2">
+                <div class="mono text-[10px] text-muted tracking-wider">7-DAY EARNINGS</div>
+                <span class="mono text-[10px] text-success">+22%</span>
+              </div>
+              <div class="mono text-2xl font-semibold tabular">$284<span class="text-sm text-muted">.50</span></div>
+              <div class="mt-4 h-16 flex items-end gap-1">
+                <div class="flex-1 bg-volt/30 rounded-sm" style="height:35%"></div>
+                <div class="flex-1 bg-volt/45 rounded-sm" style="height:55%"></div>
+                <div class="flex-1 bg-volt/30 rounded-sm" style="height:28%"></div>
+                <div class="flex-1 bg-volt/55 rounded-sm" style="height:72%"></div>
+                <div class="flex-1 bg-volt/65 rounded-sm" style="height:85%"></div>
+                <div class="flex-1 bg-volt rounded-sm" style="height:100%"></div>
+                <div class="flex-1 bg-volt/45 rounded-sm" style="height:48%"></div>
+              </div>
+              <div class="flex items-center justify-between mono text-[9px] text-muted mt-2">
+                <span>MON</span><span>WED</span><span>FRI</span><span>SUN</span>
+              </div>
+            </div>
+
+            <!-- Leaderboard -->
+            <div class="bg-surface border border-stroke rounded-xl p-5">
+              <div class="flex items-center justify-between mb-3">
+                <div class="mono text-[10px] text-muted tracking-wider">LEADERBOARD</div>
+                <span class="chip" style="background:rgba(67,97,255,0.1);border-color:rgba(67,97,255,0.4);color:#4361FF">DIAMOND</span>
+              </div>
+              <div class="mono text-sm text-text">You're <span class="text-volt font-semibold text-lg">#23</span> this week</div>
+              <div class="mt-4 space-y-2">
+                <div class="flex items-center gap-2 text-xs">
+                  <span class="mono text-muted w-5">21</span>
+                  <div class="w-6 h-6 rounded-full bg-warn/20 flex items-center justify-center mono text-[9px] text-warn">SK</div>
+                  <span class="text-textDim truncate">Sofia K.</span>
+                  <span class="ml-auto mono text-muted text-[11px]">$318</span>
+                </div>
+                <div class="flex items-center gap-2 text-xs">
+                  <span class="mono text-muted w-5">22</span>
+                  <div class="w-6 h-6 rounded-full bg-success/20 flex items-center justify-center mono text-[9px] text-success">JM</div>
+                  <span class="text-textDim truncate">Jorge M.</span>
+                  <span class="ml-auto mono text-muted text-[11px]">$298</span>
+                </div>
+                <div class="flex items-center gap-2 text-xs bg-volt/10 border border-volt/30 rounded-md -mx-2 px-2 py-1.5">
+                  <span class="mono text-volt w-5 font-semibold">23</span>
+                  <div class="w-6 h-6 rounded-full bg-volt/20 flex items-center justify-center mono text-[9px] text-volt">MK</div>
+                  <span class="text-text truncate font-medium">You</span>
+                  <span class="ml-auto mono text-volt text-[11px] font-semibold">$284</span>
+                </div>
+                <div class="flex items-center gap-2 text-xs">
+                  <span class="mono text-muted w-5">24</span>
+                  <div class="w-6 h-6 rounded-full bg-textDim/15 flex items-center justify-center mono text-[9px] text-textDim">DR</div>
+                  <span class="text-textDim truncate">Daria R.</span>
+                  <span class="ml-auto mono text-muted text-[11px]">$272</span>
+                </div>
+              </div>
+              <a class="mt-4 mono text-[11px] text-textDim hover:text-text cursor-pointer transition block">Full ranking →</a>
+            </div>
+
+            <!-- Tip of day -->
+            <div class="bg-surface border border-stroke rounded-xl p-5 relative overflow-hidden">
+              <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-volt/50"></div>
+              <div class="mono text-[10px] text-muted tracking-wider mb-2">TIP · APRIL 18</div>
+              <div class="text-sm text-text leading-relaxed">
+                For pour tasks, approach the mug rim from a <span class="text-volt font-medium">15° angle</span>. Top-tier operators average <span class="text-volt font-medium">94% grade</span> when they slow down the last 200ms before contact.
+              </div>
+              <a class="mt-3 mono text-[11px] text-textDim hover:text-text cursor-pointer transition block">See full guide →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== TASK DETAIL VIEW ========== -->
+    <section id="task" class="view grid-dark min-h-screen">
+      <div class="max-w-[1380px] mx-auto px-8 py-8">
+
+        <!-- Back -->
+        <a data-route="#dashboard" class="inline-flex items-center gap-2 mono text-[11px] text-muted hover:text-text transition cursor-pointer mb-6">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          BACK TO TASKS
+        </a>
+
+        <div class="grid grid-cols-12 gap-8">
+          <!-- Left column -->
+          <div class="col-span-8 space-y-6">
+            <!-- Header -->
+            <div>
+              <div class="flex items-center gap-2 mono text-[11px] text-muted mb-3">
+                <span>TASK</span><span class="text-muted/60">·</span>
+                <span>T-117</span><span class="text-muted/60">·</span>
+                <span>GR1T2</span><span class="text-muted/60">·</span>
+                <span>FINE MANIPULATION</span>
+              </div>
+              <h1 class="text-[44px] leading-[1.05] font-semibold tracking-tight max-w-2xl">Pour coffee from kettle to mug</h1>
+              <div class="mt-5 flex items-center gap-3 flex-wrap">
+                <span class="chip" style="background:rgba(255,74,92,0.08);border-color:rgba(255,74,92,0.3);color:#FF4A5C">●●● HARD</span>
+                <span class="chip" style="background:rgba(245,184,66,0.08);border-color:rgba(245,184,66,0.3);color:#F5B842">HIGH PAY</span>
+                <span class="chip">5 episodes needed</span>
+                <span class="chip">~9 min each</span>
+                <span class="chip">Bimanual · Liquid</span>
+              </div>
+            </div>
+
+            <!-- Hero -->
+            <div class="aspect-[16/9] rounded-xl border border-stroke relative overflow-hidden sim-viewport" style="background: radial-gradient(ellipse at 50% 40%, rgba(67,97,255,0.15), transparent 70%), linear-gradient(180deg, #0E1014, #17181E);">
+              <div class="scan-sweep absolute left-0 right-0 h-32 pointer-events-none"
+                   style="background: linear-gradient(180deg, transparent, rgba(67,97,255,0.2), transparent);"></div>
+              <svg viewBox="0 0 800 450" class="absolute inset-0 w-full h-full">
+                <defs>
+                  <linearGradient id="rgrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#A0C4FF" stop-opacity="0.9"/>
+                    <stop offset="100%" stop-color="#4361FF" stop-opacity="0.3"/>
+                  </linearGradient>
+                </defs>
+                <!-- Grid overlay -->
+                <g opacity="0.08" stroke="#A0C4FF">
+                  <line x1="0" y1="100" x2="800" y2="100"/>
+                  <line x1="0" y1="200" x2="800" y2="200"/>
+                  <line x1="0" y1="300" x2="800" y2="300"/>
+                  <line x1="200" y1="0" x2="200" y2="450"/>
+                  <line x1="400" y1="0" x2="400" y2="450"/>
+                  <line x1="600" y1="0" x2="600" y2="450"/>
+                </g>
+                <!-- Floor -->
+                <ellipse cx="400" cy="390" rx="240" ry="25" fill="none" stroke="#4361FF" stroke-opacity="0.3" stroke-dasharray="3 5"/>
+                <!-- Table edge -->
+                <line x1="180" y1="260" x2="620" y2="260" stroke="#4361FF" stroke-opacity="0.35" stroke-width="1.5"/>
+                <!-- Kettle -->
+                <g stroke="url(#rgrad)" stroke-width="1.8" fill="none">
+                  <path d="M320 200 L360 200 L365 255 L315 255 Z"/>
+                  <ellipse cx="340" cy="200" rx="20" ry="5"/>
+                  <path d="M365 215 Q390 215 390 240"/>
+                  <rect x="325" y="170" width="30" height="10" rx="3"/>
+                </g>
+                <!-- Mug -->
+                <g stroke="url(#rgrad)" stroke-width="1.8" fill="none">
+                  <path d="M460 230 L490 230 L495 258 L455 258 Z"/>
+                  <ellipse cx="475" cy="230" rx="15" ry="3"/>
+                  <path d="M495 240 Q510 240 510 250"/>
+                </g>
+                <!-- Robot arms -->
+                <g stroke="#A0C4FF" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.9">
+                  <path d="M100 110 L180 180 L270 220"/>
+                  <path d="M700 110 L620 180 L520 220"/>
+                  <circle cx="270" cy="220" r="6" fill="#4361FF" opacity="0.4"/>
+                  <circle cx="520" cy="220" r="6" fill="#4361FF" opacity="0.4"/>
+                </g>
+                <!-- Pour stream -->
+                <path d="M390 240 Q420 245 440 240" stroke="#A0C4FF" stroke-width="1.5" stroke-dasharray="2 3" fill="none" opacity="0.7"/>
+                <!-- Labels -->
+                <g font-family="IBM Plex Mono" font-size="10" fill="#A0C4FF" opacity="0.8">
+                  <text x="20" y="30">SCENE · CAFE_A_V3</text>
+                  <text x="20" y="48">ROBOT · GR1T2</text>
+                  <text x="20" y="66">TARGET · 120ml</text>
+                </g>
+                <g font-family="IBM Plex Mono" font-size="9" fill="#A0C4FF" opacity="0.6">
+                  <text x="340" y="160" text-anchor="middle">KETTLE</text>
+                  <text x="475" y="285" text-anchor="middle">MUG</text>
+                </g>
+              </svg>
+              <div class="absolute bottom-4 left-4 flex items-center gap-2 mono text-[11px] text-sky/80">
+                <span class="w-1.5 h-1.5 rounded-full dot-ok pulse-success"></span>
+                TARGET BEHAVIOR PREVIEW
+              </div>
+              <button class="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-volt flex items-center justify-center hover:bg-voltDeep transition">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><polygon points="7 4 20 12 7 20 7 4"/></svg>
+              </button>
+            </div>
+
+            <!-- Brief -->
+            <div class="bg-surface border border-stroke rounded-xl p-6">
+              <h3 class="text-sm mono text-muted tracking-wider mb-4">BRIEF</h3>
+              <div class="space-y-5">
+                <div>
+                  <div class="text-xs mono text-muted tracking-wider mb-1.5">WHAT</div>
+                  <p class="text-text leading-relaxed">Using both arms, lift the kettle from the countertop, bring it above the white mug, tilt to pour approximately 120ml of coffee, and return the kettle to its starting position. Complete 5 clean episodes.</p>
+                </div>
+                <div>
+                  <div class="text-xs mono text-muted tracking-wider mb-1.5">WHY</div>
+                  <p class="text-text leading-relaxed">This task trains fine bimanual liquid-handling policies for GR1T2's home-assistant stack. Clean episodes feed directly into this week's mid-training run at Fourier.</p>
+                </div>
+                <div>
+                  <div class="text-xs mono text-muted tracking-wider mb-1.5">ACCEPTANCE</div>
+                  <ul class="text-text leading-relaxed space-y-1.5 mono text-sm">
+                    <li class="flex items-start gap-2"><span class="text-success mt-0.5">✓</span> Liquid volume in mug between 100–140ml</li>
+                    <li class="flex items-start gap-2"><span class="text-success mt-0.5">✓</span> No spill outside 5cm radius of mug</li>
+                    <li class="flex items-start gap-2"><span class="text-success mt-0.5">✓</span> Kettle returned within 2cm of start pose</li>
+                    <li class="flex items-start gap-2"><span class="text-success mt-0.5">✓</span> Episode duration 6–12 minutes</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Steps -->
+            <div class="bg-surface border border-stroke rounded-xl p-6">
+              <h3 class="text-sm mono text-muted tracking-wider mb-4">SUGGESTED FLOW</h3>
+              <ol class="space-y-3">
+                <li class="flex items-start gap-3">
+                  <span class="w-6 h-6 rounded-md bg-surfaceHi border border-strokeHi flex items-center justify-center mono text-[11px] text-textDim flex-shrink-0">01</span>
+                  <div>
+                    <div class="text-text text-sm font-medium">Approach &amp; grasp kettle</div>
+                    <div class="text-textDim text-xs mt-0.5">Left hand on handle, right hand on body for stability. 0.5-0.8s grasp window.</div>
+                  </div>
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="w-6 h-6 rounded-md bg-surfaceHi border border-strokeHi flex items-center justify-center mono text-[11px] text-textDim flex-shrink-0">02</span>
+                  <div>
+                    <div class="text-text text-sm font-medium">Lift &amp; traverse to mug</div>
+                    <div class="text-textDim text-xs mt-0.5">Keep kettle level. Clear the toaster by at least 8cm.</div>
+                  </div>
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="w-6 h-6 rounded-md bg-surfaceHi border border-strokeHi flex items-center justify-center mono text-[11px] text-textDim flex-shrink-0">03</span>
+                  <div>
+                    <div class="text-text text-sm font-medium">Tilt &amp; pour</div>
+                    <div class="text-textDim text-xs mt-0.5">Approach the rim at 15°. Start pouring at 25° tilt, increase smoothly to ~55°. Hold until target volume.</div>
+                  </div>
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="w-6 h-6 rounded-md bg-surfaceHi border border-strokeHi flex items-center justify-center mono text-[11px] text-textDim flex-shrink-0">04</span>
+                  <div>
+                    <div class="text-text text-sm font-medium">Retract &amp; return</div>
+                    <div class="text-textDim text-xs mt-0.5">Level the kettle before moving. Place within 2cm of start pose.</div>
+                  </div>
+                </li>
+              </ol>
+            </div>
+
+            <!-- Reward breakdown -->
+            <div class="bg-surface border border-stroke rounded-xl p-6">
+              <h3 class="text-sm mono text-muted tracking-wider mb-4">REWARD BREAKDOWN</h3>
+              <div class="space-y-3">
+                <div class="flex items-center justify-between pb-3 border-b border-stroke">
+                  <div>
+                    <div class="text-text text-sm">Base · 5 clean episodes</div>
+                    <div class="text-textDim text-xs mt-0.5">$6.40 per episode</div>
+                  </div>
+                  <div class="mono text-text">$32.00</div>
+                </div>
+                <div class="flex items-center justify-between pb-3 border-b border-stroke">
+                  <div>
+                    <div class="text-text text-sm">Quality bonus · A-tier <span class="text-textDim">(up to +40%)</span></div>
+                    <div class="text-textDim text-xs mt-0.5">Paid after grading</div>
+                  </div>
+                  <div class="mono text-volt">+$12.80</div>
+                </div>
+                <div class="flex items-center justify-between pb-3 border-b border-stroke">
+                  <div>
+                    <div class="text-text text-sm">Streak multiplier · 14 days</div>
+                    <div class="text-textDim text-xs mt-0.5">1.15× on base</div>
+                  </div>
+                  <div class="mono text-volt">+$4.80</div>
+                </div>
+                <div class="flex items-center justify-between pb-3 border-b border-stroke">
+                  <div>
+                    <div class="text-text text-sm">Diamond tier multiplier</div>
+                    <div class="text-textDim text-xs mt-0.5">1.60× on base</div>
+                  </div>
+                  <div class="mono text-volt">+$19.20</div>
+                </div>
+                <div class="flex items-center justify-between pt-2">
+                  <div class="mono text-muted tracking-wider text-[11px]">MAX POTENTIAL PAYOUT</div>
+                  <div class="mono text-2xl text-volt font-semibold tabular">$68.80</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Operators -->
+            <div class="bg-surface border border-stroke rounded-xl p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm mono text-muted tracking-wider">40 OPERATORS COMPLETED THIS TASK</h3>
+                <span class="mono text-[11px] text-muted">AVG 94.1 QUALITY</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full bg-volt/20 flex items-center justify-center mono text-[10px] text-volt border border-ink">DR</div>
+                <div class="w-8 h-8 rounded-full bg-success/20 flex items-center justify-center mono text-[10px] text-success border border-ink -ml-3">JM</div>
+                <div class="w-8 h-8 rounded-full bg-warn/20 flex items-center justify-center mono text-[10px] text-warn border border-ink -ml-3">SK</div>
+                <div class="w-8 h-8 rounded-full bg-textDim/15 flex items-center justify-center mono text-[10px] text-textDim border border-ink -ml-3">AL</div>
+                <div class="w-8 h-8 rounded-full bg-danger/20 flex items-center justify-center mono text-[10px] text-danger border border-ink -ml-3">PT</div>
+                <div class="w-8 h-8 rounded-full bg-surfaceHi flex items-center justify-center mono text-[10px] text-muted border border-ink -ml-3">+35</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right sticky column -->
+          <div class="col-span-4">
+            <div class="sticky top-24 space-y-4">
+              <!-- Payout -->
+              <div class="bg-gradient-to-br from-volt/12 to-transparent border border-volt/30 rounded-xl p-6">
+                <div class="mono text-[10px] text-muted tracking-wider mb-2">PAYOUT</div>
+                <div class="mono text-4xl font-semibold tabular">$32<span class="text-lg text-muted">.00</span></div>
+                <div class="mono text-[11px] text-textDim mt-1">base · up to $68.80 with bonuses</div>
+
+                <!-- Start CTA -->
+                <a data-route="#session" class="mt-6 btn-volt w-full py-3.5 rounded-md text-[15px] font-semibold flex items-center justify-center gap-2 cursor-pointer">
+                  Start session
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21"/></svg>
+                </a>
+                <div class="mt-2.5 mono text-[10px] text-muted text-center">ESTIMATED TIME &middot; 45 MIN · 5 EPISODES</div>
+              </div>
+
+              <!-- Preflight -->
+              <div class="bg-surface border border-stroke rounded-xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="mono text-[10px] text-muted tracking-wider">PRE-FLIGHT</div>
+                  <div class="mono text-[10px] text-success flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full dot-ok"></span>ALL GO
+                  </div>
+                </div>
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <span class="w-2 h-2 rounded-full dot-ok"></span>
+                      <span class="text-sm text-text">Quest 3 connected</span>
+                    </div>
+                    <span class="mono text-[10px] text-muted">72 fps</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <span class="w-2 h-2 rounded-full dot-ok"></span>
+                      <span class="text-sm text-text">Certificate valid</span>
+                    </div>
+                    <span class="mono text-[10px] text-muted">28 days</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <span class="w-2 h-2 rounded-full dot-ok"></span>
+                      <span class="text-sm text-text">Sim instance warmed</span>
+                    </div>
+                    <span class="mono text-[10px] text-muted">12 ms</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <span class="w-2 h-2 rounded-full dot-ok"></span>
+                      <span class="text-sm text-text">Scene CAFE_A loaded</span>
+                    </div>
+                    <span class="mono text-[10px] text-muted">v3.2</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <span class="w-2 h-2 rounded-full dot-ok"></span>
+                      <span class="text-sm text-text">Hand tracking calibrated</span>
+                    </div>
+                    <span class="mono text-[10px] text-muted">OK</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Similar tasks -->
+              <div class="bg-surface border border-stroke rounded-xl p-6">
+                <div class="mono text-[10px] text-muted tracking-wider mb-4">SIMILAR</div>
+                <div class="space-y-3">
+                  <a data-route="#task/t-042" class="block cursor-pointer group">
+                    <div class="text-sm text-textDim group-hover:text-text transition">Pick mug, place on coaster</div>
+                    <div class="mono text-[11px] text-muted flex items-center gap-2 mt-1">
+                      <span>GR1T2</span><span>·</span><span>$12.00</span>
+                    </div>
+                  </a>
+                  <a class="block cursor-pointer group">
+                    <div class="text-sm text-textDim group-hover:text-text transition">Pour water into glass</div>
+                    <div class="mono text-[11px] text-muted flex items-center gap-2 mt-1">
+                      <span>G1</span><span>·</span><span>$24.00</span>
+                    </div>
+                  </a>
+                  <a class="block cursor-pointer group">
+                    <div class="text-sm text-textDim group-hover:text-text transition">Fill kettle from tap</div>
+                    <div class="mono text-[11px] text-muted flex items-center gap-2 mt-1">
+                      <span>GR1T2</span><span>·</span><span>$28.00</span>
+                    </div>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== SESSION COCKPIT VIEW ========== -->
+    <section id="session" class="view min-h-screen bg-inkDeep">
+      <!-- Session top bar -->
+      <div class="h-14 border-b border-stroke bg-ink flex items-center justify-between px-8">
+        <div class="flex items-center gap-6">
+          <a data-route="#task/t-117" class="mono text-[11px] text-muted hover:text-text transition flex items-center gap-2 cursor-pointer">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            EXIT
+          </a>
+          <span class="w-px h-5 bg-stroke"></span>
+          <div class="flex items-center gap-3">
+            <span class="w-2 h-2 rounded-full dot-ok pulse-success"></span>
+            <div>
+              <div class="text-sm text-text font-medium">Pour coffee from kettle to mug</div>
+              <div class="mono text-[10px] text-muted">T-117 · GR1T2 · CAFE_A_V3</div>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-6">
+          <div class="text-center">
+            <div class="mono text-[10px] text-muted tracking-wider">ELAPSED</div>
+            <div class="mono text-lg text-text font-semibold tabular" id="timer">00:12:34</div>
+          </div>
+          <span class="w-px h-8 bg-stroke"></span>
+          <div class="text-center">
+            <div class="mono text-[10px] text-muted tracking-wider">EPISODE</div>
+            <div class="mono text-lg text-text font-semibold"><span class="text-volt">03</span> / 05</div>
+          </div>
+          <span class="w-px h-8 bg-stroke"></span>
+          <div class="text-center">
+            <div class="mono text-[10px] text-muted tracking-wider">EARNED</div>
+            <div class="mono text-lg text-volt font-semibold tabular">$19.20</div>
+          </div>
+          <span class="w-px h-8 bg-stroke"></span>
+          <button class="btn-danger px-5 py-2 rounded-md font-semibold text-sm flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-danger"></span>
+            ABORT
+          </button>
+        </div>
+      </div>
+
+      <!-- Cockpit layout -->
+      <div class="flex" style="height: calc(100vh - 3.5rem - 4rem);">
+
+        <!-- Left: sim stream -->
+        <div class="flex-1 p-5">
+          <div class="w-full h-full rounded-xl border border-stroke relative overflow-hidden sim-viewport" style="background: radial-gradient(ellipse at 50% 50%, rgba(67,97,255,0.12), transparent 60%), linear-gradient(180deg, #08090C, #0E1014);">
+
+            <!-- Scanning sweep -->
+            <div class="scan-sweep absolute left-0 right-0 h-32 pointer-events-none"
+                 style="background: linear-gradient(180deg, transparent, rgba(67,97,255,0.12), transparent);"></div>
+
+            <!-- Grid floor -->
+            <svg viewBox="0 0 800 500" class="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid slice">
+              <defs>
+                <linearGradient id="sgrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#A0C4FF" stop-opacity="0.85"/>
+                  <stop offset="100%" stop-color="#4361FF" stop-opacity="0.2"/>
+                </linearGradient>
+              </defs>
+              <!-- Perspective grid -->
+              <g opacity="0.12" stroke="#A0C4FF">
+                <line x1="0" y1="350" x2="800" y2="350"/>
+                <line x1="0" y1="400" x2="800" y2="400"/>
+                <line x1="0" y1="450" x2="800" y2="450"/>
+                <line x1="200" y1="350" x2="120" y2="500"/>
+                <line x1="400" y1="350" x2="400" y2="500"/>
+                <line x1="600" y1="350" x2="680" y2="500"/>
+              </g>
+              <!-- Scene table -->
+              <path d="M180 280 L620 280 L700 360 L100 360 Z" fill="none" stroke="#4361FF" stroke-opacity="0.35" stroke-width="1.5"/>
+              <!-- Kettle -->
+              <g stroke="url(#sgrad)" stroke-width="2" fill="none">
+                <path d="M320 200 L360 200 L365 255 L315 255 Z"/>
+                <ellipse cx="340" cy="200" rx="20" ry="5"/>
+                <path d="M365 215 Q395 215 395 245"/>
+                <rect x="325" y="170" width="30" height="10" rx="3"/>
+                <path d="M395 245 Q410 248 420 240" stroke-dasharray="2 3"/>
+              </g>
+              <!-- Mug -->
+              <g stroke="url(#sgrad)" stroke-width="2" fill="none">
+                <path d="M440 222 L475 222 L480 258 L435 258 Z"/>
+                <ellipse cx="457" cy="222" rx="18" ry="4"/>
+                <path d="M480 232 Q500 232 500 245"/>
+                <!-- Liquid fill -->
+                <rect x="439" y="238" width="37" height="18" fill="#4361FF" fill-opacity="0.3"/>
+              </g>
+              <!-- Robot arms -->
+              <g stroke="#A0C4FF" stroke-width="2.5" fill="none" stroke-linecap="round">
+                <path d="M80 80 L180 160 L280 220" opacity="0.9"/>
+                <path d="M720 80 L620 160 L500 220" opacity="0.9"/>
+                <circle cx="280" cy="220" r="8" fill="#4361FF" fill-opacity="0.5"/>
+                <circle cx="500" cy="220" r="8" fill="#4361FF" fill-opacity="0.5"/>
+                <circle cx="280" cy="220" r="14" stroke-opacity="0.3"/>
+                <circle cx="500" cy="220" r="14" stroke-opacity="0.3"/>
+              </g>
+              <!-- Annotation lines -->
+              <g stroke="#A0C4FF" stroke-opacity="0.4" stroke-dasharray="2 4" fill="none">
+                <line x1="340" y1="170" x2="340" y2="120"/>
+                <line x1="340" y1="120" x2="450" y2="120"/>
+              </g>
+              <g font-family="IBM Plex Mono" font-size="10" fill="#A0C4FF">
+                <text x="455" y="123">KETTLE · lifted · 128ms</text>
+              </g>
+            </svg>
+
+            <!-- HUD corners -->
+            <div class="absolute top-4 left-4 flex items-center gap-3">
+              <div class="flex items-center gap-2 px-2.5 py-1 bg-ink/80 border border-stroke rounded-md mono text-[10px]">
+                <span class="w-1.5 h-1.5 rounded-full bg-danger pulse-rec"></span>
+                <span class="text-danger">REC · EP 03</span>
+              </div>
+              <div class="px-2.5 py-1 bg-ink/80 border border-stroke rounded-md mono text-[10px] text-sky">
+                STREAMING TO QUEST 3 · 72 FPS
+              </div>
+            </div>
+            <div class="absolute top-4 right-4 flex items-center gap-3">
+              <div class="px-2.5 py-1 bg-ink/80 border border-stroke rounded-md mono text-[10px] text-textDim">
+                LAT 12ms
+              </div>
+              <div class="px-2.5 py-1 bg-ink/80 border border-stroke rounded-md mono text-[10px] text-textDim">
+                CAM · FRONT
+              </div>
+            </div>
+
+            <!-- Bottom hud -->
+            <div class="absolute bottom-4 left-4 right-4 flex items-end justify-between">
+              <div class="space-y-1 mono text-[10px] text-muted">
+                <div>POSE · [0.24, 0.18, 0.92]</div>
+                <div>VOL&nbsp; · 72ml / 120ml target</div>
+                <div>FORCE · 0.42 N (L) · 0.38 N (R)</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button class="w-9 h-9 rounded-md bg-ink/80 border border-stroke hover:border-volt transition flex items-center justify-center" title="Camera angle">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B4BDD4" stroke-width="1.8"><path d="M23 7l-7 5 7 5V7zM1 5h15v14H1z"/></svg>
+                </button>
+                <button class="w-9 h-9 rounded-md bg-ink/80 border border-stroke hover:border-volt transition flex items-center justify-center" title="Telemetry overlay">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B4BDD4" stroke-width="1.8"><path d="M3 3h7v7H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 14h7v7H3z"/></svg>
+                </button>
+                <button class="w-9 h-9 rounded-md bg-ink/80 border border-stroke hover:border-volt transition flex items-center justify-center" title="Fullscreen">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B4BDD4" stroke-width="1.8"><path d="M8 3H3v5M21 8V3h-5M16 21h5v-5M3 16v5h5"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: telemetry stack -->
+        <div class="w-[360px] border-l border-stroke p-5 space-y-4 overflow-y-auto">
+
+          <!-- Robot state -->
+          <div class="bg-surface border border-stroke rounded-xl p-4">
+            <div class="flex items-center justify-between mb-4">
+              <div class="mono text-[10px] text-muted tracking-wider">ROBOT STATE</div>
+              <span class="mono text-[10px] text-success flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full dot-ok"></span>NOMINAL
+              </span>
+            </div>
+            <div class="space-y-3">
+              <div>
+                <div class="flex items-center justify-between mono text-[11px] mb-1.5">
+                  <span class="text-textDim">L-ARM · IK</span>
+                  <span class="text-success">0.98</span>
+                </div>
+                <div class="tel-bar"><div class="tel-bar-fill" style="width:98%"></div></div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between mono text-[11px] mb-1.5">
+                  <span class="text-textDim">R-ARM · IK</span>
+                  <span class="text-success">0.96</span>
+                </div>
+                <div class="tel-bar"><div class="tel-bar-fill" style="width:96%"></div></div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between mono text-[11px] mb-1.5">
+                  <span class="text-textDim">HEAD · tracking</span>
+                  <span class="text-success">1.00</span>
+                </div>
+                <div class="tel-bar"><div class="tel-bar-fill" style="width:100%"></div></div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between mono text-[11px] mb-1.5">
+                  <span class="text-textDim">BASE · stable</span>
+                  <span class="text-success">1.00</span>
+                </div>
+                <div class="tel-bar"><div class="tel-bar-fill" style="width:100%"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hand tracking -->
+          <div class="bg-surface border border-stroke rounded-xl p-4">
+            <div class="mono text-[10px] text-muted tracking-wider mb-3">HAND TRACKING</div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <div class="flex items-center gap-2 mb-1.5">
+                  <span class="w-2 h-2 rounded-full dot-ok"></span>
+                  <span class="mono text-[11px] text-textDim">LEFT</span>
+                </div>
+                <div class="mono text-xs text-text">26 / 26 joints</div>
+                <div class="mono text-[10px] text-muted mt-0.5">90 Hz</div>
+              </div>
+              <div>
+                <div class="flex items-center gap-2 mb-1.5">
+                  <span class="w-2 h-2 rounded-full dot-ok"></span>
+                  <span class="mono text-[11px] text-textDim">RIGHT</span>
+                </div>
+                <div class="mono text-xs text-text">26 / 26 joints</div>
+                <div class="mono text-[10px] text-muted mt-0.5">90 Hz</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Latency / FPS -->
+          <div class="bg-surface border border-stroke rounded-xl p-4">
+            <div class="mono text-[10px] text-muted tracking-wider mb-3">LINK</div>
+            <div class="grid grid-cols-3 gap-3 text-center">
+              <div>
+                <div class="mono text-[10px] text-muted">LAT</div>
+                <div class="mono text-lg text-text tabular mt-0.5">12<span class="text-[10px] text-muted">ms</span></div>
+              </div>
+              <div>
+                <div class="mono text-[10px] text-muted">FPS</div>
+                <div class="mono text-lg text-success tabular mt-0.5">72</div>
+              </div>
+              <div>
+                <div class="mono text-[10px] text-muted">JITTER</div>
+                <div class="mono text-lg text-text tabular mt-0.5">0.8<span class="text-[10px] text-muted">ms</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recording -->
+          <div class="bg-gradient-to-br from-danger/10 to-transparent border border-danger/30 rounded-xl p-4">
+            <div class="flex items-center justify-between mb-3">
+              <div class="mono text-[10px] text-danger tracking-wider flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-danger pulse-rec"></span>
+                RECORDING
+              </div>
+              <span class="mono text-[10px] text-muted">MCAP</span>
+            </div>
+            <div class="mono text-sm text-text">Episode 3 &middot; 01:24 elapsed</div>
+            <div class="mt-2 bar-track"><div style="width:42%; background:#FF4A5C; height:100%; border-radius:2px;"></div></div>
+            <div class="mono text-[10px] text-muted mt-1.5">1.8 GB buffered · auto-save at end</div>
+          </div>
+
+          <!-- Checklist -->
+          <div class="bg-surface border border-stroke rounded-xl p-4">
+            <div class="mono text-[10px] text-muted tracking-wider mb-3">SUCCESS CRITERIA</div>
+            <ul class="space-y-2 mono text-[11px]">
+              <li class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-success/20 flex items-center justify-center"><svg width="7" height="7" viewBox="0 0 24 24" stroke="#4ECE8C" stroke-width="4" fill="none"><path d="M20 6L9 17l-5-5"/></svg></span>
+                <span class="text-textDim">Kettle grasped</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-success/20 flex items-center justify-center"><svg width="7" height="7" viewBox="0 0 24 24" stroke="#4ECE8C" stroke-width="4" fill="none"><path d="M20 6L9 17l-5-5"/></svg></span>
+                <span class="text-textDim">Lifted &amp; traversed</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-volt/20 flex items-center justify-center"><span class="w-1 h-1 rounded-full bg-volt"></span></span>
+                <span class="text-text">Pouring in progress</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-stroke"></span>
+                <span class="text-muted">Return to start</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Episode timeline -->
+      <div class="h-16 border-t border-stroke bg-ink px-5 flex items-center gap-3">
+        <div class="mono text-[10px] text-muted tracking-wider w-16">EPISODES</div>
+        <div class="flex-1 flex items-center gap-2">
+          <div class="ep-slot ep-good">01 · 96.1</div>
+          <div class="ep-slot ep-good">02 · 94.3</div>
+          <div class="ep-slot ep-active">
+            <span class="flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-danger pulse-rec"></span>
+              REC
+            </span>
+          </div>
+          <div class="ep-slot">04</div>
+          <div class="ep-slot">05</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="btn-ghost-d px-4 py-2 rounded-md text-xs font-medium flex items-center gap-2">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14"/></svg>
+            Discard
+          </button>
+          <button class="btn-ghost-d px-4 py-2 rounded-md text-xs font-medium">Save &amp; retry</button>
+          <button class="btn-volt px-5 py-2 rounded-md text-xs font-semibold flex items-center gap-2">
+            Save &amp; next episode
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== EARNINGS VIEW ========== -->
+    <section id="earnings" class="view grid-dark min-h-screen">
+      <div class="max-w-[1480px] mx-auto px-8 py-8">
+
+        <!-- Header -->
+        <div class="flex items-end justify-between mb-8">
+          <div>
+            <div class="mono text-[11px] text-muted tracking-wider mb-1">EARNINGS · APRIL 2026</div>
+            <h1 class="text-2xl font-semibold tracking-tight">Where your money lives.</h1>
+          </div>
+          <div class="flex items-center gap-3">
+            <button class="btn-ghost-d px-4 py-2 rounded-md text-sm flex items-center gap-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              Export CSV
+            </button>
+            <button class="btn-volt px-4 py-2 rounded-md text-sm font-medium">Request payout</button>
+          </div>
+        </div>
+
+        <!-- Big number + chart -->
+        <div class="grid grid-cols-12 gap-6 mb-8">
+          <div class="col-span-8 bg-surface border border-stroke rounded-xl p-8">
+            <div class="flex items-start justify-between mb-6">
+              <div>
+                <div class="mono text-[10px] text-muted tracking-wider mb-3">MONTH TO DATE</div>
+                <div class="mono text-[64px] font-semibold leading-none tracking-tight tabular">$2,384<span class="text-3xl text-muted">.50</span></div>
+                <div class="mono text-xs text-textDim mt-3">63 episodes · avg $37.85 / episode</div>
+              </div>
+              <div class="text-right">
+                <span class="chip" style="background:rgba(78,206,140,0.08);border-color:rgba(78,206,140,0.3);color:#4ECE8C">+18% VS MAR</span>
+                <div class="mono text-[11px] text-muted mt-3">PROJECTION</div>
+                <div class="mono text-xl text-volt font-semibold mt-0.5">$3,920</div>
+              </div>
+            </div>
+
+            <!-- 30-day bar chart -->
+            <div class="mt-8">
+              <div class="flex items-end gap-1 h-40">
+                <div class="flex-1 bg-volt/30 rounded-sm" style="height:35%"></div>
+                <div class="flex-1 bg-volt/40 rounded-sm" style="height:52%"></div>
+                <div class="flex-1 bg-volt/25 rounded-sm" style="height:28%"></div>
+                <div class="flex-1 bg-volt/50 rounded-sm" style="height:68%"></div>
+                <div class="flex-1 bg-volt/35 rounded-sm" style="height:45%"></div>
+                <div class="flex-1 bg-volt/45 rounded-sm" style="height:62%"></div>
+                <div class="flex-1 bg-volt/30 rounded-sm" style="height:38%"></div>
+                <div class="flex-1 bg-volt/55 rounded-sm" style="height:75%"></div>
+                <div class="flex-1 bg-volt/40 rounded-sm" style="height:55%"></div>
+                <div class="flex-1 bg-volt/50 rounded-sm" style="height:70%"></div>
+                <div class="flex-1 bg-volt/30 rounded-sm" style="height:40%"></div>
+                <div class="flex-1 bg-volt/65 rounded-sm" style="height:86%"></div>
+                <div class="flex-1 bg-volt/80 rounded-sm" style="height:95%"></div>
+                <div class="flex-1 bg-volt/55 rounded-sm" style="height:72%"></div>
+                <div class="flex-1 bg-volt/40 rounded-sm" style="height:50%"></div>
+                <div class="flex-1 bg-volt/50 rounded-sm" style="height:65%"></div>
+                <div class="flex-1 bg-volt/60 rounded-sm" style="height:78%"></div>
+                <div class="flex-1 bg-volt/25 rounded-sm" style="height:32%"></div>
+                <div class="flex-1 bg-volt/45 rounded-sm" style="height:58%"></div>
+                <div class="flex-1 bg-volt/40 rounded-sm" style="height:50%"></div>
+                <div class="flex-1 bg-volt/55 rounded-sm" style="height:68%"></div>
+                <div class="flex-1 bg-volt/70 rounded-sm" style="height:82%"></div>
+                <div class="flex-1 bg-volt/50 rounded-sm" style="height:62%"></div>
+                <div class="flex-1 bg-volt/40 rounded-sm" style="height:52%"></div>
+                <div class="flex-1 bg-volt/60 rounded-sm" style="height:75%"></div>
+                <div class="flex-1 bg-volt/50 rounded-sm" style="height:68%"></div>
+                <div class="flex-1 bg-volt/55 rounded-sm" style="height:72%"></div>
+                <div class="flex-1 bg-volt/45 rounded-sm" style="height:58%"></div>
+                <div class="flex-1 bg-volt/70 rounded-sm" style="height:85%"></div>
+                <div class="flex-1 bg-volt rounded-sm" style="height:100%"></div>
+              </div>
+              <div class="flex items-center justify-between mono text-[10px] text-muted mt-3">
+                <span>APR 01</span><span>APR 07</span><span>APR 14</span><span>APR 21</span><span>TODAY</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-span-4 space-y-4">
+            <!-- Pending / paid -->
+            <div class="bg-surface border border-stroke rounded-xl p-5">
+              <div class="mono text-[10px] text-muted tracking-wider mb-4">BALANCE</div>
+              <div class="space-y-4">
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-sm text-textDim">Paid out</span>
+                    <span class="mono text-lg text-text tabular">$1,820.00</span>
+                  </div>
+                  <div class="bar-track"><div class="bar-fill" style="width:76%"></div></div>
+                </div>
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-sm text-textDim">Pending</span>
+                    <span class="mono text-lg text-volt tabular">$564.50</span>
+                  </div>
+                  <div class="bar-track"><div style="width:24%; background:#F5B842; height:100%; border-radius:2px;"></div></div>
+                </div>
+              </div>
+              <div class="mt-5 pt-4 border-t border-stroke">
+                <div class="mono text-[10px] text-muted tracking-wider mb-2">NEXT PAYOUT</div>
+                <div class="text-sm text-text">Monday, April 20 · 3 days</div>
+                <div class="mono text-[11px] text-muted mt-1">Wise · USD · ••• 4821</div>
+              </div>
+            </div>
+
+            <!-- Tier -->
+            <div class="bg-gradient-to-br from-volt/15 to-transparent border border-volt/30 rounded-xl p-5">
+              <div class="flex items-center justify-between mb-2">
+                <div class="mono text-[10px] text-muted tracking-wider">YOUR TIER</div>
+                <span class="chip bg-volt/10 border-volt/40 text-voltLight">1.60×</span>
+              </div>
+              <div class="mono text-2xl font-semibold">DIAMOND</div>
+              <div class="mono text-[11px] text-textDim mt-1">Top 8% of operators</div>
+              <div class="mt-4 pt-4 border-t border-volt/20">
+                <div class="flex items-center justify-between mono text-[11px] mb-2">
+                  <span class="text-textDim">TO NEXT TIER · OBSIDIAN</span>
+                  <span class="text-volt">42 EP</span>
+                </div>
+                <div class="bar-track"><div class="bar-fill" style="width:78%"></div></div>
+                <div class="mono text-[10px] text-muted mt-1.5">158 / 200 quality episodes</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Breakdown -->
+        <div class="grid grid-cols-3 gap-4 mb-8">
+          <div class="bg-surface border border-stroke rounded-xl p-5">
+            <div class="mono text-[10px] text-muted tracking-wider mb-4">BY ROBOT</div>
+            <div class="space-y-3">
+              <div>
+                <div class="flex items-center justify-between mono text-xs mb-1.5">
+                  <span class="text-text">GR1T2</span>
+                  <span class="text-text">$1,620</span>
+                </div>
+                <div class="tel-bar"><div class="tel-bar-fill" style="width:68%"></div></div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between mono text-xs mb-1.5">
+                  <span class="text-text">G1</span>
+                  <span class="text-textDim">$488</span>
+                </div>
+                <div class="tel-bar"><div class="tel-bar-fill" style="width:20%"></div></div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between mono text-xs mb-1.5">
+                  <span class="text-text">Apollo</span>
+                  <span class="text-textDim">$276</span>
+                </div>
+                <div class="tel-bar"><div class="tel-bar-fill" style="width:12%"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-surface border border-stroke rounded-xl p-5">
+            <div class="mono text-[10px] text-muted tracking-wider mb-4">BY SKILL</div>
+            <div class="space-y-3">
+              <div>
+                <div class="flex items-center justify-between mono text-xs mb-1.5">
+                  <span class="text-text">Fine manipulation</span>
+                  <span class="text-text">$988</span>
+                </div>
+                <div class="tel-bar"><div class="tel-bar-fill" style="width:42%"></div></div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between mono text-xs mb-1.5">
+                  <span class="text-text">Pick-place</span>
+                  <span class="text-textDim">$712</span>
+                </div>
+                <div class="tel-bar"><div class="tel-bar-fill" style="width:30%"></div></div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between mono text-xs mb-1.5">
+                  <span class="text-text">Bimanual</span>
+                  <span class="text-textDim">$496</span>
+                </div>
+                <div class="tel-bar"><div class="tel-bar-fill" style="width:21%"></div></div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between mono text-xs mb-1.5">
+                  <span class="text-text">Deformable</span>
+                  <span class="text-textDim">$188</span>
+                </div>
+                <div class="tel-bar"><div class="tel-bar-fill" style="width:8%"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-surface border border-stroke rounded-xl p-5">
+            <div class="mono text-[10px] text-muted tracking-wider mb-4">BY QUALITY TIER</div>
+            <div class="space-y-3">
+              <div>
+                <div class="flex items-center justify-between mono text-xs mb-1.5">
+                  <span class="text-text">A+ (95+)</span>
+                  <span class="text-success">$1,420</span>
+                </div>
+                <div class="tel-bar"><div style="width:60%; background:#4ECE8C; height:100%; border-radius:2px;"></div></div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between mono text-xs mb-1.5">
+                  <span class="text-text">A (90-95)</span>
+                  <span class="text-volt">$684</span>
+                </div>
+                <div class="tel-bar"><div class="tel-bar-fill" style="width:29%"></div></div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between mono text-xs mb-1.5">
+                  <span class="text-text">B+ (85-90)</span>
+                  <span class="text-warn">$232</span>
+                </div>
+                <div class="tel-bar"><div style="width:10%; background:#F5B842; height:100%; border-radius:2px;"></div></div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between mono text-xs mb-1.5">
+                  <span class="text-text">B (80-85)</span>
+                  <span class="text-muted">$48</span>
+                </div>
+                <div class="tel-bar"><div style="width:2%; background:#8891AE; height:100%; border-radius:2px;"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transactions -->
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold">Transactions</h2>
+            <div class="flex items-center gap-2">
+              <button class="chip active">All</button>
+              <button class="chip">Episodes</button>
+              <button class="chip">Bonuses</button>
+              <button class="chip">Payouts</button>
+            </div>
+          </div>
+          <div class="bg-surface border border-stroke rounded-xl overflow-hidden">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-left mono text-[10px] text-muted tracking-wider border-b border-stroke">
+                  <th class="px-5 py-3 font-normal">DATE</th>
+                  <th class="px-5 py-3 font-normal">DETAILS</th>
+                  <th class="px-5 py-3 font-normal">TYPE</th>
+                  <th class="px-5 py-3 font-normal">STATUS</th>
+                  <th class="px-5 py-3 font-normal text-right">AMOUNT</th>
+                </tr>
+              </thead>
+              <tbody class="text-textDim">
+                <tr class="t-row border-b border-stroke/70">
+                  <td class="px-5 py-3 mono text-xs text-muted">APR 18 · 14:22</td>
+                  <td class="px-5 py-3 text-text">Pour coffee (mug) · EP 3</td>
+                  <td class="px-5 py-3"><span class="chip">EPISODE</span></td>
+                  <td class="px-5 py-3"><span class="chip" style="background:rgba(245,184,66,0.08);border-color:rgba(245,184,66,0.3);color:#F5B842">GRADING</span></td>
+                  <td class="px-5 py-3 mono text-right text-text">+$6.40</td>
+                </tr>
+                <tr class="t-row border-b border-stroke/70">
+                  <td class="px-5 py-3 mono text-xs text-muted">APR 18 · 12:18</td>
+                  <td class="px-5 py-3 text-text">Pick mug, place on coaster · 5ep</td>
+                  <td class="px-5 py-3"><span class="chip">EPISODE</span></td>
+                  <td class="px-5 py-3"><span class="chip" style="background:rgba(78,206,140,0.08);border-color:rgba(78,206,140,0.3);color:#4ECE8C">APPROVED</span></td>
+                  <td class="px-5 py-3 mono text-right text-text">+$14.40</td>
+                </tr>
+                <tr class="t-row border-b border-stroke/70">
+                  <td class="px-5 py-3 mono text-xs text-muted">APR 18 · 09:40</td>
+                  <td class="px-5 py-3 text-text">Quality bonus · April week 3</td>
+                  <td class="px-5 py-3"><span class="chip" style="background:rgba(67,97,255,0.1);border-color:rgba(67,97,255,0.4);color:#4361FF">BONUS</span></td>
+                  <td class="px-5 py-3"><span class="chip" style="background:rgba(78,206,140,0.08);border-color:rgba(78,206,140,0.3);color:#4ECE8C">APPROVED</span></td>
+                  <td class="px-5 py-3 mono text-right text-text">+$42.00</td>
+                </tr>
+                <tr class="t-row border-b border-stroke/70">
+                  <td class="px-5 py-3 mono text-xs text-muted">APR 17 · 18:02</td>
+                  <td class="px-5 py-3 text-text">Close microwave · 5 ep</td>
+                  <td class="px-5 py-3"><span class="chip">EPISODE</span></td>
+                  <td class="px-5 py-3"><span class="chip" style="background:rgba(78,206,140,0.08);border-color:rgba(78,206,140,0.3);color:#4ECE8C">APPROVED</span></td>
+                  <td class="px-5 py-3 mono text-right text-text">+$8.40</td>
+                </tr>
+                <tr class="t-row border-b border-stroke/70">
+                  <td class="px-5 py-3 mono text-xs text-muted">APR 15 · 09:00</td>
+                  <td class="px-5 py-3 text-text">Weekly payout · April week 2</td>
+                  <td class="px-5 py-3"><span class="chip" style="background:rgba(67,97,255,0.1);border-color:rgba(67,97,255,0.4);color:#4361FF">PAYOUT</span></td>
+                  <td class="px-5 py-3"><span class="chip" style="background:rgba(78,206,140,0.08);border-color:rgba(78,206,140,0.3);color:#4ECE8C">SENT</span></td>
+                  <td class="px-5 py-3 mono text-right text-text">−$486.00</td>
+                </tr>
+                <tr class="t-row">
+                  <td class="px-5 py-3 mono text-xs text-muted">APR 14 · 21:14</td>
+                  <td class="px-5 py-3 text-text">Fold napkin · 5 ep</td>
+                  <td class="px-5 py-3"><span class="chip">EPISODE</span></td>
+                  <td class="px-5 py-3"><span class="chip" style="background:rgba(78,206,140,0.08);border-color:rgba(78,206,140,0.3);color:#4ECE8C">APPROVED</span></td>
+                  <td class="px-5 py-3 mono text-right text-text">+$16.20</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="mt-5 flex items-center justify-between mono text-[11px] text-muted">
+            <span>Showing 6 of 137 transactions</span>
+            <a class="text-textDim hover:text-text cursor-pointer transition">Load more →</a>
+          </div>
+          <div class="mt-8 text-center mono text-[10px] text-muted">
+            US OPERATORS · FORM 1099 ISSUED FOR EARNINGS OVER $600 ANNUALLY
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  // ===== ROUTER =====
+  const routes = ['dashboard', 'task', 'session', 'earnings'];
+  const navLinks = document.querySelectorAll('[data-route]');
+
+  function showView(hash) {
+    let key = hash.replace('#', '').split('/')[0];
+    if (!routes.includes(key)) key = 'dashboard';
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    const target = document.getElementById(key);
+    if (target) target.classList.add('active');
+    // Update sidebar active
+    document.querySelectorAll('aside .nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll(`aside [data-route="#${key}"]`).forEach(n => n.classList.add('active'));
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest('[data-route]');
+    if (link) {
+      e.preventDefault();
+      const route = link.getAttribute('data-route');
+      window.location.hash = route;
+    }
+  });
+
+  window.addEventListener('hashchange', () => showView(window.location.hash));
+  showView(window.location.hash || '#dashboard');
+
+  // ===== LIVE TIMER =====
+  (function() {
+    const el = document.getElementById('timer');
+    if (!el) return;
+    let t = 12 * 60 + 34; // 12:34 seed
+    setInterval(() => {
+      t += 1;
+      const h = String(Math.floor(t / 3600)).padStart(2, '0');
+      const m = String(Math.floor((t % 3600) / 60)).padStart(2, '0');
+      const s = String(t % 60).padStart(2, '0');
+      el.textContent = `${h}:${m}:${s}`;
+    }, 1000);
+  })();
+
+  // ===== FILTER CHIPS (just toggle active state visually) =====
+  document.querySelectorAll('.chip[data-filter]').forEach(c => {
+    c.addEventListener('click', () => {
+      const group = c.getAttribute('data-filter');
+      document.querySelectorAll(`.chip[data-filter="${group}"]`).forEach(x => x.classList.remove('active'));
+      c.classList.add('active');
+    });
+  });
+
+  // ===== THEME TOGGLE =====
+  (function() {
+    const body = document.body;
+    let stored = null;
+    try { stored = localStorage.getItem('sim-xr-theme'); } catch (e) {}
+    if (stored === 'light') body.classList.add('light');
+
+    const toggle = document.getElementById('theme-toggle');
+    if (toggle) {
+      toggle.addEventListener('click', () => {
+        body.classList.toggle('light');
+        try {
+          localStorage.setItem('sim-xr-theme', body.classList.contains('light') ? 'light' : 'dark');
+        } catch (e) {}
+      });
+    }
+  })();
+</script>
+</body>
+</html>

@@ -7,6 +7,9 @@ dist/
 build/
 *.dist
 
+# Netlify CLI state (per-folder linking, not for repo)
+**/.netlify/
+
 # Environment variables
 .env
 .env.local
