@@ -1011,45 +1011,63 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── OPERATOR CROSS-LINK ── */}
-      <section style={{ padding: "56px 0", background: C.white, borderTop: `1px solid ${C.border}` }}>
-        <div className="container" style={{ textAlign: "center" }}>
-          <div style={{ fontFamily: T.label, fontSize: "0.7rem", fontWeight: 700, color: C.blue, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.6rem" }}>
-            For Operators
-          </div>
-          <h3 style={{ fontSize: "1.4rem", color: C.navy, margin: "0 0 0.5rem", fontWeight: 600, fontFamily: T.display }}>
-            Want to train robots from your couch?
-          </h3>
-          <p style={{ color: C.gray, fontSize: "0.92rem", lineHeight: 1.6, maxWidth: "520px", margin: "0 auto 1.4rem" }}>
-            We pay weekly to consumer-VR users who teleoperate humanoids inside our simulation. Quest 3 or Vision Pro, no prior robotics experience needed.
-          </p>
-          <a
-            href="/operator/"
-            style={{
-              fontFamily: T.label, fontWeight: 600, fontSize: "0.85rem",
-              color: C.white, background: C.blue,
-              padding: "0.7rem 1.5rem", borderRadius: "8px",
-              textDecoration: "none", letterSpacing: "0.02em",
-              display: "inline-block",
-            }}
-          >
-            Apply to operate →
-          </a>
-        </div>
-      </section>
+      {/* ── FOOTER ── (4-col grid, mirrors /operator footer structure) */}
+      <footer style={{ background: C.navy, color: "rgba(255,255,255,0.6)", borderTop: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "2.5rem 1.5rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: "2rem" }} className="footer-grid">
+            {/* Brand block */}
+            <div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: "0.6rem", marginBottom: "1rem" }}>
+                <span style={{ fontFamily: T.label, fontWeight: 700, fontSize: "1.15rem", color: "#FFFFFF", letterSpacing: "-0.02em" }}>
+                  SIM <span style={{ color: "#4D80FF" }}>XR.</span>
+                </span>
+              </div>
+              <p style={{ fontSize: "0.88rem", lineHeight: 1.6, maxWidth: "26rem", margin: "0 0 1rem" }}>
+                The training layer for Physical AI. We turn millions of consumer XR headsets into a scalable, gamified training ground for robots.
+              </p>
+              <p style={{ fontSize: "0.85rem", margin: 0 }}>
+                <span style={{ fontFamily: T.mono, fontSize: "0.68rem", color: "rgba(255,255,255,0.4)", letterSpacing: "0.1em", marginRight: "0.6rem" }}>
+                  FOR OPERATORS
+                </span>
+                <a href="/operator/" style={{ color: "#FFFFFF", textDecoration: "none", fontWeight: 500 }}>
+                  /operator →
+                </a>
+              </p>
+            </div>
 
-      {/* ── FOOTER ── */}
-      <footer style={{ background: C.grayLight, borderTop: `1px solid ${C.border}`, padding: "2rem 0" }}>
-        <div className="container" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
-          <span style={{ fontFamily: T.label, fontWeight: 700, fontSize: "1rem", color: C.navy }}>
-            SIM <span style={{ color: C.blue }}>XR.</span>
-          </span>
-          <span style={{ fontFamily: T.label, fontSize: "0.75rem", color: C.gray }}>
-            © 2026 SIM XR — The Training Layer for Physical AI
-          </span>
-          <a href="mailto:gm@simxr.tech" style={{ fontFamily: T.label, fontSize: "0.78rem", fontWeight: 600, color: C.blue, textDecoration: "none" }}>
-            gm@simxr.tech
-          </a>
+            {/* PRODUCT column */}
+            <div>
+              <div style={{ fontFamily: T.mono, fontSize: "0.68rem", color: "rgba(255,255,255,0.4)", letterSpacing: "0.1em", marginBottom: "0.85rem" }}>
+                PRODUCT
+              </div>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, fontSize: "0.88rem", lineHeight: 1.9 }}>
+                <li><a href="#problem" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>Problem</a></li>
+                <li><a href="#solution" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>Solution</a></li>
+                <li><a href="#how-it-works" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>How It Works</a></li>
+                <li><a href="#market-timing" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>Market Timing</a></li>
+              </ul>
+            </div>
+
+            {/* COMPANY column */}
+            <div>
+              <div style={{ fontFamily: T.mono, fontSize: "0.68rem", color: "rgba(255,255,255,0.4)", letterSpacing: "0.1em", marginBottom: "0.85rem" }}>
+                COMPANY
+              </div>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, fontSize: "0.88rem", lineHeight: 1.9 }}>
+                <li><a href="#vision" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>Vision</a></li>
+                <li><a href="#founder" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>Founder</a></li>
+                <li><a href="mailto:gm@simxr.tech" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>Contact</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom strip */}
+        <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+          <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "1.1rem 1.5rem", display: "flex", alignItems: "center", justifyContent: "space-between", fontFamily: T.mono, fontSize: "0.68rem", color: "rgba(255,255,255,0.4)", letterSpacing: "0.05em", flexWrap: "wrap", gap: "0.5rem" }}>
+            <span>© 2026 SIM XR — The Training Layer for Physical AI</span>
+            <span>California · Paris · Tel Aviv</span>
+          </div>
         </div>
       </footer>
     </div>
