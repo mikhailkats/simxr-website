@@ -1,0 +1,32 @@
+# SIM XR website — Netlify build config
+# Vite-only build (skips the server bundling that pnpm build would also do).
+# Output goes to dist/public/, which is the Vite default for this project.
+
+[build]
+  command = "pnpm vite build"
+  publish = "dist/public"
+
+[build.environment]
+  NODE_VERSION = "20"
+  PNPM_VERSION = "10.4.1"
+  # Netlify auto-detects pnpm from packageManager field in package.json,
+  # but pinning it here avoids surprise upgrades.
+
+# SPA fallback — wouter is client-side routed; any unknown path
+# should serve index.html so React handles 404 / deep-link routes.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Cache busting headers — Vite emits hashed filenames in /assets/
+# so they're safe to cache aggressively.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Forms detection runs against the published HTML; the hidden
+# <form name="early-access" netlify> + <form name="collaboration" netlify>
+# in client/index.html register them at build time. Submissions land in
+# the Netlify dashboard under "Forms".

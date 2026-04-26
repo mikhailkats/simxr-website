@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>SIM XR — The Training Layer for Physical AI</title>
+    <meta name="description" content="SIM XR turns VR gameplay into robot training data. We build the data infrastructure for Physical AI — scalable, gamified, and grounded in real human intelligence." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="SIM XR — The Data Infrastructure for Physical AI" />
+    <meta property="og:description" content="SIM XR turns VR gameplay into robot training data. Scalable, physics-grounded teleoperation data for robot policy training — powered by NVIDIA Isaac Lab and CloudXR." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SIM XR — The Data Infrastructure for Physical AI" />
+    <meta name="twitter:description" content="SIM XR turns VR gameplay into robot training data. Scalable, physics-grounded teleoperation data for robot policy training — powered by NVIDIA Isaac Lab and CloudXR." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+
+    <!--
+      Hidden static forms — required for Netlify Forms to detect them at build time.
+      Netlify's HTML parser scans the deployed index.html for <form name="..." netlify>
+      tags; the React-rendered runtime forms then submit to "/" using the matching
+      form-name. Field names below MUST match the keys submitted from Home.tsx.
+    -->
+    <form name="early-access" data-netlify="true" data-netlify-honeypot="bot-field" hidden>
+      <input type="text" name="bot-field" />
+      <input type="text" name="name" />
+      <input type="text" name="company" />
+      <input type="email" name="email" />
+      <textarea name="task"></textarea>
+      <input type="text" name="demos" />
+    </form>
+
+    <form name="collaboration" data-netlify="true" data-netlify-honeypot="bot-field" hidden>
+      <input type="text" name="bot-field" />
+      <input type="text" name="name" />
+      <input type="email" name="email" />
+      <input type="text" name="area" />
+      <textarea name="message"></textarea>
+    </form>
+  </body>
+</html>
