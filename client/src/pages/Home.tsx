@@ -323,7 +323,7 @@ export default function Home() {
                 See How It Works
               </a>
               <a
-                href="mailto:gm@simxr.tech"
+                href="https://simxr.tech/operator/"
                 style={{
                   fontFamily: T.label, fontWeight: 600, fontSize: "0.88rem",
                   color: C.navy, background: C.white,
@@ -332,7 +332,7 @@ export default function Home() {
                   textDecoration: "none", letterSpacing: "0.01em",
                 }}
               >
-                Get in Touch
+                Apply to Operate
               </a>
             </div>
           </div>
