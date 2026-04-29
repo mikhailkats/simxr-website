@@ -12,6 +12,16 @@
   # Netlify auto-detects pnpm from packageManager field in package.json,
   # but pinning it here avoids surprise upgrades.
 
+# Disable Pretty-URL .html stripping. Default Netlify behavior strips
+# `.html` from links and form actions, which breaks Netlify Forms
+# success-page redirects (Netlify's form handler can't match the
+# stripped path back to the file and falls through to its default
+# "Thank you!" page). The React SPA doesn't use .html URLs anyway,
+# so disabling site-wide is harmless. Required for /operator/ form
+# to land on our custom thanks.html.
+[build.processing.html]
+  pretty_urls = false
+
 # /operator-v2/* — graceful 301 to the now-promoted /operator/.
 # operator-v2 was the staging path while we A/B-tested; v2 became the main
 # operator page on 2026-04-30. Keeps any old shared links working.
