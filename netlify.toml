@@ -22,6 +22,15 @@
 [build.processing.html]
   pretty_urls = false
 
+# /operator/thanks — explicit rewrite to thanks.html. Form action in
+# operator/index.html is "/operator/thanks" (no extension) so Netlify's
+# HTML post-processing can't strip it and break the success-page redirect.
+# This rule makes the extensionless path resolve to the actual file.
+[[redirects]]
+  from = "/operator/thanks"
+  to = "/operator/thanks.html"
+  status = 200
+
 # /operator-v2/* — graceful 301 to the now-promoted /operator/.
 # operator-v2 was the staging path while we A/B-tested; v2 became the main
 # operator page on 2026-04-30. Keeps any old shared links working.
