@@ -3,15 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sim XR — Application received</title>
+<title>Sim XR — You're on the list</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --ink: #0A0E27;
     --paper: #FBF9F4;
-    --cream: #F7F4EE;
     --volt: #0057FF;
     --charcoal: #111217;
     --muted: #8891AE;
@@ -26,22 +24,20 @@
     display: flex; flex-direction: column; min-height: 100vh;
   }
   header { padding: 20px 24px; border-bottom: 1px solid rgba(17,18,23,0.06); }
-  .wordmark { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--charcoal); }
-  .wordmark .bolt { width: 32px; height: 32px; border-radius: 6px; background: var(--charcoal); display: flex; align-items: center; justify-content: center; }
-  .wordmark span { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600; }
+  .wordmark { display: inline-flex; align-items: baseline; gap: 10px; text-decoration: none; }
   main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 48px 24px; }
-  .card { max-width: 560px; text-align: left; }
+  .card { max-width: 520px; text-align: left; }
   .eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--volt); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 16px; }
-  h1 { font-size: clamp(32px, 4vw, 48px); font-weight: 600; line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 16px; }
+  h1 { font-size: clamp(32px, 4vw, 44px); font-weight: 600; line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 16px; }
   p { font-size: 17px; color: rgba(17,18,23,0.7); line-height: 1.6; margin: 0 0 14px; max-width: 48ch; }
-  .back { margin-top: 32px; display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; background: var(--volt); color: white; border-radius: 8px; text-decoration: none; font-weight: 500; font-size: 15px; }
+  .back { margin-top: 28px; display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; background: var(--volt); color: white; border-radius: 8px; text-decoration: none; font-weight: 500; font-size: 15px; }
   .back:hover { background: #003ACC; }
   footer { padding: 16px 24px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); border-top: 1px solid rgba(17,18,23,0.06); }
 </style>
 </head>
 <body>
   <header>
-    <a href="/" class="wordmark" style="text-decoration: none;">
+    <a href="index.html" class="wordmark" style="text-decoration: none;">
       <span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.15rem; letter-spacing: -0.02em; color: #111217;">
         SIM <span style="color: #0057FF;">XR.</span>
       </span>
@@ -51,14 +47,14 @@
 
   <main>
     <div class="card">
-      <div class="eyebrow">Application received</div>
-      <h1>Thanks &mdash; we'll be in touch.</h1>
-      <p>We read every application. Expect a reply at the email you provided within 48 hours, with the next step (a short calibration call) booked from there.</p>
-      <p>If you don't see anything in your inbox, check spam, then ping <a href="mailto:mk@simxr.tech" style="color: var(--volt);">mk@simxr.tech</a> directly.</p>
-      <a href="/" class="back">Back to the page</a>
+      <div class="eyebrow">You're on the list</div>
+      <h1>We'll write when slots open.</h1>
+      <p>You'll get one email when we open the next batch of operator slots. Probably a short video walkthrough and a calibration call link &mdash; nothing else.</p>
+      <p>Wrong email? Just submit again with the right one.</p>
+      <a href="index.html" class="back">Back to the page</a>
     </div>
   </main>
 
-  <footer>&copy; 2026 Sim XR Labs</footer>
+  <footer>&copy; 2026 SIM XR &mdash; California · Paris · Tel Aviv</footer>
 </body>
 </html>

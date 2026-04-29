@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sim XR for Operators — Show robots how.</title>
-<meta name="description" content="The operator side of Sim XR. Teleoperate humanoid robots in VR, claim tasks from leading robotics labs, get paid weekly.">
+<meta name="description" content="Train humanoid robots from your couch. Quest 3 or Vision Pro. Paid weekly. Join the waitlist.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -15,7 +15,6 @@ tailwind.config = {
     extend: {
       colors: {
         ink: '#0A0E27',
-        surface: '#141937',
         stroke: '#1F2747',
         volt: '#0057FF',
         voltLight: '#4D80FF',
@@ -24,10 +23,6 @@ tailwind.config = {
         cream: '#F7F4EE',
         paper: '#FBF9F4',
         charcoal: '#111217',
-        inkSoft: '#2A2D3A',
-        success: '#4ECE8C',
-        warn: '#F5B842',
-        danger: '#FF4A5C',
         muted: '#8891AE',
         mutedLight: '#6B7280'
       },
@@ -43,728 +38,430 @@ tailwind.config = {
   html { scroll-behavior: smooth; }
   body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
   .mono { font-family: 'IBM Plex Mono', monospace; font-feature-settings: 'tnum'; }
-
-  /* Grid texture — subtle voltage tint */
   .grid-cream {
     background-image:
       linear-gradient(to right, rgba(17,18,23,0.04) 1px, transparent 1px),
       linear-gradient(to bottom, rgba(17,18,23,0.04) 1px, transparent 1px);
     background-size: 48px 48px;
   }
-
-  /* Pulsing dot */
-  @keyframes pulse-live {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(0,87,255,0.6); }
-    70% { box-shadow: 0 0 0 8px rgba(0,87,255,0); }
-  }
-  .pulse-live { animation: pulse-live 1.8s ease-out infinite; }
-
-  @keyframes pulse-success {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(78,206,140,0.55); }
-    70% { box-shadow: 0 0 0 7px rgba(78,206,140,0); }
-  }
-  .pulse-success { animation: pulse-success 2.2s ease-out infinite; }
-
-  /* Ticker scroll */
-  @keyframes ticker {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
-  }
-  .ticker-track { animation: ticker 40s linear infinite; }
-
-  /* Voltage focus ring */
   *:focus-visible { outline: 2px solid #0057FF; outline-offset: 2px; border-radius: 2px; }
-
-  /* Card lift */
-  .card-lift { transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
-  .card-lift:hover { transform: translateY(-2px); box-shadow: 0 16px 40px -20px rgba(0,87,255,0.25); border-color: rgba(0,87,255,0.35) !important; }
-
-  /* Number shuffle */
-  .tabular { font-variant-numeric: tabular-nums; }
-
-  /* Robot silhouette — pure CSS for hero */
-  .robot-stage {
-    position: relative;
-    background:
-      radial-gradient(ellipse at 50% 40%, rgba(0,87,255,0.18), transparent 60%),
-      linear-gradient(180deg, #0A0E27 0%, #141937 100%);
-    overflow: hidden;
-  }
-  .robot-stage::before {
-    content: '';
-    position: absolute; inset: 0;
-    background-image:
-      linear-gradient(to right, rgba(160,196,255,0.06) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(160,196,255,0.06) 1px, transparent 1px);
-    background-size: 32px 32px;
-    pointer-events: none;
-  }
-
-  /* Scanline — subtle, one time, not decorative costume */
-  @keyframes scan-once {
-    0% { transform: translateY(-10%); opacity: 0; }
-    30% { opacity: 0.4; }
-    100% { transform: translateY(120%); opacity: 0; }
-  }
-  .scan-once { animation: scan-once 3.5s ease-in-out infinite; }
-
-  /* Marquee divider */
-  .marquee { overflow: hidden; mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent); }
-
-  /* Voltage button */
   .btn-volt {
     background: #0057FF;
     color: white;
-    transition: background .2s ease, transform .15s ease;
+    transition: background .15s ease, transform .05s ease;
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
   }
-  .btn-volt:hover { background: #2940C9; }
-  .btn-volt:active { transform: translateY(1px); }
+  .btn-volt:hover { background: #1a6dff; }
+  .btn-volt:active { background: #003ACC; transform: translateY(1px); }
 
-  /* Ghost button */
-  .btn-ghost {
-    border: 1px solid rgba(17,18,23,0.2);
-    color: #111217;
-    background: transparent;
-    transition: background .2s ease, border-color .2s ease;
+  /* Robotic scanline sweep — only fires on hover, cycles while hovered.
+     mix-blend-mode: screen glows the button without covering the text. */
+  .btn-volt::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255,255,255,0) 35%,
+      rgba(255,255,255,0.5) 50%,
+      rgba(255,255,255,0) 65%,
+      transparent 100%
+    );
+    transform: translateX(-100%);
+    pointer-events: none;
+    mix-blend-mode: screen;
+    opacity: 0;
   }
-  .btn-ghost:hover { background: rgba(17,18,23,0.04); border-color: rgba(17,18,23,0.4); }
-
-  /* Chip */
-  .chip {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 4px 10px; border-radius: 999px; font-size: 12px;
-    border: 1px solid rgba(17,18,23,0.1);
-    background: rgba(0,87,255,0.04);
-    color: #111217;
-    font-family: 'IBM Plex Mono', monospace;
+  .btn-volt:hover::after {
+    opacity: 1;
+    animation: btn-scan 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+  @keyframes btn-scan {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
   }
 
-  /* Mini spark */
-  .spark path { stroke: #0057FF; stroke-width: 1.5; fill: none; }
-  .spark .fill { fill: rgba(0,87,255,0.1); stroke: none; }
-
-  /* Section fade */
-  .section-divider {
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(17,18,23,0.12), transparent);
+  /* Card lift hover (matches v1) */
+  .card-lift { transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+  .card-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 40px -20px rgba(0,87,255,0.25);
+    border-color: rgba(0,87,255,0.35) !important;
   }
 </style>
 </head>
-<body class="bg-cream text-charcoal antialiased">
+<body class="bg-cream text-charcoal min-h-screen flex flex-col">
 
-<!-- ============ NAV ============ -->
-<header class="sticky top-0 z-40 bg-cream/85 backdrop-blur border-b border-charcoal/5">
-  <div class="max-w-[1280px] mx-auto px-6 h-16 flex items-center justify-between">
-    <a href="#top" class="flex items-baseline gap-2.5 group">
-      <!-- Wordmark — matches simxr.tech main page -->
-      <span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.15rem; letter-spacing: -0.02em;" class="text-charcoal">
-        SIM <span style="color: #0057FF;">XR.</span>
-      </span>
-      <span class="mono text-xs text-charcoal/40 font-medium tracking-wider">/&nbsp;OPERATORS</span>
-    </a>
-    <nav class="hidden md:flex items-center gap-8 text-sm">
-      <a href="#how" class="hover:text-volt transition">How it works</a>
-      <a href="#robots" class="hover:text-volt transition">Robots</a>
-      <a href="#tasks" class="hover:text-volt transition">Open tasks</a>
-      <a href="#earnings" class="hover:text-volt transition">Earnings</a>
-    </nav>
-    <div class="flex items-center gap-3">
-      <a href="#apply" class="btn-volt px-4 py-2 rounded-md text-sm font-medium">Apply to operate</a>
-    </div>
-  </div>
-</header>
-
-<!-- ============ HERO ============ -->
-<section id="top" class="relative grid-cream">
-  <div class="max-w-[1280px] mx-auto px-6 pt-20 pb-14 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-    <div class="lg:col-span-6">
-      <div class="inline-flex items-center gap-2 mb-6 chip">
-        <span class="w-1.5 h-1.5 rounded-full bg-volt pulse-live"></span>
-        <span class="text-[11px] tracking-wider uppercase"><span id="nav-online" class="tabular">142</span> operators online</span>
-      </div>
-      <h1 class="mono text-[72px] leading-[0.95] md:text-[96px] font-semibold tracking-tight">
-        Show robots<br><span class="text-volt">how.</span>
-      </h1>
-      <p class="mt-6 text-lg text-charcoal/70 max-w-lg leading-relaxed">
-        Claim a task, put on the headset, and train humanoids with your own motion &mdash; one episode at a time. Paid out weekly.
-      </p>
-      <div class="mt-10 flex items-center gap-3">
-        <a href="#apply" class="btn-volt px-6 py-3.5 rounded-md font-medium flex items-center gap-2 text-[15px]">
-          Apply to operate
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-        </a>
-        <a href="#how" class="btn-ghost px-6 py-3.5 rounded-md font-medium text-[15px]">See how it works</a>
-      </div>
-      <div class="mt-10 flex items-center gap-6 text-xs mono text-charcoal/55">
-        <div class="flex items-center gap-2">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
-          <span>Remote-friendly</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
-          <span>Weekly payout</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
-          <span>Quest 3 &amp; Vision Pro</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Robot stage -->
-    <div class="lg:col-span-6">
-      <div class="robot-stage aspect-[4/3] rounded-2xl border border-charcoal/10 relative">
-        <!-- Scan sweep -->
-        <div class="scan-once absolute left-0 right-0 h-24 pointer-events-none"
-             style="background: linear-gradient(180deg, transparent, rgba(0,87,255,0.25), transparent);"></div>
-        <!-- Operator photo -->
-        <img src="images/simxr_operator_1.png"
-             alt="Operator at home in a Quest 3 headset, hands raised mid-gesture for hand-tracked teleoperation"
-             class="absolute inset-0 w-full h-full object-cover"
-             style="object-position: 50% 25%;">
-        <!-- Telemetry overlay (right side, mono) -->
-        <div class="absolute top-4 right-4 mono text-[10px] text-cream/85 text-right space-y-1 pointer-events-none">
-          <div>HEAD &middot; 90 Hz</div>
-          <div>L-ARM &middot; IK ok</div>
-          <div>R-ARM &middot; IK ok</div>
-        </div>
-        <!-- Bottom bar -->
-        <div class="absolute bottom-4 left-4 right-4 flex items-center justify-between mono text-[10px] text-cream/85">
-          <div class="flex items-center gap-2">
-            <span class="w-1.5 h-1.5 rounded-full bg-success pulse-success"></span>
-            <span>GR1T2 &middot; Live preview</span>
-          </div>
-          <span>EPISODE 003 / 005</span>
-        </div>
-        <!-- Subtle dark gradient so overlay text reads on any photo brightness -->
-        <div class="absolute inset-0 pointer-events-none"
-             style="background: linear-gradient(180deg, rgba(10,14,39,0.25) 0%, transparent 25%, transparent 70%, rgba(10,14,39,0.45) 100%);"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Ticker -->
-  <div class="border-y border-charcoal/10 bg-paper">
-    <div class="marquee py-3">
-      <div class="ticker-track flex gap-12 whitespace-nowrap mono text-xs text-charcoal/60">
-        <span>12,408 EPISODES THIS WEEK</span><span class="text-volt">&bull;</span>
-        <span>$84,220 PAID OUT</span><span class="text-volt">&bull;</span>
-        <span>342 ACTIVE OPERATORS</span><span class="text-volt">&bull;</span>
-        <span>7 HUMANOID PLATFORMS</span><span class="text-volt">&bull;</span>
-        <span>AVG $24 / HOUR ACROSS OPERATORS</span><span class="text-volt">&bull;</span>
-        <span>24 LABS TRAINING FROM SIM XR DATA</span><span class="text-volt">&bull;</span>
-        <!-- duplicate for seamless loop -->
-        <span>12,408 EPISODES THIS WEEK</span><span class="text-volt">&bull;</span>
-        <span>$84,220 PAID OUT</span><span class="text-volt">&bull;</span>
-        <span>342 ACTIVE OPERATORS</span><span class="text-volt">&bull;</span>
-        <span>7 HUMANOID PLATFORMS</span><span class="text-volt">&bull;</span>
-        <span>AVG $24 / HOUR ACROSS OPERATORS</span><span class="text-volt">&bull;</span>
-        <span>24 LABS TRAINING FROM SIM XR DATA</span><span class="text-volt">&bull;</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ HOW IT WORKS ============ -->
-<section id="how" class="py-24">
-  <div class="max-w-[1280px] mx-auto px-6">
-    <div class="flex items-end justify-between mb-12">
-      <div>
-        <div class="mono text-xs text-volt tracking-wider uppercase mb-3">How it works</div>
-        <h2 class="text-4xl md:text-5xl font-semibold tracking-tight max-w-xl leading-tight">Three steps from<br>signup to paycheck.</h2>
-      </div>
-      <div class="hidden md:block mono text-xs text-charcoal/50 max-w-xs">
-        Operators onboard in under a day. You'll run a short calibration, pass a skill review, and start claiming tasks.
-      </div>
-    </div>
-
-    <div class="grid md:grid-cols-3 gap-5">
-      <!-- Step 1 -->
-      <div class="border border-charcoal/10 bg-paper rounded-xl p-7 card-lift">
-        <div class="flex items-center justify-between mb-8">
-          <span class="mono text-xs text-charcoal/40">STEP 01</span>
-          <span class="w-8 h-8 rounded-md bg-charcoal text-cream mono text-xs flex items-center justify-center">01</span>
-        </div>
-        <h3 class="text-xl font-semibold mb-2">Claim a task.</h3>
-        <p class="text-sm text-charcoal/60 leading-relaxed">Browse open episodes from top robotics labs. Filter by robot, skill, or payout. Claim in one click.</p>
-        <div class="mt-6 border-t border-charcoal/5 pt-5">
-          <div class="flex items-center justify-between mono text-[11px] text-charcoal/50">
-            <span>GR1T2 · Pour to scale</span>
-            <span class="text-volt">$36 / hr</span>
-          </div>
-        </div>
-      </div>
-      <!-- Step 2 -->
-      <div class="border border-charcoal/10 bg-paper rounded-xl p-7 card-lift">
-        <div class="flex items-center justify-between mb-8">
-          <span class="mono text-xs text-charcoal/40">STEP 02</span>
-          <span class="w-8 h-8 rounded-md bg-charcoal text-cream mono text-xs flex items-center justify-center">02</span>
-        </div>
-        <h3 class="text-xl font-semibold mb-2">Put on the headset.</h3>
-        <p class="text-sm text-charcoal/60 leading-relaxed">Quest 3 or Apple Vision Pro. Our browser app streams the simulation to your headset and captures your motion.</p>
-        <div class="mt-6 border-t border-charcoal/5 pt-5">
-          <div class="flex items-center justify-between mono text-[11px]">
-            <span class="flex items-center gap-1.5 text-success"><span class="w-1.5 h-1.5 rounded-full bg-success"></span>Streaming · 72 fps</span>
-            <span class="text-charcoal/50">15 ms</span>
-          </div>
-        </div>
-      </div>
-      <!-- Step 3 -->
-      <div class="border border-charcoal/10 bg-paper rounded-xl p-7 card-lift">
-        <div class="flex items-center justify-between mb-8">
-          <span class="mono text-xs text-charcoal/40">STEP 03</span>
-          <span class="w-8 h-8 rounded-md bg-volt text-white mono text-xs flex items-center justify-center">03</span>
-        </div>
-        <h3 class="text-xl font-semibold mb-2">Get paid per episode.</h3>
-        <p class="text-sm text-charcoal/60 leading-relaxed">Every clean episode you record goes into a training run. Quality bonuses stack. Weekly payouts to your bank or Wise.</p>
-        <div class="mt-6 border-t border-charcoal/5 pt-5">
-          <div class="flex items-center justify-between mono text-[11px]">
-            <span class="text-charcoal/50">This week</span>
-            <span class="text-volt font-semibold">+$284.00</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="section-divider max-w-[1280px] mx-auto"></div>
-
-<!-- ============ ROBOTS ============ -->
-<section id="robots" class="py-24 bg-paper">
-  <div class="max-w-[1280px] mx-auto px-6">
-    <div class="mb-10">
-      <div class="mono text-xs text-volt tracking-wider uppercase mb-3">The fleet</div>
-      <h2 class="text-4xl md:text-5xl font-semibold tracking-tight max-w-2xl leading-tight">You'll operate the humanoids top labs are training on.</h2>
-    </div>
-    <div class="rounded-2xl overflow-hidden border border-charcoal/10 mb-10 bg-ink relative aspect-[16/8]">
-      <img src="images/scene-training-floor.png"
-           alt="Two robotic arms manipulating beans into a tray on a wooden bench inside a robotics training facility — the working environment of a SIM XR operator"
-           class="absolute inset-0 w-full h-full object-cover"
-           style="object-position: 50% 60%;">
-      <div class="absolute inset-0 pointer-events-none"
-           style="background: linear-gradient(180deg, transparent 60%, rgba(10,14,39,0.55) 100%);"></div>
-      <div class="absolute bottom-4 left-4 right-4 flex items-center justify-between mono text-[10px] text-cream/90">
-        <div class="flex items-center gap-2">
-          <span class="w-1.5 h-1.5 rounded-full bg-success pulse-success"></span>
-          <span>BIMANUAL POUR &middot; training floor</span>
-        </div>
-        <span>4 LABS &middot; 7 ROBOTS &middot; 69 OPEN TASKS</span>
-      </div>
-    </div>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div class="border border-charcoal/10 rounded-xl p-6 bg-cream card-lift">
-        <div class="mono text-[11px] text-charcoal/40 mb-8">FOURIER</div>
-        <div class="text-2xl font-semibold">GR1T2</div>
-        <div class="text-sm text-charcoal/55 mt-1">Bimanual · 36 DoF</div>
-        <div class="mt-6 flex items-center justify-between mono text-[11px]">
-          <span class="text-volt">●</span>
-          <span class="text-charcoal/60 tabular">42 open tasks</span>
-        </div>
-      </div>
-      <div class="border border-charcoal/10 rounded-xl p-6 bg-cream card-lift">
-        <div class="mono text-[11px] text-charcoal/40 mb-8">UNITREE</div>
-        <div class="text-2xl font-semibold">G1</div>
-        <div class="text-sm text-charcoal/55 mt-1">Whole-body · 29 DoF</div>
-        <div class="mt-6 flex items-center justify-between mono text-[11px]">
-          <span class="text-volt">●</span>
-          <span class="text-charcoal/60 tabular">18 open tasks</span>
-        </div>
-      </div>
-      <div class="border border-charcoal/10 rounded-xl p-6 bg-cream card-lift">
-        <div class="mono text-[11px] text-charcoal/40 mb-8">APPTRONIK</div>
-        <div class="text-2xl font-semibold">Apollo</div>
-        <div class="text-sm text-charcoal/55 mt-1">Bimanual · 33 DoF</div>
-        <div class="mt-6 flex items-center justify-between mono text-[11px]">
-          <span class="text-volt">●</span>
-          <span class="text-charcoal/60 tabular">9 open tasks</span>
-        </div>
-      </div>
-      <div class="border border-charcoal/10 rounded-xl p-6 bg-cream card-lift">
-        <div class="mono text-[11px] text-charcoal/40 mb-8">1X</div>
-        <div class="text-2xl font-semibold">NEO</div>
-        <div class="text-sm text-charcoal/55 mt-1">Home manipulation</div>
-        <div class="mt-6 flex items-center justify-between mono text-[11px]">
-          <span class="text-warn">●</span>
-          <span class="text-charcoal/60 tabular">Coming soon</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ TASKS PREVIEW ============ -->
-<section id="tasks" class="py-24">
-  <div class="max-w-[1280px] mx-auto px-6">
-    <div class="flex items-end justify-between mb-10">
-      <div>
-        <div class="mono text-xs text-volt tracking-wider uppercase mb-3">Open right now</div>
-        <h2 class="text-4xl md:text-5xl font-semibold tracking-tight max-w-2xl leading-tight">Tasks waiting for an operator.</h2>
-      </div>
-      <div class="hidden md:inline-flex items-center gap-2 mono text-xs text-charcoal/55">
-        69 open this week
-      </div>
-    </div>
-
-    <div class="grid md:grid-cols-3 gap-5">
-      <!-- Task card 1 — EASY -->
-      <div class="border border-charcoal/10 bg-paper rounded-xl overflow-hidden card-lift">
-        <div class="aspect-[16/10] relative overflow-hidden bg-ink">
-          <img src="images/scene-workshop-bench.png"
-               alt="Humanoid robot in a hard hat at a workshop bench, hands hovering over a small orange parts bin — WORKSHOP_01 sort-and-place task"
-               class="absolute inset-0 w-full h-full object-cover"
-               style="object-position: 50% 45%;">
-          <div class="absolute inset-0 pointer-events-none"
-               style="background: linear-gradient(180deg, rgba(10,14,39,0.30) 0%, transparent 30%, transparent 60%, rgba(10,14,39,0.55) 100%);"></div>
-          <div class="absolute top-3 left-3 mono text-[10px] text-cream/90 tracking-wider">SCENE &middot; WORKSHOP_01</div>
-          <div class="absolute bottom-3 left-3 mono text-[10px] text-cream/90 tracking-wider">SORT &middot; 12 parts</div>
-          <div class="absolute top-3 right-3 chip bg-volt text-white border-0">NEW</div>
-        </div>
-        <div class="p-5">
-          <div class="flex items-center gap-2 mono text-[10px] text-charcoal/50 mb-2">
-            <span>GR1T2</span><span>·</span><span>SORT &amp; PLACE</span>
-          </div>
-          <h3 class="font-semibold text-base leading-snug mb-3">Sort parts into bin</h3>
-          <div class="flex items-center justify-between text-sm">
-            <div class="flex items-center gap-3">
-              <span class="chip">● EASY</span>
-              <span class="text-charcoal/50 mono text-xs">~5 min / episode</span>
-            </div>
-            <span class="mono text-volt font-semibold">$14 / hr</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Task card 2 — MED -->
-      <div class="border border-charcoal/10 bg-paper rounded-xl overflow-hidden card-lift">
-        <div class="aspect-[16/10] relative overflow-hidden bg-ink">
-          <img src="images/task-pull-case.png"
-               alt="Humanoid robot reaching into a warehouse pallet rack to pull out a box — WAREHOUSE_01 loco-manipulation task"
-               class="absolute inset-0 w-full h-full object-cover"
-               style="object-position: 50% 45%;">
-          <div class="absolute inset-0 pointer-events-none"
-               style="background: linear-gradient(180deg, rgba(10,14,39,0.30) 0%, transparent 30%, transparent 60%, rgba(10,14,39,0.55) 100%);"></div>
-          <div class="absolute top-3 left-3 mono text-[10px] text-cream/90 tracking-wider">SCENE &middot; WAREHOUSE_01</div>
-          <div class="absolute bottom-3 left-3 mono text-[10px] text-cream/90 tracking-wider">REACH &middot; 1.4 m</div>
-        </div>
-        <div class="p-5">
-          <div class="flex items-center gap-2 mono text-[10px] text-charcoal/50 mb-2">
-            <span>APOLLO</span><span>·</span><span>WHOLE-BODY &middot; LOAD HANDLING</span>
-          </div>
-          <h3 class="font-semibold text-base leading-snug mb-3">Pull case from rack</h3>
-          <div class="flex items-center justify-between text-sm">
-            <div class="flex items-center gap-3">
-              <span class="chip">●● MED</span>
-              <span class="text-charcoal/50 mono text-xs">~7 min / episode</span>
-            </div>
-            <span class="mono text-volt font-semibold">$22 / hr</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Task card 3 — HARD -->
-      <div class="border border-charcoal/10 bg-paper rounded-xl overflow-hidden card-lift">
-        <div class="aspect-[16/10] relative overflow-hidden bg-ink">
-          <img src="images/task-pour-scale.png"
-               alt="Top-down: a bimanual robot with a ceramic bowl and a digital scale on a wooden bench — KITCHEN_03 weigh-and-pour task"
-               class="absolute inset-0 w-full h-full object-cover"
-               style="object-position: 50% 50%;">
-          <div class="absolute inset-0 pointer-events-none"
-               style="background: linear-gradient(180deg, rgba(10,14,39,0.30) 0%, transparent 30%, transparent 60%, rgba(10,14,39,0.55) 100%);"></div>
-          <div class="absolute top-3 left-3 mono text-[10px] text-cream/90 tracking-wider">SCENE &middot; KITCHEN_03</div>
-          <div class="absolute bottom-3 left-3 mono text-[10px] text-cream/90 tracking-wider">WEIGH &middot; 80 g target</div>
-          <div class="absolute top-3 right-3 chip bg-warn text-charcoal border-0">HIGH PAY</div>
-        </div>
-        <div class="p-5">
-          <div class="flex items-center gap-2 mono text-[10px] text-charcoal/50 mb-2">
-            <span>GR1T2</span><span>·</span><span>FINE MANIPULATION</span>
-          </div>
-          <h3 class="font-semibold text-base leading-snug mb-3">Pour to scale, hit 80&nbsp;g</h3>
-          <div class="flex items-center justify-between text-sm">
-            <div class="flex items-center gap-3">
-              <span class="chip">●●● HARD</span>
-              <span class="text-charcoal/50 mono text-xs">~9 min / episode</span>
-            </div>
-            <span class="mono text-volt font-semibold">$36 / hr</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="section-divider max-w-[1280px] mx-auto"></div>
-
-<!-- ============ EARNINGS TEASE ============ -->
-<section id="earnings" class="py-24 bg-paper">
-  <div class="max-w-[1280px] mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
-    <div>
-      <div class="mono text-xs text-volt tracking-wider uppercase mb-3">What you'll make</div>
-      <h2 class="text-4xl md:text-5xl font-semibold tracking-tight leading-tight mb-6">Paid weekly. In your<br>own hours.</h2>
-      <p class="text-lg text-charcoal/65 leading-relaxed mb-8 max-w-md">
-        Operators set their own schedule. Most clear $20&ndash;28 per hour when claiming consistently. Top operators in the Diamond tier average $40+ per hour.
-      </p>
-      <div class="space-y-3">
-        <div class="flex items-start gap-3">
-          <span class="mt-1 w-4 h-4 rounded-full bg-volt/10 flex items-center justify-center flex-shrink-0">
-            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#0057FF" stroke-width="4"><path d="M20 6L9 17l-5-5"/></svg>
-          </span>
-          <p class="text-sm text-charcoal/70"><span class="font-medium">Hourly rate</span> by task &mdash; $14 to $36 per hour, set by difficulty.</p>
-        </div>
-        <div class="flex items-start gap-3">
-          <span class="mt-1 w-4 h-4 rounded-full bg-volt/10 flex items-center justify-center flex-shrink-0">
-            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#0057FF" stroke-width="4"><path d="M20 6L9 17l-5-5"/></svg>
-          </span>
-          <p class="text-sm text-charcoal/70"><span class="font-medium">Quality bonus</span> up to +40% when your episodes land in the top training tier.</p>
-        </div>
-        <div class="flex items-start gap-3">
-          <span class="mt-1 w-4 h-4 rounded-full bg-volt/10 flex items-center justify-center flex-shrink-0">
-            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#0057FF" stroke-width="4"><path d="M20 6L9 17l-5-5"/></svg>
-          </span>
-          <p class="text-sm text-charcoal/70"><span class="font-medium">Streak &amp; tier</span> multipliers compound. Diamond operators earn 1.6× base on every claim.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Earnings mock panel -->
-    <div class="bg-ink rounded-2xl p-8 text-cream relative overflow-hidden">
-      <div class="absolute inset-0 opacity-20 pointer-events-none"
-           style="background-image: linear-gradient(to right, rgba(160,196,255,0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(160,196,255,0.1) 1px, transparent 1px); background-size: 32px 32px;"></div>
-      <div class="relative">
-        <div class="flex items-center justify-between mb-6">
-          <div class="mono text-[11px] text-sky/70 tracking-wider">APRIL EARNINGS</div>
-          <div class="chip bg-volt/15 border-volt/30 text-sky mono">+18% vs MAR</div>
-        </div>
-        <div class="mono text-[64px] font-semibold leading-none tracking-tight">$<span class="tabular">2,384</span><span class="text-3xl text-sky/50">.50</span></div>
-        <div class="mono text-xs text-sky/60 mt-2">94 hours &middot; avg $25.40 / hr</div>
-
-        <!-- Spark bar chart -->
-        <div class="mt-10 flex items-end gap-1.5 h-24">
-          <!-- 20 bars -->
-          <div class="flex-1 bg-volt/30 rounded-sm" style="height:40%"></div>
-          <div class="flex-1 bg-volt/35 rounded-sm" style="height:55%"></div>
-          <div class="flex-1 bg-volt/25 rounded-sm" style="height:30%"></div>
-          <div class="flex-1 bg-volt/50 rounded-sm" style="height:70%"></div>
-          <div class="flex-1 bg-volt/40 rounded-sm" style="height:60%"></div>
-          <div class="flex-1 bg-volt/55 rounded-sm" style="height:80%"></div>
-          <div class="flex-1 bg-volt/30 rounded-sm" style="height:45%"></div>
-          <div class="flex-1 bg-volt/60 rounded-sm" style="height:85%"></div>
-          <div class="flex-1 bg-volt/45 rounded-sm" style="height:65%"></div>
-          <div class="flex-1 bg-volt/50 rounded-sm" style="height:72%"></div>
-          <div class="flex-1 bg-volt/35 rounded-sm" style="height:50%"></div>
-          <div class="flex-1 bg-volt/70 rounded-sm" style="height:92%"></div>
-          <div class="flex-1 bg-volt rounded-sm" style="height:100%"></div>
-          <div class="flex-1 bg-volt/60 rounded-sm" style="height:82%"></div>
-          <div class="flex-1 bg-volt/40 rounded-sm" style="height:55%"></div>
-          <div class="flex-1 bg-volt/55 rounded-sm" style="height:75%"></div>
-          <div class="flex-1 bg-volt/65 rounded-sm" style="height:88%"></div>
-          <div class="flex-1 bg-volt/30 rounded-sm" style="height:42%"></div>
-          <div class="flex-1 bg-volt/50 rounded-sm" style="height:68%"></div>
-          <div class="flex-1 bg-volt/45 rounded-sm" style="height:60%"></div>
-        </div>
-        <div class="flex items-center justify-between mono text-[10px] text-sky/50 mt-2">
-          <span>APR 01</span><span>APR 10</span><span>APR 20</span><span>TODAY</span>
-        </div>
-
-        <div class="mt-8 grid grid-cols-3 gap-6 pt-6 border-t border-stroke">
-          <div>
-            <div class="mono text-[10px] text-sky/50 tracking-wider">TIER</div>
-            <div class="mono text-lg font-semibold text-volt mt-1">DIAMOND</div>
-          </div>
-          <div>
-            <div class="mono text-[10px] text-sky/50 tracking-wider">STREAK</div>
-            <div class="mono text-lg font-semibold mt-1">14 days</div>
-          </div>
-          <div>
-            <div class="mono text-[10px] text-sky/50 tracking-wider">MULTIPLIER</div>
-            <div class="mono text-lg font-semibold text-volt mt-1">1.60×</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ APPLY FORM ============ -->
-<section id="apply" class="py-24 bg-paper border-t border-charcoal/10">
-  <div class="max-w-[680px] mx-auto px-6">
-    <div class="mono text-xs text-volt tracking-wider uppercase mb-3">Apply to operate</div>
-    <h2 class="text-4xl md:text-5xl font-semibold tracking-tight leading-tight mb-4">Tell us about yourself.</h2>
-    <p class="text-charcoal/70 mb-10 leading-relaxed max-w-lg">We get back within 48 hours and schedule a calibration call. No prior robotics experience required &mdash; we'll teach you what to do with the headset.</p>
-
-    <form
-      name="operator-application"
-      method="POST"
-      action="/operator/thanks.html"
-      data-netlify="true"
-      data-netlify-honeypot="bot-field"
-      class="space-y-5"
-    >
-      <input type="hidden" name="form-name" value="operator-application">
-      <p class="hidden"><label>Don't fill this out: <input name="bot-field"></label></p>
-
-      <div>
-        <label class="mono text-[11px] tracking-wider text-charcoal/60 uppercase block mb-2">Name</label>
-        <input name="name" required autocomplete="name"
-          class="w-full px-4 py-3 bg-white border border-charcoal/15 rounded-md focus:border-volt focus:outline-none transition"
-          placeholder="Full name">
-      </div>
-
-      <div>
-        <label class="mono text-[11px] tracking-wider text-charcoal/60 uppercase block mb-2">Email</label>
-        <input name="email" type="email" required autocomplete="email"
-          class="w-full px-4 py-3 bg-white border border-charcoal/15 rounded-md focus:border-volt focus:outline-none transition"
-          placeholder="you@example.com">
-      </div>
-
-      <div class="grid sm:grid-cols-2 gap-5">
-        <div>
-          <label class="mono text-[11px] tracking-wider text-charcoal/60 uppercase block mb-2">Headset</label>
-          <select name="headset"
-            class="w-full px-4 py-3 bg-white border border-charcoal/15 rounded-md focus:border-volt focus:outline-none transition">
-            <option>Quest 3</option>
-            <option>Quest 3S</option>
-            <option>Apple Vision Pro</option>
-            <option>Pico 4 Ultra</option>
-            <option>Other</option>
-            <option>None yet</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="mono text-[11px] tracking-wider text-charcoal/60 uppercase block mb-2">Where you're based</label>
-          <input name="location" autocomplete="address-level2"
-            class="w-full px-4 py-3 bg-white border border-charcoal/15 rounded-md focus:border-volt focus:outline-none transition"
-            placeholder="City, country">
-        </div>
-      </div>
-
-      <div>
-        <label class="mono text-[11px] tracking-wider text-charcoal/60 uppercase block mb-2">Why operate? <span class="text-charcoal/40 normal-case tracking-normal">(optional)</span></label>
-        <textarea name="message" rows="4"
-          class="w-full px-4 py-3 bg-white border border-charcoal/15 rounded-md focus:border-volt focus:outline-none transition resize-y"
-          placeholder="A few words about your experience or what draws you to this work."></textarea>
-      </div>
-
-      <div class="pt-2 flex items-center gap-4 flex-wrap">
-        <button type="submit" class="btn-volt px-6 py-3.5 rounded-md font-medium flex items-center gap-2 text-[15px]">
-          Send application
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-        </button>
-        <span class="mono text-[11px] text-charcoal/50">Or email <a href="mailto:mk@simxr.tech" class="underline hover:text-volt">mk@simxr.tech</a> directly.</span>
-      </div>
-    </form>
-  </div>
-</section>
-
-<!-- ============ OPERATOR QUOTE ============ -->
-<section class="py-24">
-  <div class="max-w-[1000px] mx-auto px-6">
-    <div class="rounded-2xl overflow-hidden border border-charcoal/10 mb-12 bg-ink relative aspect-[16/9]">
-      <img src="images/operator-pov-arms.png"
-           alt="First-person view through humanoid arms reaching forward in a domestic scene — what an operator sees in the headset"
-           class="absolute inset-0 w-full h-full object-cover"
-           style="object-position: 50% 50%;">
-      <div class="absolute top-4 left-4 mono text-[10px] text-cream/85 tracking-wider">
-        OPERATOR POV &middot; SCENE: HOME_KITCHEN_03
-      </div>
-    </div>
-    <div class="text-center">
-      <div class="mono text-xs text-volt tracking-wider uppercase mb-6">From an operator</div>
-      <blockquote class="text-3xl md:text-4xl font-medium tracking-tight leading-[1.2] text-charcoal">
-        "I thought I'd be clicking through a job queue. Instead I'm wearing a headset, moving a humanoid's arms with my own, and watching the training run learn from what I just did. It's the most interesting paid work I've ever done."
-      </blockquote>
-      <div class="mt-8 flex items-center justify-center gap-3">
-        <div class="w-10 h-10 rounded-full bg-volt/15 flex items-center justify-center mono text-xs font-semibold text-volt">DR</div>
-        <div class="text-left">
-          <div class="text-sm font-medium">Daria R.</div>
-          <div class="mono text-[11px] text-charcoal/50">Diamond operator &middot; 412 episodes</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ FINAL CTA ============ -->
-<section class="py-24 bg-ink text-cream relative overflow-hidden">
-  <div class="absolute inset-0 opacity-15 pointer-events-none"
-       style="background-image: linear-gradient(to right, rgba(160,196,255,0.2) 1px, transparent 1px), linear-gradient(to bottom, rgba(160,196,255,0.2) 1px, transparent 1px); background-size: 48px 48px;"></div>
-  <div class="max-w-[1000px] mx-auto px-6 text-center relative">
-    <div class="flex flex-col items-center gap-4 mb-10">
-      <div class="w-28 h-28 md:w-32 md:h-32 rounded-2xl overflow-hidden border border-stroke bg-surface relative">
-        <img src="images/robot-gr1t2.png"
-             alt="Fourier GR1T2 humanoid robot — your first calibration partner"
-             class="absolute inset-0 w-full h-full object-cover"
-             style="object-position: 50% 35%;">
-      </div>
-      <div class="mono text-[11px] tracking-wider text-sky/60">GR1T2 &middot; YOUR FIRST CALIBRATION</div>
-    </div>
-    <h2 class="mono text-5xl md:text-7xl font-semibold tracking-tight leading-[0.95]">Ready to show<br><span class="text-volt">robots how?</span></h2>
-    <p class="mt-6 text-lg text-sky/70 max-w-md mx-auto">Apply in two minutes. Calibration call within 48 hours. First episode the same week.</p>
-    <div class="mt-10 flex items-center justify-center gap-3">
-      <a href="#apply" class="btn-volt px-7 py-3.5 rounded-md font-medium flex items-center gap-2">
-        Apply to operate
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+  <!-- ============ NAV ============ -->
+  <header class="sticky top-0 z-40 bg-cream/85 backdrop-blur border-b border-charcoal/5">
+    <div class="max-w-[1280px] mx-auto px-6 h-16 flex items-center justify-between">
+      <a href="#top" class="flex items-baseline gap-2.5 group">
+        <span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.15rem; letter-spacing: -0.02em;" class="text-charcoal">
+          SIM <span style="color: #0057FF;">XR.</span>
+        </span>
+        <span class="mono text-xs text-charcoal/40 font-medium tracking-wider">/&nbsp;OPERATORS</span>
       </a>
+      <a href="#waitlist" class="btn-volt px-5 py-2 rounded-md text-sm font-medium">Join waitlist</a>
     </div>
-  </div>
-</section>
+  </header>
 
-<!-- ============ FOOTER ============ -->
-<footer class="bg-ink text-sky/60 border-t border-stroke">
-  <div class="max-w-[1280px] mx-auto px-6 py-10 grid md:grid-cols-4 gap-8">
-    <div class="md:col-span-2">
-      <div class="flex items-baseline gap-2.5 mb-4">
-        <!-- Wordmark — matches simxr.tech main page -->
+  <!-- ============ HERO ============ -->
+  <section id="top" class="relative grid-cream flex-1 flex items-center">
+    <div class="max-w-[1280px] mx-auto px-6 py-10 md:py-12 grid md:grid-cols-2 gap-10 items-center w-full">
+
+      <!-- Left: Copy + form -->
+      <div>
+        <div class="inline-flex items-center gap-2 mono text-[11px] tracking-wider text-charcoal/60 uppercase mb-3">
+          <span class="w-1.5 h-1.5 rounded-full bg-volt"></span>
+          <span>AI × Robotics · Open Beta · Q2 2026</span>
+        </div>
+
+        <h1 class="mono text-[52px] leading-[0.95] md:text-[68px] font-semibold tracking-tight mb-3">
+          Show robots<br><span style="color: #0057FF;">how.</span>
+        </h1>
+
+        <p class="text-base text-charcoal/70 leading-relaxed mb-5 max-w-md">
+          Your VR headset isn't just for games. Teach humanoid robots real-world skills with your own motion &mdash; five-minute missions, weekly payout.
+        </p>
+
+        <!-- Waitlist application form -->
+        <form
+          id="waitlist"
+          name="operator-waitlist"
+          method="POST"
+          action="thanks.html"
+          data-netlify="true"
+          data-netlify-honeypot="bot-field"
+          class="max-w-md space-y-3"
+        >
+          <input type="hidden" name="form-name" value="operator-waitlist">
+          <p class="hidden"><label>Don't fill this out: <input name="bot-field"></label></p>
+
+          <div class="mono text-[10px] tracking-[0.18em] text-volt uppercase flex items-center gap-2">
+            <span class="w-1 h-1 rounded-full bg-volt"></span>
+            Early access · limited first batch
+          </div>
+
+          <!-- Name -->
+          <div>
+            <label class="mono text-[11px] tracking-wider text-charcoal/60 uppercase block mb-2">Name</label>
+            <input name="name" required autocomplete="name"
+              class="w-full px-4 py-2.5 bg-white border border-charcoal/15 rounded-md focus:border-volt focus:outline-none transition"
+              placeholder="Name or nickname">
+          </div>
+
+          <!-- Email -->
+          <div>
+            <label class="mono text-[11px] tracking-wider text-charcoal/60 uppercase block mb-2">Email</label>
+            <input name="email" type="email" required autocomplete="email"
+              class="w-full px-4 py-2.5 bg-white border border-charcoal/15 rounded-md focus:border-volt focus:outline-none transition"
+              placeholder="you@example.com">
+          </div>
+
+          <!-- Headsets (multi-select pills) -->
+          <fieldset>
+            <legend class="mono text-[11px] tracking-wider text-charcoal/60 uppercase mb-2 block">Your headsets &nbsp;<span class="text-charcoal/40 normal-case tracking-normal">(pick all that apply)</span></legend>
+            <div class="flex flex-wrap gap-2">
+              <label class="cursor-pointer">
+                <input type="checkbox" name="headsets[]" value="Quest 2" class="peer sr-only">
+                <span class="inline-block px-3 py-1.5 rounded-md border border-charcoal/15 bg-white text-sm transition peer-checked:bg-volt peer-checked:text-white peer-checked:border-volt peer-focus-visible:ring-2 peer-focus-visible:ring-volt/40">Quest 2</span>
+              </label>
+              <label class="cursor-pointer">
+                <input type="checkbox" name="headsets[]" value="Quest 3 / 3S" class="peer sr-only">
+                <span class="inline-block px-3 py-1.5 rounded-md border border-charcoal/15 bg-white text-sm transition peer-checked:bg-volt peer-checked:text-white peer-checked:border-volt peer-focus-visible:ring-2 peer-focus-visible:ring-volt/40">Quest 3 / 3S</span>
+              </label>
+              <label class="cursor-pointer">
+                <input type="checkbox" name="headsets[]" value="Apple Vision Pro" class="peer sr-only">
+                <span class="inline-block px-3 py-1.5 rounded-md border border-charcoal/15 bg-white text-sm transition peer-checked:bg-volt peer-checked:text-white peer-checked:border-volt peer-focus-visible:ring-2 peer-focus-visible:ring-volt/40">Apple Vision Pro</span>
+              </label>
+              <label class="cursor-pointer">
+                <input type="checkbox" name="headsets[]" value="Pico 4 Ultra" class="peer sr-only">
+                <span class="inline-block px-3 py-1.5 rounded-md border border-charcoal/15 bg-white text-sm transition peer-checked:bg-volt peer-checked:text-white peer-checked:border-volt peer-focus-visible:ring-2 peer-focus-visible:ring-volt/40">Pico 4 Ultra</span>
+              </label>
+              <label class="cursor-pointer">
+                <input type="checkbox" name="headsets[]" value="Pico 4" class="peer sr-only">
+                <span class="inline-block px-3 py-1.5 rounded-md border border-charcoal/15 bg-white text-sm transition peer-checked:bg-volt peer-checked:text-white peer-checked:border-volt peer-focus-visible:ring-2 peer-focus-visible:ring-volt/40">Pico 4</span>
+              </label>
+              <label class="cursor-pointer">
+                <input type="checkbox" name="headsets[]" value="PC VR" class="peer sr-only">
+                <span class="inline-block px-3 py-1.5 rounded-md border border-charcoal/15 bg-white text-sm transition peer-checked:bg-volt peer-checked:text-white peer-checked:border-volt peer-focus-visible:ring-2 peer-focus-visible:ring-volt/40">PC VR</span>
+              </label>
+              <label class="cursor-pointer">
+                <input type="checkbox" name="headsets[]" value="Other" class="peer sr-only">
+                <span class="inline-block px-3 py-1.5 rounded-md border border-charcoal/15 bg-white text-sm transition peer-checked:bg-volt peer-checked:text-white peer-checked:border-volt peer-focus-visible:ring-2 peer-focus-visible:ring-volt/40">Other</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <!-- Where you're based -->
+          <div>
+            <label class="mono text-[11px] tracking-wider text-charcoal/60 uppercase block mb-2">Where you're based</label>
+            <input name="location" autocomplete="address-level2"
+              class="w-full px-4 py-2.5 bg-white border border-charcoal/15 rounded-md focus:border-volt focus:outline-none transition"
+              placeholder="City, country">
+          </div>
+
+          <!-- Expectation-setting acknowledgment (required) -->
+          <label class="flex items-start gap-2.5 cursor-pointer text-[12px] text-charcoal/70 leading-snug pt-1">
+            <input type="checkbox" name="acknowledged" value="yes" required
+              class="mt-[3px] shrink-0 cursor-pointer w-4 h-4"
+              style="accent-color: #0057FF;">
+            <span>I understand this is an early-access beta &mdash; not a guaranteed job offer.</span>
+          </label>
+
+          <!-- Submit alone — perks + NVIDIA moved to right column to balance the layout -->
+          <button type="submit" class="btn-volt px-6 py-3 rounded-md font-medium text-[15px] mt-1">
+            Add to waitlist
+          </button>
+        </form>
+
+      </div>
+
+      <!-- Right: Photo + perks + NVIDIA badge -->
+      <div class="space-y-5">
+        <!-- Hero photo -->
+        <div class="aspect-[16/9] bg-charcoal/5 rounded-lg overflow-hidden relative border border-charcoal/10">
+          <img src="images/operator-mirror.png"
+               alt="An operator wearing a VR headset, hands extended in a precise grabbing motion, with a humanoid robot beside him mirroring the same pose"
+               class="absolute inset-0 w-full h-full object-cover">
+          <!-- Minimal HUD chip -->
+          <div class="absolute bottom-4 left-4 mono text-[10px] text-white/85 tracking-wider">
+            <span class="inline-flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-volt"></span>
+              hand tracking · on
+            </span>
+          </div>
+        </div>
+
+        <!-- "What you get" — 3 perks (moved here from below the form) -->
+        <ul class="text-sm text-charcoal/70 list-none p-0 space-y-2">
+          <li class="flex items-start gap-2.5">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0057FF" stroke-width="3" class="mt-[5px] shrink-0"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>One email when the next batch opens &mdash; nothing else.</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0057FF" stroke-width="3" class="mt-[5px] shrink-0"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>First batch keeps a higher per-task rate during beta.</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0057FF" stroke-width="3" class="mt-[5px] shrink-0"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>Real USD. No tokens, no points, no crypto.</span>
+          </li>
+        </ul>
+
+        <!-- Credibility badge (moved here from below the form) -->
+        <div class="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-charcoal/15 bg-white">
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="#76B900" aria-hidden="true"><circle cx="8" cy="8" r="8"/></svg>
+          <span class="text-[12px] font-medium text-charcoal">Backed by</span>
+          <span class="text-[12px] font-bold tracking-wide" style="color: #76B900;">NVIDIA Inception</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ PHYSICAL AI REVOLUTION + 3 PILLARS ============ -->
+  <section class="bg-cream border-t border-charcoal/5">
+    <div class="max-w-[1280px] mx-auto px-6 py-20 md:py-24">
+
+      <!-- Story compressed to one big headline. 2-second read. -->
+      <div class="mb-14 max-w-3xl">
+        <div class="mono text-xs text-volt tracking-wider uppercase mb-4">Physical AI · what's happening</div>
+        <h2 class="text-4xl md:text-5xl font-semibold tracking-tight leading-[1.1]">
+          AI can do a lot.<br>
+          It still can't move like a human. <span style="color: #0057FF;">That's where you come in.</span>
+        </h2>
+      </div>
+
+      <!-- 3 pillar cards in one row: Devices · Physics · Robots — square image on left, text on right -->
+      <div class="grid md:grid-cols-3 gap-5">
+
+        <!-- 01 · Devices -->
+        <div class="border border-charcoal/10 bg-paper rounded-xl overflow-hidden card-lift flex h-44">
+          <div class="aspect-square h-full bg-charcoal/5 relative shrink-0">
+            <img src="images/headset.png"
+                 alt="A premium VR headset (Meta Quest 3 / Apple Vision Pro) — Sim XR works on any consumer headset or PC VR rig"
+                 class="absolute inset-0 w-full h-full object-cover">
+          </div>
+          <div class="p-5 flex flex-col justify-center flex-1 min-w-0">
+            <div class="mono text-[11px] text-charcoal/40 mb-2 tracking-wider uppercase">01 &middot; Gear</div>
+            <h3 class="text-xl font-semibold mb-2 leading-tight">Any headset.</h3>
+            <div class="mono text-[10px] text-charcoal/50 tracking-wider">QUEST 2 &middot; QUEST 3 &middot; AVP &middot; PC VR</div>
+          </div>
+        </div>
+
+        <!-- 02 · Physics -->
+        <div class="border border-charcoal/10 bg-paper rounded-xl overflow-hidden card-lift flex h-44">
+          <div class="aspect-square h-full bg-charcoal/5 relative shrink-0">
+            <img src="images/physics-moment.png"
+                 alt="Cinematic moment of water being poured into a glass beaker, splashing mid-air — physical realism inside the simulation"
+                 class="absolute inset-0 w-full h-full object-cover">
+          </div>
+          <div class="p-5 flex flex-col justify-center flex-1 min-w-0">
+            <div class="mono text-[11px] text-charcoal/40 mb-2 tracking-wider uppercase">02 &middot; Physics</div>
+            <h3 class="text-xl font-semibold mb-2 leading-tight">Real physics.</h3>
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="inline-flex items-center gap-1">
+                <svg viewBox="0 0 12 12" width="9" height="9" fill="#76B900" aria-hidden="true"><circle cx="6" cy="6" r="6"/></svg>
+                <span class="mono text-[10px] tracking-wider font-semibold" style="color: #76B900;">NVIDIA</span>
+              </span>
+              <span class="mono text-[10px] text-charcoal/50 tracking-wider">NEWTON + PHYSX</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 03 · Robots -->
+        <div class="border border-charcoal/10 bg-paper rounded-xl overflow-hidden card-lift flex h-44">
+          <div class="aspect-square h-full bg-charcoal/5 relative shrink-0">
+            <img src="images/robot-gr1t2.png"
+                 alt="Fourier GR1T2 humanoid robot — one of the digital-twin platforms operator data trains"
+                 class="absolute inset-0 w-full h-full object-cover">
+          </div>
+          <div class="p-5 flex flex-col justify-center flex-1 min-w-0">
+            <div class="mono text-[11px] text-charcoal/40 mb-2 tracking-wider uppercase">03 &middot; Impact</div>
+            <h3 class="text-xl font-semibold mb-2 leading-tight">Real robots.</h3>
+            <div class="flex flex-wrap gap-1">
+              <span class="mono text-[9px] tracking-wider px-1.5 py-0.5 rounded border border-charcoal/15 bg-cream/50 text-charcoal/70">UNITREE</span>
+              <span class="mono text-[9px] tracking-wider px-1.5 py-0.5 rounded border border-charcoal/15 bg-cream/50 text-charcoal/70">GR1T2</span>
+              <span class="mono text-[9px] tracking-wider px-1.5 py-0.5 rounded border border-charcoal/15 bg-cream/50 text-charcoal/70">GALILEO</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ HOW IT PLAYS ============ -->
+  <section class="bg-paper border-t border-charcoal/5">
+    <div class="max-w-[1280px] mx-auto px-6 py-20 md:py-24">
+
+      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-12">
+        <div>
+          <div class="mono text-xs text-volt tracking-wider uppercase mb-3">How it plays</div>
+          <h2 class="text-4xl md:text-5xl font-semibold tracking-tight max-w-xl leading-tight">
+            Three steps from<br>signup to paycheck.
+          </h2>
+        </div>
+        <div class="hidden md:block mono text-xs text-charcoal/50 max-w-xs">
+          Operators onboard in under a day. Short calibration, a quick skill review, then start claiming missions.
+        </div>
+      </div>
+
+      <!-- 3-card step grid (v1 pattern) — with emoji icons -->
+      <div class="grid md:grid-cols-3 gap-5">
+        <!-- Step 1 -->
+        <div class="border border-charcoal/10 bg-cream rounded-xl p-7 card-lift">
+          <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-2.5">
+              <span class="text-2xl leading-none" aria-hidden="true">🎯</span>
+              <span class="mono text-xs text-charcoal/40">STEP 01</span>
+            </div>
+            <span class="w-8 h-8 rounded-md bg-charcoal text-cream mono text-xs flex items-center justify-center">01</span>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">Claim a mission.</h3>
+          <p class="text-sm text-charcoal/60 leading-relaxed">Browse open episodes from top robotics labs. Filter by robot, skill, or payout. Claim in one click.</p>
+          <div class="mt-6 border-t border-charcoal/5 pt-5">
+            <div class="flex items-center justify-between mono text-[11px] text-charcoal/50">
+              <span>GR1T2 &middot; Pour to scale</span>
+              <span class="text-volt">$36 / hr</span>
+            </div>
+          </div>
+        </div>
+        <!-- Step 2 -->
+        <div class="border border-charcoal/10 bg-cream rounded-xl p-7 card-lift">
+          <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-2.5">
+              <span class="text-2xl leading-none" aria-hidden="true">🥽</span>
+              <span class="mono text-xs text-charcoal/40">STEP 02</span>
+            </div>
+            <span class="w-8 h-8 rounded-md bg-charcoal text-cream mono text-xs flex items-center justify-center">02</span>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">Strap in.</h3>
+          <p class="text-sm text-charcoal/60 leading-relaxed">Quest 2, Quest 3, or Vision Pro. Hands-only &mdash; no controllers. The browser app streams the simulation and captures your motion in real time.</p>
+          <div class="mt-6 border-t border-charcoal/5 pt-5">
+            <div class="flex items-center justify-between mono text-[11px]">
+              <span class="flex items-center gap-1.5" style="color: #16A34A;"><span class="w-1.5 h-1.5 rounded-full" style="background: #16A34A;"></span>Streaming &middot; 72 fps</span>
+              <span class="text-charcoal/50">15 ms</span>
+            </div>
+          </div>
+        </div>
+        <!-- Step 3 -->
+        <div class="border border-charcoal/10 bg-cream rounded-xl p-7 card-lift">
+          <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-2.5">
+              <span class="text-2xl leading-none" aria-hidden="true">💸</span>
+              <span class="mono text-xs text-charcoal/40">STEP 03</span>
+            </div>
+            <span class="w-8 h-8 rounded-md bg-volt text-white mono text-xs flex items-center justify-center">03</span>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">Get paid per episode.</h3>
+          <p class="text-sm text-charcoal/60 leading-relaxed">Every clean run goes into a training run. Quality bonuses stack. Weekly payouts to your bank or Wise.</p>
+          <div class="mt-6 border-t border-charcoal/5 pt-5">
+            <div class="flex items-center justify-between mono text-[11px]">
+              <span class="text-charcoal/50">This week</span>
+              <span class="text-volt font-semibold">+$284.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Featured mission preview -->
+      <div class="mt-12 rounded-2xl overflow-hidden border border-charcoal/10 bg-ink relative aspect-[16/8]">
+        <img src="images/mission-pour.png"
+             alt="Two humanoid robotic hands pouring clear liquid from a beaker onto a digital scale on a dark wooden workshop bench — KITCHEN_03 weigh-and-pour task"
+             class="absolute inset-0 w-full h-full object-cover"
+             style="object-position: 50% 50%;">
+        <div class="absolute inset-0 pointer-events-none"
+             style="background: linear-gradient(180deg, transparent 60%, rgba(10,14,39,0.55) 100%);"></div>
+        <div class="absolute top-4 left-4 mono text-[10px] text-cream/90 tracking-wider leading-relaxed">
+          <div>MISSION 03 / OPEN</div>
+          <div>POUR &middot; BEAKER &rarr; SCALE</div>
+        </div>
+        <div class="absolute top-4 right-4 mono text-[10px] text-cream/90 tracking-wider text-right leading-relaxed">
+          <div>EST. 5 MIN</div>
+          <div>$24 &middot; CLEAN RUN</div>
+        </div>
+        <div class="absolute bottom-4 left-4 right-4 flex items-center justify-between mono text-[10px] text-cream/90 tracking-wider">
+          <span class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-volt"></span>
+            live preview
+          </span>
+          <span>SCENE &middot; KITCHEN_03</span>
+        </div>
+      </div>
+
+      <!-- Secondary CTA back up to the hero form -->
+      <div class="mt-12 flex items-center gap-3">
+        <a href="#waitlist" class="btn-volt px-6 py-3 rounded-md font-medium text-[14px]">
+          Add to waitlist &uarr;
+        </a>
+        <span class="mono text-[11px] text-charcoal/50 tracking-wide">
+          One email when slots open. No spam.
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="bg-ink text-sky/60 border-t border-stroke">
+    <div class="max-w-[1280px] mx-auto px-6 py-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div class="flex items-baseline gap-2.5">
         <span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.15rem; letter-spacing: -0.02em;" class="text-cream">
           SIM <span style="color: #4D80FF;">XR.</span>
         </span>
         <span class="mono text-xs text-sky/50 font-medium tracking-wider">/&nbsp;OPERATORS</span>
       </div>
-      <p class="text-sm max-w-sm mb-4">The operator platform for training humanoid robots. Built by former roboticists in Paris &amp; California.</p>
-      <p class="text-sm">
-        <span class="text-sky/40 mono text-[11px] tracking-wider mr-2">FOR ROBOTICS LABS</span>
-        <a href="/" class="text-cream hover:text-volt transition underline-offset-2 hover:underline">simxr.tech &rarr;</a>
-      </p>
+      <div class="mono text-[11px] tracking-wider flex flex-col md:flex-row md:items-center md:gap-6 gap-1">
+        <span>© 2026 SIM XR — The Training Layer for Physical AI</span>
+        <span>California · Paris · Tel Aviv</span>
+      </div>
     </div>
-    <div>
-      <div class="mono text-[11px] text-sky/40 tracking-wider mb-3">PLATFORM</div>
-      <ul class="space-y-2 text-sm">
-        <li><a href="#how" class="hover:text-cream transition">How it works</a></li>
-        <li><a href="#robots" class="hover:text-cream transition">Robots</a></li>
-        <li><a href="#tasks" class="hover:text-cream transition">Open tasks</a></li>
-        <li><a href="#earnings" class="hover:text-cream transition">Earnings</a></li>
-      </ul>
-    </div>
-    <div>
-      <div class="mono text-[11px] text-sky/40 tracking-wider mb-3">OPERATORS</div>
-      <ul class="space-y-2 text-sm">
-        <li><a href="#apply" class="hover:text-cream transition">Apply</a></li>
-        <li><a href="#how" class="hover:text-cream transition">How it works</a></li>
-        <li><a href="mailto:mk@simxr.tech" class="hover:text-cream transition">Contact</a></li>
-      </ul>
-    </div>
-  </div>
-  <div class="border-t border-stroke">
-    <div class="max-w-[1280px] mx-auto px-6 py-5 flex items-center justify-between mono text-[11px] text-sky/40">
-      <span>© 2026 SIM XR — The Training Layer for Physical AI</span>
-      <span>California · Paris · Tel Aviv</span>
-    </div>
-  </div>
-</footer>
+  </footer>
 
-<script>
-  // Live counter nudge — operators online
-  (function(){
-    const el = document.getElementById('nav-online');
-    if (!el) return;
-    let n = 142;
-    setInterval(() => {
-      const delta = Math.random() > 0.5 ? 1 : -1;
-      n = Math.max(130, Math.min(160, n + delta));
-      el.textContent = n;
-    }, 3500);
-  })();
-</script>
 </body>
 </html>

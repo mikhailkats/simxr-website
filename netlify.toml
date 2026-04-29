@@ -12,6 +12,27 @@
   # Netlify auto-detects pnpm from packageManager field in package.json,
   # but pinning it here avoids surprise upgrades.
 
+# /operator-v2/* — graceful 301 to the now-promoted /operator/.
+# operator-v2 was the staging path while we A/B-tested; v2 became the main
+# operator page on 2026-04-30. Keeps any old shared links working.
+[[redirects]]
+  from = "/operator-v2/*"
+  to = "/operator/:splat"
+  status = 301
+  force = true
+
+# /client/* — proxy to NVIDIA's IsaacTeleop client. Same-origin proxy is
+# required so the inline localStorage seeding in /connect/index.html
+# (mediaAddress / immersiveMode / deviceProfile) is readable by the client
+# page on mount. force=true makes Netlify proxy the URL transparently
+# instead of redirecting (browser keeps simxr.tech in the address bar).
+# This rule must come BEFORE the SPA catch-all below.
+[[redirects]]
+  from = "/client/*"
+  to = "https://nvidia.github.io/IsaacTeleop/client/:splat"
+  status = 200
+  force = true
+
 # SPA fallback — wouter is client-side routed; any unknown path
 # should serve index.html so React handles 404 / deep-link routes.
 [[redirects]]
