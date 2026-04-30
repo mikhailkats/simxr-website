@@ -204,6 +204,16 @@ tailwind.config = {
               placeholder="City, country">
           </div>
 
+          <!-- VR experience (optional) — short free-text so makers/streamers can flag themselves -->
+          <div>
+            <label class="mono text-[11px] tracking-wider text-charcoal/60 uppercase block mb-2">
+              Done anything cool in VR? &nbsp;<span class="text-charcoal/40 normal-case tracking-normal">(optional)</span>
+            </label>
+            <textarea name="vr_experience" rows="2"
+              class="w-full px-4 py-2.5 bg-white border border-charcoal/15 rounded-md focus:border-volt focus:outline-none transition resize-none"
+              placeholder="Streamed, modded, built, recorded — drop a link or a line."></textarea>
+          </div>
+
           <!-- Expectation-setting acknowledgment (required) -->
           <label class="flex items-start gap-2.5 cursor-pointer text-[12px] text-charcoal/70 leading-snug pt-1">
             <input type="checkbox" name="acknowledged" value="yes" required
