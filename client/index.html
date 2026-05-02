@@ -4,12 +4,30 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
 
-    <!-- Favicon: SVG for modern browsers, PNGs for legacy + iOS, .ico for ancient ones. -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Favicon: SVG for modern browsers, PNGs for legacy + iOS, .ico for ancient ones.
+         Hostname-aware variant pick happens inline below — `favicon.svg` is the dark
+         operator variant (simxr.app), `favicon-tech.svg` is the light marketing variant
+         (simxr.tech). The static <link> below is the simxr.app default; the inline
+         script overrides for simxr.tech BEFORE the browser commits to fetching, so
+         there's no first-paint flash. PNG/ICO fallbacks stay shared (dark variant) —
+         used only by older browsers and add-to-home-screen on iOS. -->
+    <link rel="icon" id="favicon-svg" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
+    <script>
+      // Swap to the light marketing variant on simxr.tech (and www.simxr.tech).
+      // Runs synchronously in <head> before the browser issues the favicon
+      // request, so there's no flash of the dark operator icon.
+      (function () {
+        var h = window.location.hostname;
+        if (h === 'simxr.tech' || h === 'www.simxr.tech') {
+          var el = document.getElementById('favicon-svg');
+          if (el) el.setAttribute('href', '/favicon-tech.svg');
+        }
+      })();
+    </script>
 
     <title>SIM XR — The Training Layer for Physical AI</title>
     <meta name="description" content="SIM XR turns VR gameplay into robot training data. We build the data infrastructure for Physical AI — scalable, gamified, and grounded in real human intelligence." />

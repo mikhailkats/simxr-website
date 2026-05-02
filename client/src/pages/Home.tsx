@@ -1,7 +1,23 @@
+// SIM XR homepage — product-site rewrite 2026-05-02.
+//
+// Replaces the deck-shaped 13-section v1 (Problem / Solution / Market Timing /
+// Gamification / Vision / Final CTA / etc.) with a 7-section product page:
+//   Hero → Demo → What it is → How it works → Founder → Get in touch → Footer.
+// The previous version is preserved verbatim at
+// `client/_archive/Home-2026-05-02-deck-version.tsx` (outside src/, not bundled)
+// for easy reference / restore.
+//
+// Notes:
+//   - Hero CTA points at the early-access form, not simxr.app — Mike said the
+//     simxr.app demo isn't ready to surface from the marketing site yet.
+//   - Founder block (Gosha + photo + 3 credentials) is kept BIT-EXACTLY from
+//     the deck version per his explicit ask. Don't restructure it.
+//   - EarlyAccessForm + CollaboratorForm + useReveal + design tokens (C, T)
+//     are unchanged from the deck version — they work, no reason to touch.
+
 import { useEffect, useState } from "react";
 
 // Local image assets — moved off Manus CloudFront 2026-04-27.
-const SIMULATION_SCENE = "/images/simulation_scene.webp";
 const VR_USER = "/images/vr_user.jpg";
 const FOUNDER_PHOTO = "/images/founder_georgy.jpg";
 
@@ -134,42 +150,33 @@ function CollaboratorForm() {
     return (
       <div style={{ textAlign: "center", padding: "2rem 0" }}>
         <div style={{ fontSize: "2rem", marginBottom: "0.75rem" }}>✓</div>
-        <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.1rem", color: "#0B0F1A", marginBottom: "0.4rem" }}>Message sent!</div>
-        <p style={{ color: "#6B7280", fontSize: "0.88rem" }}>We'll be in touch soon.</p>
+        <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.1rem", color: "#0B0F1A", marginBottom: "0.4rem" }}>Message received!</div>
+        <p style={{ color: "#6B7280", fontSize: "0.88rem" }}>Thanks for reaching out — we'll be in touch.</p>
       </div>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-        <div>
-          <label style={labelStyle}>Name <span style={{ color: "#EF4444" }}>*</span></label>
-          <input required style={inputStyle} placeholder="Your name" value={form.name}
-            onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
-        </div>
-        <div>
-          <label style={labelStyle}>Email <span style={{ color: "#EF4444" }}>*</span></label>
-          <input required type="email" style={inputStyle} placeholder="you@example.com" value={form.email}
-            onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
-        </div>
+      <div>
+        <label style={labelStyle}>Name <span style={{ color: "#EF4444" }}>*</span></label>
+        <input required style={inputStyle} placeholder="Your name" value={form.name}
+          onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
       </div>
       <div>
-        <label style={labelStyle}>Area of Interest <span style={{ color: "#EF4444" }}>*</span></label>
-        <select required value={form.area} onChange={e => setForm(f => ({ ...f, area: e.target.value }))}
-          style={{ ...inputStyle, appearance: "auto" }}>
-          <option value="">Select your area...</option>
-          <option value="XR / VR">XR / VR</option>
-          <option value="Robotics">Robotics</option>
-          <option value="ML / Imitation Learning">ML / Imitation Learning</option>
-          <option value="Simulation">Simulation</option>
-          <option value="Other">Other</option>
-        </select>
+        <label style={labelStyle}>Email <span style={{ color: "#EF4444" }}>*</span></label>
+        <input required type="email" style={inputStyle} placeholder="you@example.com" value={form.email}
+          onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
       </div>
       <div>
-        <label style={labelStyle}>Tell us about yourself (optional)</label>
-        <textarea rows={4} style={{ ...inputStyle, resize: "vertical" }}
-          placeholder="Background, project, or what you'd like to work on..."
+        <label style={labelStyle}>Area of interest</label>
+        <input style={inputStyle} placeholder="e.g. XR engineering, 3DGS pipelines, robot policy training" value={form.area}
+          onChange={e => setForm(f => ({ ...f, area: e.target.value }))} />
+      </div>
+      <div>
+        <label style={labelStyle}>Message</label>
+        <textarea rows={3} style={{ ...inputStyle, resize: "vertical" }}
+          placeholder="Tell us a bit about how you'd like to collaborate."
           value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} />
       </div>
       <button type="submit" disabled={status === "sending"} style={{
@@ -180,22 +187,26 @@ function CollaboratorForm() {
         cursor: status === "sending" ? "not-allowed" : "pointer",
         letterSpacing: "0.02em",
       }}>
-        {status === "sending" ? "Sending…" : "Contact →"}
+        {status === "sending" ? "Sending…" : "Get in Touch →"}
       </button>
       {status === "error" && <p style={{ color: "#EF4444", fontSize: "0.82rem", textAlign: "center" }}>Something went wrong. Please email gm@simxr.tech directly.</p>}
     </form>
   );
 }
 
+// ─── Reveal-on-scroll observer ───────────────────────────────────
 function useReveal() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) e.target.classList.add("visible");
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("revealed");
+            observer.unobserve(entry.target);
+          }
         });
       },
-      { threshold: 0.1 }
+      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" },
     );
     document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
     return () => observer.disconnect();
@@ -242,20 +253,24 @@ export default function Home() {
           SIM <span style={{ color: C.blue }}>XR.</span>
         </span>
         <div style={{ display: "flex", gap: "2rem" }} className="hidden md:flex">
-          {["Problem", "Solution", "Market Timing", "How It Works", "Vision", "Founder"].map((item) => (
+          {[
+            { label: "Demo", href: "#demo" },
+            { label: "How It Works", href: "#how-it-works" },
+            { label: "Founder", href: "#founder" },
+          ].map((item) => (
             <a
-              key={item}
-              href={`#${item.toLowerCase().replace(/ /g, "-")}`}
+              key={item.label}
+              href={item.href}
               style={{ fontFamily: T.label, fontSize: "0.82rem", fontWeight: 500, color: C.gray, textDecoration: "none", letterSpacing: "0.01em" }}
               onMouseEnter={(e) => (e.currentTarget.style.color = C.navy)}
               onMouseLeave={(e) => (e.currentTarget.style.color = C.gray)}
             >
-              {item}
+              {item.label}
             </a>
           ))}
         </div>
         <a
-          href="mailto:gm@simxr.tech"
+          href="#contact"
           style={{
             fontFamily: T.label, fontWeight: 600, fontSize: "0.82rem",
             color: C.white, background: C.navy,
@@ -308,11 +323,11 @@ export default function Home() {
                 marginBottom: "2.25rem",
               }}
             >
-              We turn millions of consumer XR headsets into a scalable, gamified training ground for robots
+              Operators play in VR. Robots learn from human intelligence — at scale, with real-world physics.
             </p>
             <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
               <a
-                href="#solution"
+                href="#contact"
                 style={{
                   fontFamily: T.label, fontWeight: 600, fontSize: "0.88rem",
                   color: C.white, background: C.navy,
@@ -320,24 +335,12 @@ export default function Home() {
                   textDecoration: "none", letterSpacing: "0.01em",
                 }}
               >
-                See How It Works
-              </a>
-              <a
-                href="https://simxr.tech/operator/"
-                style={{
-                  fontFamily: T.label, fontWeight: 600, fontSize: "0.88rem",
-                  color: C.navy, background: C.white,
-                  border: `1.5px solid ${C.border}`,
-                  padding: "0.7rem 1.6rem", borderRadius: "7px",
-                  textDecoration: "none", letterSpacing: "0.01em",
-                }}
-              >
-                Apply to Operate
+                Talk to us
               </a>
             </div>
           </div>
 
-          {/* Hero visual — stats card */}
+          {/* Hero visual — VR operator + 3 stats card */}
           <div style={{ position: "relative" }}>
             <div
               style={{
@@ -369,337 +372,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── PROBLEM ── */}
-      <section id="problem" style={{ padding: "100px 0", background: C.grayLight, borderTop: `1px solid ${C.border}` }}>
-        <div className="container">
-          <div className="reveal" style={{ maxWidth: "600px", marginBottom: "3.5rem" }}>
-            <div className="label-tag" style={{ marginBottom: "0.75rem" }}>The Challenge</div>
-            <h2 style={{ fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)", color: C.navy, marginBottom: "0.75rem", lineHeight: 1.15 }}>
-              The Data Bottleneck
-            </h2>
-            <p style={{ color: C.gray, fontSize: "1.125rem", lineHeight: 1.7, maxWidth: "700px" }}>
-              Physical AI is exploding, but real-world teleoperation cannot keep up with the demand.<br />AI still requires human validation, but doing this in the physical world is incredibly slow.
-            </p>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1.5px", background: C.border, borderRadius: "12px", overflow: "hidden" }}>
-            {[
-              {
-                num: "01",
-                title: "Resource-Intensive & Costly",
-                body: "Real-world teleoperation requires specialized hardware, lab setups, and trained operators.",
-              },
-              {
-                num: "02",
-                title: "A Throughput Bottleneck",
-                body: "One operator teaches one skill — but that skill must be demonstrated hundreds or thousands of times before a model can generalize.",
-              },
-              {
-                num: "03",
-                title: "Video Data Lacks Physics",
-                body: "Vast egocentric and internet-scale video cannot capture the physical logic of manipulation.",
-              },
-            ].map((card, i) => (
-              <div
-                key={i}
-                className="reveal"
-                style={{
-                  background: C.white,
-                  padding: "2.5rem 2rem",
-                  transitionDelay: `${i * 0.1}s`,
-                }}
-              >
-                <div style={{ fontFamily: T.mono, fontSize: "0.7rem", color: C.blue, marginBottom: "1.25rem", letterSpacing: "0.1em" }}>{card.num}</div>
-                <div style={{ fontFamily: T.display, fontWeight: 700, fontSize: "1rem", color: C.navy, marginBottom: "0.75rem", lineHeight: 1.35 }}>{card.title}</div>
-                <p style={{ color: C.gray, fontSize: "0.88rem", lineHeight: 1.65 }}>{card.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── WHAT WE BUILD ── */}
-      <section id="what-we-build" style={{ padding: "100px 0", background: C.navy, borderTop: `1px solid rgba(255,255,255,0.08)` }}>
-        <div className="container">
-          <div className="reveal" style={{ textAlign: "center", marginBottom: "3.5rem" }}>
-            <div className="label-tag" style={{ marginBottom: "0.75rem", background: "rgba(0,87,255,0.2)", color: "#6FA3FF", borderColor: "rgba(0,87,255,0.3)" }}>What We Build</div>
-            <h2 style={{ fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)", color: "#FFFFFF", marginBottom: "1rem", lineHeight: 1.15 }}>
-              The missing layer between<br />
-              <span style={{ color: C.blue }}>VR gameplay and robot intelligence</span>
-            </h2>
-            <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "1.05rem", maxWidth: "620px", margin: "0 auto", lineHeight: 1.7 }}>
-              Today, robotics companies hire gig workers to record themselves doing chores with iPhones strapped to their heads — $15/hr, limited variety, privacy concerns, and no physics ground-truth. We replace that with something fundamentally better.
-            </p>
-          </div>
-
-          {/* Three-column contrast */}
-          <div className="reveal" style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: "2rem", alignItems: "stretch", marginBottom: "4rem" }}>
-            {/* Left: old way */}
-            <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", padding: "2rem" }}>
-              <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "0.7rem", fontWeight: 700, color: "rgba(255,255,255,0.35)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "1.25rem" }}>Today's approach</div>
-              {[
-                { icon: "📱", text: "Gig workers with iPhones on their heads" },
-                { icon: "🏠", text: "Limited home environments, repetitive tasks" },
-                { icon: "⚠️", text: "No physics ground-truth, sim-to-real gap" },
-                { icon: "🔒", text: "Privacy concerns, low worker engagement" },
-                { icon: "📉", text: "Bottleneck: can't scale beyond home settings" },
-              ].map((item, i) => (
-                <div key={i} style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start", marginBottom: "0.9rem" }}>
-                  <span style={{ fontSize: "1rem", flexShrink: 0, marginTop: "0.1rem" }}>{item.icon}</span>
-                  <span style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.88rem", lineHeight: 1.55 }}>{item.text}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Center divider */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.5rem", padding: "0 0.5rem" }}>
-              <div style={{ width: "1px", flex: 1, background: "rgba(255,255,255,0.1)" }} />
-              <div style={{ background: C.blue, color: "#fff", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "0.7rem", letterSpacing: "0.08em", padding: "0.5rem 0.75rem", borderRadius: "999px", whiteSpace: "nowrap" }}>VS</div>
-              <div style={{ width: "1px", flex: 1, background: "rgba(255,255,255,0.1)" }} />
-            </div>
-
-            {/* Right: SIM XR */}
-            <div style={{ background: "rgba(0,87,255,0.1)", border: "1px solid rgba(0,87,255,0.3)", borderRadius: "16px", padding: "2rem" }}>
-              <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "0.7rem", fontWeight: 700, color: C.blue, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "1.25rem" }}>SIM XR approach</div>
-              {[
-                { icon: "🎮", text: "Consumer VR headsets — workers play, not perform chores" },
-                { icon: "🌍", text: "Infinite simulated environments, any task, any variation" },
-                { icon: "⚙️", text: "Physics-grounded via NVIDIA Isaac Lab — zero sim gap" },
-                { icon: "🏆", text: "Gamified engagement — workers want to come back" },
-                { icon: "📈", text: "Scales to millions of episodes per day, globally" },
-              ].map((item, i) => (
-                <div key={i} style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start", marginBottom: "0.9rem" }}>
-                  <span style={{ fontSize: "1rem", flexShrink: 0, marginTop: "0.1rem" }}>{item.icon}</span>
-                  <span style={{ color: "rgba(255,255,255,0.85)", fontSize: "0.88rem", lineHeight: 1.55 }}>{item.text}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Bottom: the three-step loop */}
-          <div className="reveal" style={{ transitionDelay: "0.1s" }}>
-            <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-              <p style={{ color: "rgba(255,255,255,0.4)", fontFamily: "'Space Grotesk', sans-serif", fontSize: "0.75rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" }}>How it compounds</p>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1.5rem" }}>
-              {[
-                { step: "01", title: "Integrate", body: "Robotics teams define tasks in our simulation environment. SDK connects to ROS/ROS2 in days, not months." },
-                { step: "02", title: "Play & Collect", body: "Workers worldwide complete tasks through VR gameplay. Every session generates validated, physics-grounded demonstrations." },
-                { step: "03", title: "Evolve", body: "Each demonstration trains the policy. The robot learns, makes fewer mistakes, and requests harder tasks. Autonomy compounds." },
-              ].map((s, i) => (
-                <div key={i} style={{ borderTop: `2px solid ${i === 1 ? C.blue : "rgba(255,255,255,0.15)"}`, paddingTop: "1.5rem" }}>
-                  <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "0.7rem", fontWeight: 700, color: i === 1 ? C.blue : "rgba(255,255,255,0.3)", letterSpacing: "0.1em", marginBottom: "0.5rem" }}>{s.step}</div>
-                  <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1rem", fontWeight: 700, color: "#FFFFFF", marginBottom: "0.5rem" }}>{s.title}</div>
-                  <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", lineHeight: 1.65 }}>{s.body}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── SOLUTION ── */}
-      <section id="solution" style={{ padding: "100px 0", background: C.white, borderTop: `1px solid ${C.border}` }}>
-        <div className="container">
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5rem", alignItems: "center" }}>
-            <div className="reveal">
-              <div className="label-tag" style={{ marginBottom: "0.75rem" }}>The Sweet Spot</div>
-              <h2 style={{ fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)", color: C.navy, marginBottom: "1rem", lineHeight: 1.15 }}>
-                Cheaper than Teleop.<br />
-                <span style={{ color: C.blue }}>Better than Pure Sim.</span>
-              </h2>
-              <p style={{ color: C.gray, fontSize: "1rem", lineHeight: 1.7, marginBottom: "2.5rem" }}>
-                SIM XR captures real human intelligence — the way people naturally grasp, manipulate, and reason — inside a physics-accurate virtual environment. The result: high-quality training data at a fraction of the cost.
-              </p>
-
-              {/* Comparison table */}
-              <div style={{ border: `1px solid ${C.border}`, borderRadius: "10px", overflow: "hidden" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", background: C.grayLight, padding: "0.6rem 1rem", borderBottom: `1px solid ${C.border}` }}>
-                  {["", "Real Teleop", "VR-SIM ✦", "Pure Sim"].map((h, i) => (
-                    <div key={i} style={{ fontFamily: T.label, fontSize: "0.65rem", fontWeight: 600, color: i === 2 ? C.blue : C.gray, textTransform: "uppercase", letterSpacing: "0.08em", textAlign: i > 0 ? "center" : "left" }}>{h}</div>
-                  ))}
-                </div>
-                {[
-                  { label: "Cost", vals: ["$15+/hr", "$5/hr", "Compute"] },
-                  { label: "Scale", vals: ["Bottleneck", "Infinite", "High"] },
-                  { label: "Quality", vals: ["Real physics", "Validated", "Sim gap"] },
-                ].map((row, i) => (
-                  <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", padding: "0.75rem 1rem", borderBottom: i < 2 ? `1px solid ${C.border}` : "none", alignItems: "center" }}>
-                    <div style={{ fontFamily: T.label, fontSize: "0.72rem", fontWeight: 600, color: C.gray, textTransform: "uppercase", letterSpacing: "0.06em" }}>{row.label}</div>
-                    {row.vals.map((v, j) => (
-                      <div key={j} style={{ textAlign: "center", fontSize: "0.82rem", fontWeight: j === 1 ? 700 : 400, color: j === 1 ? C.blue : C.gray, background: j === 1 ? C.blueLight : "transparent", padding: "0.25rem 0.5rem", borderRadius: "5px" }}>{v}</div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="reveal" style={{ transitionDelay: "0.15s" }}>
-              {/* Three advantage cards */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "1rem", marginBottom: "1.5rem" }}>
-                {[
-                  {
-                    icon: "🌍",
-                    title: "Scalable Workforce",
-                    body: "Leveraging the global install base of 20M+ VR/XR headsets and full body suits. No need to fly operators to a lab.",
-                  },
-                  {
-                    icon: "💰",
-                    title: "Cheaper",
-                    body: "Using $500 consumer hardware instead of $50,000 custom teleoperation rigs.",
-                  },
-                  {
-                    icon: "⚡",
-                    title: "High Fidelity",
-                    body: "Physics-based simulation (Isaac Lab) and cloud delivery (CloudXR) ensures data transfers seamlessly to the real world.",
-                  },
-                ].map((adv, i) => (
-                  <div key={i} className="reveal" style={{ display: "flex", gap: "1rem", alignItems: "flex-start", padding: "1.25rem 1.5rem", background: C.grayLight, borderRadius: "10px", border: `1px solid ${C.border}`, transitionDelay: `${i * 0.1}s` }}>
-                    <div style={{ fontSize: "1.4rem", lineHeight: 1, flexShrink: 0 }}>{adv.icon}</div>
-                    <div>
-                      <div style={{ fontFamily: T.display, fontWeight: 700, fontSize: "0.95rem", color: C.navy, marginBottom: "0.3rem" }}>{adv.title}</div>
-                      <p style={{ color: C.gray, fontSize: "0.85rem", lineHeight: 1.6, margin: 0 }}>{adv.body}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div style={{ position: "relative", borderRadius: "14px", overflow: "hidden", border: `1px solid ${C.border}` }}>
-                <img
-                  src={SIMULATION_SCENE}
-                  alt="Gamified VR task vs clean simulator"
-                  style={{ width: "100%", display: "block", objectFit: "cover" }}
-                />
-                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, display: "flex", justifyContent: "space-between", padding: "0.75rem 1rem", background: "rgba(255,255,255,0.9)", borderTop: `1px solid ${C.border}` }}>
-                  <span style={{ fontFamily: T.mono, fontSize: "0.62rem", color: C.blue, letterSpacing: "0.08em" }}>PLAYER VIEW</span>
-                  <span style={{ fontFamily: T.mono, fontSize: "0.62rem", color: C.gray, letterSpacing: "0.08em" }}>SIMULATOR OUTPUT →</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── MARKET TIMING ── */}
-      <section id="market-timing" style={{ padding: "100px 0", background: C.navy, borderTop: `1px solid ${C.border}` }}>
-        <div className="container">
-          <div className="reveal" style={{ textAlign: "center", marginBottom: "4.5rem" }}>
-            <div className="label-tag" style={{ marginBottom: "0.75rem", background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)" }}>Market Timing</div>
-            <h2 style={{ fontSize: "clamp(2rem, 4vw, 3.2rem)", color: C.white, lineHeight: 1.1, marginBottom: "1rem" }}>
-              The Hardware is<br />
-              <span style={{ color: C.blue }}>Already Here.</span>
-            </h2>
-            <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "1.05rem", maxWidth: "520px", margin: "0 auto", lineHeight: 1.7 }}>
-              Three forces converged to make this moment possible — and irreversible.
-            </p>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1.5rem" }}>
-            {[
-              {
-                num: "01",
-                title: "20M+ Dormant Headsets",
-                body: "Millions of consumer VR devices are gathering dust. This is a massive, distributed workforce waiting to be activated.",
-                stat: "20M+",
-                statLabel: "VR/XR headsets in the wild",
-              },
-              {
-                num: "02",
-                title: "The Missing Link Found",
-                body: "Hardware existed, but physics didn't. Now, NVIDIA Isaac Lab + Cloud GPUs make real-time simulation possible at scale.",
-                stat: "Isaac Lab",
-                statLabel: "+ CloudXR = real-time sim",
-              },
-              {
-                num: "03",
-                title: "We Connect the Dots",
-                body: "We bridge the gap between the XR community and Robotics labs. We turn \"gamers\" into \"trainers\".",
-                stat: "1/10th",
-                statLabel: "cost vs physical teleop",
-              },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className="reveal"
-                style={{
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: "14px",
-                  padding: "2.5rem 2rem",
-                  transitionDelay: `${i * 0.12}s`,
-                }}
-              >
-                <div style={{ fontFamily: T.mono, fontSize: "0.65rem", color: C.blue, marginBottom: "1.5rem", letterSpacing: "0.12em" }}>{item.num}</div>
-                <div style={{ fontFamily: T.display, fontWeight: 800, fontSize: "2rem", color: C.blue, lineHeight: 1, marginBottom: "0.3rem" }}>{item.stat}</div>
-                <div style={{ fontFamily: T.label, fontSize: "0.65rem", color: "rgba(255,255,255,0.4)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "1.5rem" }}>{item.statLabel}</div>
-                <div style={{ fontFamily: T.display, fontWeight: 700, fontSize: "1rem", color: C.white, marginBottom: "0.6rem" }}>{item.title}</div>
-                <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.88rem", lineHeight: 1.65, margin: 0 }}>{item.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── HOW IT WORKS ── */}
-      <section id="how-it-works" style={{ padding: "100px 0", background: C.grayLight, borderTop: `1px solid ${C.border}` }}>
-        <div className="container">
-          <div className="reveal" style={{ textAlign: "center", marginBottom: "4rem" }}>
-            <div className="label-tag" style={{ marginBottom: "0.75rem" }}>The Platform</div>
-            <h2 style={{ fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)", color: C.navy, lineHeight: 1.15 }}>
-              How SIM XR Works
-            </h2>
-            <p style={{ color: C.gray, fontSize: "1rem", maxWidth: "480px", margin: "0.75rem auto 0", lineHeight: 1.65 }}>
-              A three-sided platform connecting robotics companies, VR developers, and a global crowd of operators.
-            </p>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1.5rem" }}>
-            {[
-              {
-                step: "=>",
-                who: "Robotics Company",
-                role: "The Client",
-                desc: "Submits a task spec and budget. Receives a validated, benchmarked dataset ready for model training.",
-                accent: C.blue,
-              },
-              {
-                step: "",
-                who: "SIM XR Platform",
-                role: "The Orchestrator",
-                desc: "Distributes tasks, validates data quality, and routes payments. We keep the margin — our flywheel grows with every episode.",
-                accent: C.blue,
-                highlight: true,
-              },
-              {
-                step: "03",
-                who: "VR Crowd",
-                role: "The Operators",
-                desc: "Global users play gamified tasks in VR. Their actions are recorded as clean physics trajectories — paid per validated episode.",
-                accent: C.blue,
-              },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className="reveal"
-                style={{
-                  background: item.highlight ? C.navy : C.white,
-                  border: `1px solid ${item.highlight ? C.navy : C.border}`,
-                  borderRadius: "12px",
-                  padding: "2.25rem 2rem",
-                  transitionDelay: `${i * 0.1}s`,
-                }}
-              >
-                <div style={{ fontFamily: T.mono, fontSize: "0.68rem", color: item.highlight ? "rgba(255,255,255,0.4)" : C.blue, marginBottom: "1.25rem", letterSpacing: "0.1em" }}>{item.step}</div>
-                <div style={{ fontFamily: T.display, fontWeight: 800, fontSize: "1.1rem", color: item.highlight ? C.white : C.navy, marginBottom: "0.3rem" }}>{item.who}</div>
-                <div style={{ fontFamily: T.label, fontSize: "0.65rem", fontWeight: 600, color: item.highlight ? "rgba(255,255,255,0.45)" : C.blue, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.85rem" }}>{item.role}</div>
-                <p style={{ color: item.highlight ? "rgba(255,255,255,0.65)" : C.gray, fontSize: "0.88rem", lineHeight: 1.65 }}>{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── VIDEO PLACEHOLDER ── */}
-      <section id="demo" style={{ padding: "100px 0", background: C.white, borderTop: `1px solid ${C.border}` }}>
+      {/* ── DEMO (moved up — visual hook right after hero) ── */}
+      <section id="demo" style={{ padding: "100px 0", background: C.grayLight, borderTop: `1px solid ${C.border}` }}>
         <div className="container">
           <div className="reveal" style={{ textAlign: "center", marginBottom: "3rem" }}>
             <div className="label-tag" style={{ marginBottom: "0.75rem" }}>See It In Action</div>
@@ -707,7 +381,7 @@ export default function Home() {
               From VR Game to Robot Skill
             </h2>
             <p style={{ color: C.gray, fontSize: "1rem", maxWidth: "480px", margin: "0.75rem auto 0", lineHeight: 1.65 }}>
-              Watch how a single VR session generates thousands of validated training episodes for physical AI models.
+              A single VR session generates thousands of validated training episodes for physical AI models.
             </p>
           </div>
           <div
@@ -738,101 +412,59 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── GAMIFICATION ── */}
-      <section id="gamification" style={{ padding: "100px 0", background: C.grayLight, borderTop: `1px solid ${C.border}` }}>
+      {/* ── WHAT IT IS — compressed from prior "What we build" + "Solution" ── */}
+      <section id="what-it-is" style={{ padding: "100px 0", background: C.white, borderTop: `1px solid ${C.border}` }}>
         <div className="container">
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5rem", alignItems: "center" }}>
-            <div className="reveal">
-              <div className="label-tag" style={{ marginBottom: "0.75rem" }}>The Unfair Advantage</div>
-              <h2 style={{ fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)", color: C.navy, marginBottom: "1rem", lineHeight: 1.15 }}>
-                The Gamification<br />Layer.
-              </h2>
-              <p style={{ color: C.gray, fontSize: "1rem", lineHeight: 1.7, marginBottom: "2.25rem" }}>
-                Our XR &amp; metaverse expertise lets us wrap any data collection task in a compelling game loop — immersive, rewarding, and genuinely fun. Users participate not just for pay, but because it's engaging.
-              </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-                {[
-                  { title: "Intrinsic Motivation", desc: "Game loops keep users engaged beyond pay — more episodes, higher retention and data quality." },
-                  { title: "Skin-Agnostic Data", desc: "We record actions, not frames. Any game skin maps to clean physics trajectories." },
-                  { title: "Retargetable to Any Scene", desc: "One session replays in any environment — 3DGS or Isaac Lab. Infinite scene variations." },
-                ].map((item, i) => (
-                  <div key={i} style={{ display: "flex", gap: "1rem", alignItems: "flex-start" }}>
-                    <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: C.blue, marginTop: "0.45rem", flexShrink: 0 }} />
-                    <div>
-                      <div style={{ fontFamily: T.display, fontWeight: 700, fontSize: "0.95rem", color: C.navy, marginBottom: "0.2rem" }}>{item.title}</div>
-                      <div style={{ color: C.gray, fontSize: "0.88rem", lineHeight: 1.6 }}>{item.desc}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="reveal" style={{ transitionDelay: "0.15s" }}>
-              <div style={{ borderRadius: "14px", overflow: "hidden", border: `1px solid ${C.border}` }}>
-                <img
-                  src={SIMULATION_SCENE}
-                  alt="Gamified VR vs simulator"
-                  style={{ width: "100%", display: "block", objectFit: "cover" }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── VISION ── */}
-      <section id="vision" style={{ padding: "100px 0", background: C.white, borderTop: `1px solid ${C.border}` }}>
-        <div className="container">
-          <div className="reveal" style={{ textAlign: "center", marginBottom: "4rem" }}>
-            <div className="label-tag" style={{ marginBottom: "0.75rem" }}>The Vision</div>
-            <h2 style={{ fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)", color: C.navy, lineHeight: 1.15, marginBottom: "0.75rem" }}>
-              Beyond Trajectories.
+          <div className="reveal" style={{ textAlign: "center", maxWidth: "640px", margin: "0 auto 3.5rem" }}>
+            <div className="label-tag" style={{ marginBottom: "0.75rem" }}>What it is</div>
+            <h2 style={{ fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)", color: C.navy, marginBottom: "1rem", lineHeight: 1.15 }}>
+              Cheaper than teleop.<br />
+              <span style={{ color: C.blue }}>Better than pure simulation.</span>
             </h2>
-            <p style={{ color: C.gray, fontSize: "1rem", maxWidth: "520px", margin: "0 auto", lineHeight: 1.65 }}>
-              We are building the engine that generates infinite, photorealistic training worlds for Vision-Language-Action models.
+            <p style={{ color: C.gray, fontSize: "1rem", lineHeight: 1.7 }}>
+              Robotics teams need millions of demonstrations. Real-world teleop costs $15+/hr per operator and doesn't scale. SIM XR captures real human intelligence inside a physics-accurate simulation — at consumer-VR price.
             </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1.5rem", marginBottom: "3rem" }}>
+          <div className="reveal" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1.5rem" }}>
             {[
               {
-                title: "Synthetic Sensor Data for VLA",
-                desc: "We replay validated human trajectories inside simulation to generate perfect synthetic sensor data — RGB-D, LiDAR — for training Vision-Language-Action models.",
+                title: "Consumer VR, not a lab",
+                body: "Operators use Quest, Vision Pro or Pico headsets they already own. No specialized rigs, no on-site setup, no flying people in.",
               },
               {
-                title: "3D Gaussian Splatting + Physics",
-                desc: "We combine 3DGS for absolute photorealism with rigid-body physics, creating digital twins indistinguishable from reality.",
+                title: "Physics-grounded data",
+                body: "Every session runs inside NVIDIA Isaac Lab. Trajectories transfer to real robots — no sim-to-real gap, no video-only ambiguity.",
               },
               {
-                title: "Infinite Variations via Cosmos",
-                desc: "Using NVIDIA Cosmos World Foundation Models, we generate millions of environment variations, exponentially scaling Imitation & Reinforcement Learning.",
+                title: "Gamified at scale",
+                body: "Workers play because the task is fun, not just for pay. Skin-agnostic recording: one session retargets to any environment, any robot.",
               },
-            ].map((item, i) => (
+            ].map((card, i) => (
               <div
                 key={i}
-                className="reveal"
                 style={{
                   background: C.grayLight,
                   border: `1px solid ${C.border}`,
                   borderRadius: "12px",
-                  padding: "2.25rem 2rem",
-                  transitionDelay: `${i * 0.1}s`,
+                  padding: "2rem 1.75rem",
                 }}
               >
-                <div style={{ fontFamily: T.display, fontWeight: 700, fontSize: "1rem", color: C.navy, marginBottom: "0.75rem", lineHeight: 1.35 }}>{item.title}</div>
-                <p style={{ color: C.gray, fontSize: "0.88rem", lineHeight: 1.65 }}>{item.desc}</p>
+                <div style={{ fontFamily: T.display, fontWeight: 700, fontSize: "1.05rem", color: C.navy, marginBottom: "0.6rem", lineHeight: 1.3 }}>{card.title}</div>
+                <p style={{ color: C.gray, fontSize: "0.9rem", lineHeight: 1.65, margin: 0 }}>{card.body}</p>
               </div>
             ))}
           </div>
 
-          {/* NVIDIA badges */}
-          <div className="reveal" style={{ display: "flex", justifyContent: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+          {/* NVIDIA badges — public per memory project_program_status_2026 */}
+          <div className="reveal" style={{ display: "flex", justifyContent: "center", gap: "0.75rem", flexWrap: "wrap", marginTop: "3rem" }}>
             {["NVIDIA Inception Program", "Built on NVIDIA CloudXR"].map((badge) => (
               <div
                 key={badge}
                 style={{
                   fontFamily: T.label, fontSize: "0.75rem", fontWeight: 600,
-                  color: "#16A34A",
-                  background: "#F0FDF4",
+                  color: C.green,
+                  background: C.greenLight,
                   border: "1px solid #BBF7D0",
                   borderRadius: "6px",
                   padding: "0.4rem 0.9rem",
@@ -846,8 +478,64 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── FOUNDER ── */}
-      <section id="founder" style={{ padding: "100px 0", background: C.grayLight, borderTop: `1px solid ${C.border}` }}>
+      {/* ── HOW IT WORKS — three-sided platform diagram (kept verbatim) ── */}
+      <section id="how-it-works" style={{ padding: "100px 0", background: C.grayLight, borderTop: `1px solid ${C.border}` }}>
+        <div className="container">
+          <div className="reveal" style={{ textAlign: "center", marginBottom: "4rem" }}>
+            <div className="label-tag" style={{ marginBottom: "0.75rem" }}>The Platform</div>
+            <h2 style={{ fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)", color: C.navy, lineHeight: 1.15 }}>
+              How SIM XR Works
+            </h2>
+            <p style={{ color: C.gray, fontSize: "1rem", maxWidth: "480px", margin: "0.75rem auto 0", lineHeight: 1.65 }}>
+              A three-sided platform connecting robotics companies, VR developers, and a global crowd of operators.
+            </p>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1.5rem" }}>
+            {[
+              {
+                step: "01",
+                who: "Robotics Company",
+                role: "The Client",
+                desc: "Submits a task spec and budget. Receives a validated, benchmarked dataset ready for model training.",
+              },
+              {
+                step: "02",
+                who: "SIM XR Platform",
+                role: "The Orchestrator",
+                desc: "Distributes tasks, validates data quality, and routes payments. We keep the margin — our flywheel grows with every episode.",
+                highlight: true,
+              },
+              {
+                step: "03",
+                who: "VR Crowd",
+                role: "The Operators",
+                desc: "Global users play gamified tasks in VR. Their actions are recorded as clean physics trajectories — paid per validated episode.",
+              },
+            ].map((item, i) => (
+              <div
+                key={i}
+                className="reveal"
+                style={{
+                  background: item.highlight ? C.navy : C.white,
+                  border: `1px solid ${item.highlight ? C.navy : C.border}`,
+                  borderRadius: "12px",
+                  padding: "2.25rem 2rem",
+                  transitionDelay: `${i * 0.1}s`,
+                }}
+              >
+                <div style={{ fontFamily: T.mono, fontSize: "0.68rem", color: item.highlight ? "rgba(255,255,255,0.4)" : C.blue, marginBottom: "1.25rem", letterSpacing: "0.1em" }}>{item.step}</div>
+                <div style={{ fontFamily: T.display, fontWeight: 800, fontSize: "1.1rem", color: item.highlight ? C.white : C.navy, marginBottom: "0.3rem" }}>{item.who}</div>
+                <div style={{ fontFamily: T.label, fontSize: "0.65rem", fontWeight: 600, color: item.highlight ? "rgba(255,255,255,0.45)" : C.blue, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.85rem" }}>{item.role}</div>
+                <p style={{ color: item.highlight ? "rgba(255,255,255,0.65)" : C.gray, fontSize: "0.88rem", lineHeight: 1.65 }}>{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FOUNDER — kept BIT-EXACTLY from deck version per Gosha's ask ── */}
+      <section id="founder" style={{ padding: "100px 0", background: C.white, borderTop: `1px solid ${C.border}` }}>
         <div className="container">
           <div className="reveal" style={{ marginBottom: "3.5rem" }}>
             <div className="label-tag" style={{ marginBottom: "0.75rem" }}>The Founder</div>
@@ -913,16 +601,16 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── EARLY ACCESS FORM ── */}
-      <section id="early-access" style={{ padding: "100px 0", background: C.white, borderTop: `1px solid ${C.border}` }}>
+      {/* ── GET IN TOUCH — robotics teams + collaborators (forms unchanged) ── */}
+      <section id="contact" style={{ padding: "100px 0", background: C.grayLight, borderTop: `1px solid ${C.border}` }}>
         <div className="container">
           <div className="reveal" style={{ marginBottom: "3.5rem" }}>
-            <div className="label-tag" style={{ marginBottom: "0.75rem" }}>🚀 Early Access</div>
+            <div className="label-tag" style={{ marginBottom: "0.75rem" }}>Get in Touch</div>
             <h2 style={{ fontSize: "clamp(2rem, 4vw, 3rem)", color: C.navy, lineHeight: 1.1, marginBottom: "1rem" }}>
-              Early Access for Robotics Teams
+              Building the training layer for physical AI — together.
             </h2>
             <p style={{ color: C.gray, fontSize: "1rem", maxWidth: "560px" }}>
-              We're building the training layer for physical AI. Join early to shape the platform.
+              Two paths. If you're at a robotics team that needs demonstration data, request early access. If you want to collaborate as an engineer, researcher, or XR developer, reach out directly.
             </p>
           </div>
 
@@ -985,33 +673,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── CTA BANNER ── */}
-      <section style={{ padding: "80px 0", background: C.navy, borderTop: `1px solid ${C.border}` }}>
-        <div className="container" style={{ textAlign: "center" }}>
-          <div className="reveal">
-            <h2 style={{ fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)", color: C.white, lineHeight: 1.15, marginBottom: "1rem" }}>
-              Ready to train your robots<br />at scale?
-            </h2>
-            <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "1rem", marginBottom: "2rem" }}>
-              We're working with early robotics partners. Let's talk.
-            </p>
-            <a
-              href="mailto:gm@simxr.tech"
-              style={{
-                fontFamily: T.label, fontWeight: 600, fontSize: "0.9rem",
-                color: C.navy, background: C.white,
-                padding: "0.8rem 2rem", borderRadius: "8px",
-                textDecoration: "none", letterSpacing: "0.02em",
-                display: "inline-block",
-              }}
-            >
-              Get in Touch →
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* ── OPERATOR CROSS-LINK ── */}
+      {/* ── OPERATOR CROSS-LINK — small banner pointing at /operator/ ── */}
       <section style={{ padding: "64px 0", background: C.white, borderTop: `1px solid ${C.border}` }}>
         <div className="container" style={{ textAlign: "center" }}>
           <div style={{ fontFamily: T.label, fontSize: "0.7rem", fontWeight: 700, color: C.blue, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.6rem" }}>
@@ -1038,7 +700,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── FOOTER ── (4-col grid, mirrors /operator footer structure) */}
+      {/* ── FOOTER ── */}
       <footer style={{ background: C.navy, color: "rgba(255,255,255,0.6)", borderTop: `1px solid ${C.border}` }}>
         <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "2.5rem 1.5rem" }}>
           <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: "2rem" }} className="footer-grid">
@@ -1050,7 +712,7 @@ export default function Home() {
                 </span>
               </div>
               <p style={{ fontSize: "0.88rem", lineHeight: 1.6, maxWidth: "26rem", margin: "0 0 1rem" }}>
-                The training layer for Physical AI. We turn millions of consumer XR headsets into a scalable, gamified training ground for robots.
+                The training layer for Physical AI. Operators play in VR. Robots learn from human intelligence — at scale, with real-world physics.
               </p>
               <p style={{ fontSize: "0.85rem", margin: 0 }}>
                 <span style={{ fontFamily: T.mono, fontSize: "0.68rem", color: "rgba(255,255,255,0.4)", letterSpacing: "0.1em", marginRight: "0.6rem" }}>
@@ -1068,10 +730,9 @@ export default function Home() {
                 PRODUCT
               </div>
               <ul style={{ listStyle: "none", padding: 0, margin: 0, fontSize: "0.88rem", lineHeight: 1.9 }}>
-                <li><a href="#problem" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>Problem</a></li>
-                <li><a href="#solution" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>Solution</a></li>
-                <li><a href="#how-it-works" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>How It Works</a></li>
-                <li><a href="#market-timing" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>Market Timing</a></li>
+                <li><a href="#demo" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>Demo</a></li>
+                <li><a href="#what-it-is" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>What it is</a></li>
+                <li><a href="#how-it-works" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>How it works</a></li>
               </ul>
             </div>
 
@@ -1081,9 +742,9 @@ export default function Home() {
                 COMPANY
               </div>
               <ul style={{ listStyle: "none", padding: 0, margin: 0, fontSize: "0.88rem", lineHeight: 1.9 }}>
-                <li><a href="#vision" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>Vision</a></li>
                 <li><a href="#founder" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>Founder</a></li>
-                <li><a href="mailto:gm@simxr.tech" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>Contact</a></li>
+                <li><a href="#contact" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>Contact</a></li>
+                <li><a href="mailto:gm@simxr.tech" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>gm@simxr.tech</a></li>
               </ul>
             </div>
           </div>

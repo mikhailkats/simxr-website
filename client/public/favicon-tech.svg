@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- SIM XR favicon — TECH variant (simxr.tech marketing site, light theme).
+       Mirror of favicon.svg (the simxr.app dark variant) for visual coherence:
+       same X + accent dot mark, inverted palette to match the marketing site.
+       Brand colors:
+         #FFFFFF = white bg (matches simxr.tech #FFFFFF site bg)
+         #0B0F1A = primary text navy (X stroke)
+         #0057FF = brand blue (accent dot — slightly more saturated than the
+                  #4D80FF used on dark, since blue-on-white wants more punch) -->
+  <rect width="32" height="32" rx="6" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1"/>
+  <path d="M8 8 L19 19 M19 8 L8 19"
+        stroke="#0B0F1A"
+        stroke-width="3"
+        stroke-linecap="round"/>
+  <circle cx="24" cy="24" r="3.2" fill="#0057FF"/>
+</svg>

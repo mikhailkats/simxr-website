@@ -208,9 +208,17 @@ export function useCloudXRSession(
     }
 
     // 1. Pre-flight — confirm WebXR is supported in this browser.
+    //
+    // Both error paths below resolve to the same product fact: this device
+    // can't enter immersive VR. The two messages differ only in the hint
+    // about headset-side settings, which is relevant when the visitor IS
+    // already on a headset but VR mode is somehow disabled (rare). On a
+    // desktop browser, the second variant's "check VR is enabled" hint is
+    // misleading — desktop visitors should just be pointed at a real VR
+    // headset, not told to fix nonexistent settings.
     if (!("xr" in navigator) || !navigator.xr) {
       setError(
-        "WebXR not available in this browser. Open simxr.app from a WebXR-capable VR headset's browser to access the demo.",
+        "WebXR isn't supported in this browser. Open simxr.app from a Quest 3, Apple Vision Pro, or Pico headset to enter the VR demo.",
       );
       setState("error");
       return;
@@ -224,7 +232,7 @@ export function useCloudXRSession(
     }
     if (!supported) {
       setError(
-        "Your browser reports WebXR but not immersive-vr. Make sure VR is enabled in headset settings.",
+        "Immersive VR isn't available in this browser. Open simxr.app from a Quest 3, Apple Vision Pro, or Pico headset to enter the demo. If you're already on a headset and seeing this, check that VR is enabled in your headset's browser settings.",
       );
       setState("error");
       return;
