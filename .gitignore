@@ -113,3 +113,9 @@ temp/
 
 # Webdev artifacts (checkpoint zips, migrations, etc.)
 .webdev/
+
+# Build artifact: scenes.json is auto-generated from scenes.yaml by
+# scripts/build-scenes-fallback.mjs on every `pnpm build`. The yaml is
+# the source of truth; the json is derived. Never commit it.
+client/public/connect/scenes.json
+

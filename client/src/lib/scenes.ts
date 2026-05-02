@@ -238,9 +238,29 @@ export async function fetchScenes(): Promise<Scene[]> {
     }
     return MOCK_SCENES;
   }
-  // Server returns { scenes: Scene[], ts: string } per locked contract.
-  const data = await fetchJson<{ scenes: Scene[]; ts: string }>("/scenes.json");
-  return data.scenes;
+  // Live path: api.simxr.app/api/scenes.json. Server returns
+  // { scenes: Scene[], ts: string } per the locked endpoint contract.
+  try {
+    const data = await fetchJson<{ scenes: Scene[]; ts: string }>("/scenes.json");
+    return data.scenes;
+  } catch (apiErr) {
+    // Static fallback: same-origin /connect/scenes.json, generated at build
+    // time from scenes.yaml by scripts/build-scenes-fallback.mjs. Lets the
+    // catalog render even when the Brev server / Cloudflare Tunnel is down.
+    // Per-scene live status (live-ready / live-busy) requires healthz, which
+    // remains api-only — fallback scenes always render as "offline" (or
+    // "broken" if scenes.yaml flagged them).
+    try {
+      const res = await fetch("/connect/scenes.json", { cache: "no-store" });
+      if (!res.ok) throw new Error(`fallback /connect/scenes.json HTTP ${res.status}`);
+      const data = (await res.json()) as { scenes: Scene[]; ts: string };
+      return data.scenes;
+    } catch (fallbackErr) {
+      // Both sources failed — re-throw the original API error so the UI shows
+      // the "between sessions" state with the correct upstream context.
+      throw apiErr;
+    }
+  }
 }
 
 export async function fetchHealth(): Promise<Healthz> {
