@@ -6,7 +6,7 @@
 # New architecture (2026-05-02):
 # - CloudXR signaling via Cloudflare Tunnel at teleop.simxr.tech (WSS, port 443, real cert)
 # - UDP media direct from headset to AWS server's public IP (no proxy)
-# - Multi-scene picker reads from scenes.yaml and /var/run/simxr-current-scene.txt
+# - Multi-scene picker reads from scenes.yaml and /var/run/simxr/current-scene.txt
 # - All available scenes shown; live scene has the Connect button; others are offline
 #
 # Idempotent: identical inputs produce byte-identical HTML. Repeated runs with
@@ -29,7 +29,7 @@ usage() {
 Usage: $(basename "$0") [--dry-run] [--no-push] [-h|--help]
 
 Renders ${TEMPLATE} with the current public IP, reads the live scene from
-/var/run/simxr-current-scene.txt, and uses scenes.yaml to build scene cards.
+/var/run/simxr/current-scene.txt, and uses scenes.yaml to build scene cards.
 Writes to ${OUT_DIR}/index.html and (by default) commits + pushes to GitHub.
 Netlify auto-builds on push.
 
@@ -94,10 +94,10 @@ html_escape() {
   printf '%s' "$s"
 }
 
-# Read the live scene ID from /var/run/simxr-current-scene.txt, if it exists.
+# Read the live scene ID from /var/run/simxr/current-scene.txt, if it exists.
 LIVE_SCENE=""
-if [[ -f /var/run/simxr-current-scene.txt ]]; then
-  LIVE_SCENE="$(cat /var/run/simxr-current-scene.txt | tr -d '\n')"
+if [[ -f /var/run/simxr/current-scene.txt ]]; then
+  LIVE_SCENE="$(cat /var/run/simxr/current-scene.txt | tr -d '\n')"
 fi
 
 # Parse scenes.yaml and build the HTML scene cards.
