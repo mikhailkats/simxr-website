@@ -1,0 +1,57 @@
+# SIM XR Connect — curated scene list
+# Source: live `gym.register` entries on /data_storage/simxr-native/IsaacLab as of 2026-05-02.
+# Status flags:
+#   live      — currently running on the server (set by deploy script reading /var/run/simxr/current-scene.txt)
+#   available — runnable, mesh-only / stereo-safe
+#   broken    — known visual bug in Quest stereo (NuRec/Gaussian background)
+
+# ───── Manipulation / Pick-Place family (manager_based/manipulation/pick_place) ─────
+
+- id: Isaac-NutPour-GR1T2-Pink-IK-Abs-v0
+  name: "NutPour — GR1T2"
+  description: "Humanoid GR1T2 with Pink-IK arms pours nuts from a beaker into a target bowl."
+  status: available
+
+- id: Isaac-PickPlace-GR1T2-Abs-v0
+  name: "Pick & Place — GR1T2"
+  description: "Vanilla bimanual pick-and-place with Fourier GR1T2 humanoid; no special IK."
+  status: available
+
+- id: Isaac-PickPlace-GR1T2-WaistEnabled-Abs-v0
+  name: "Pick & Place — Waist-Enabled"
+  description: "Bimanual pick-and-place with full GR1T2 waist articulation enabled."
+  status: available
+
+- id: Isaac-ExhaustPipe-GR1T2-Pink-IK-Abs-v0
+  name: "Exhaust Pipe Assembly"
+  description: "Industrial exhaust-pipe routing task with Pink-IK arms."
+  status: available
+
+- id: Isaac-PickPlace-G1-InspireFTP-Abs-v0
+  name: "Pick & Place — Unitree G1 + Inspire"
+  description: "Pick-and-place with Unitree G1 humanoid wearing the Inspire dexterous hand."
+  status: available
+
+# ───── Locomanipulation family (manager_based/locomanipulation/pick_place) ─────
+
+- id: Isaac-PickPlace-Locomanipulation-G1-Abs-v0
+  name: "Locomanipulation Pick & Place — G1"
+  description: "Mobile Unitree G1 walks and manipulates; mesh-only background."
+  status: available
+
+- id: Isaac-PickPlace-FixedBaseUpperBodyIK-G1-Abs-v0
+  name: "Fixed-Base Upper-Body IK — G1"
+  description: "Unitree G1 with fixed base, upper-body IK only; mesh-only background."
+  status: available
+
+- id: Isaac-PickPlace-Locomanipulation-G1-3DGS-Abs-v0
+  name: "Locomanipulation 3DGS — G1"
+  description: "Mobile Unitree G1 with NuRec/Gaussian Bali room background."
+  status: broken
+  note: "3DGS background renders incorrectly in Quest stereo (foreground/robot/hands/table fine). Tracking the 2026-05-01 NuRec stereo investigation; same fix unblocks both 3DGS variants."
+
+- id: Isaac-PickPlace-FixedBaseUpperBodyIK-G1-3DGS-Abs-v0
+  name: "Fixed-Base Upper-Body IK 3DGS — G1"
+  description: "Unitree G1 fixed-base with NuRec/Gaussian Bali room background."
+  status: broken
+  note: "Same 3DGS-stereo blocker as the locomanipulation 3DGS variant. Listed for completeness; will flip to available when the NuRec stereo fix lands."
