@@ -826,7 +826,7 @@ export default function Home() {
 
           {/* NVIDIA badges */}
           <div className="reveal" style={{ display: "flex", justifyContent: "center", gap: "0.75rem", flexWrap: "wrap" }}>
-            {["NVIDIA Inception Program", "NVIDIA CloudXR Early Access"].map((badge) => (
+            {["NVIDIA Inception Program", "Built on NVIDIA CloudXR"].map((badge) => (
               <div
                 key={badge}
                 style={{

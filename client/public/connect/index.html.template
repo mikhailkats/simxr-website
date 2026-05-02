@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>SIM XR · Connect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+  // Seed localStorage with the values that the upstream IsaacTeleop client reads on mount
+  // but does NOT support via URL params. The /client/ path on this same origin is a Netlify
+  // proxy of nvidia.github.io/IsaacTeleop/client (configured in simxr-tech netlify.toml),
+  // so localStorage is shared across both pages.
+  // serverIP+port still go via URL params (the client reads those at boot).
+  try {
+    localStorage.setItem("mediaAddress", "__IP__");
+    localStorage.setItem("immersiveMode", "vr");
+    localStorage.setItem("deviceProfile", "quest3");
+  } catch (e) { /* private browsing — fall back to manual fields */ }
+</script>
+<style>
+  :root {
+    --bg: #0B0F1A;        /* simxr.tech navy */
+    --ink: #E6EAF0;
+    --muted: #8B93A1;
+    --line: rgba(255,255,255,0.08);
+    --accent: #0057FF;     /* simxr.tech brand blue */
+    --accent-light: #4D80FF;
+    --accent-ink: #FFFFFF;
+    --warning: #D97706;    /* amber for broken status */
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+  body {
+    min-height: 100vh;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 24px 16px 20px;
+  }
+
+  /* Top bar with wordmark */
+  header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-bottom: 32px;
+  }
+  .wordmark {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  .wordmark .accent { color: var(--accent-light); }
+  .subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+
+  /* Main content area */
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  /* Scene cards grid */
+  .scenes-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    width: 100%;
+  }
+
+  @media (min-width: 600px) {
+    .scenes-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .scene-card {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.02);
+    transition: all 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 200px;
+    position: relative;
+  }
+
+  .scene-card.live {
+    border-color: var(--accent);
+    background: rgba(0, 87, 255, 0.08);
+  }
+
+  .scene-card.offline {
+    opacity: 0.6;
+  }
+
+  .scene-card.broken {
+    border-color: var(--warning);
+    background: rgba(217, 119, 6, 0.06);
+    opacity: 0.8;
+  }
+
+  .scene-card.broken .scene-name {
+    text-decoration: line-through;
+    color: var(--warning);
+  }
+
+  .scene-badge {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    color: var(--accent-ink);
+    background: var(--accent);
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    width: fit-content;
+  }
+
+  .scene-name {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0;
+    color: var(--ink);
+  }
+
+  .scene-description {
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--muted);
+    margin: 0;
+    flex: 1;
+  }
+
+  .scene-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .scene-status.offline {
+    color: var(--muted);
+  }
+
+  .scene-status.broken {
+    color: var(--warning);
+    font-weight: 500;
+  }
+
+  .scene-note {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--warning);
+    margin: 0;
+    padding-top: 8px;
+    border-top: 1px solid rgba(217, 119, 6, 0.3);
+  }
+
+  .cta-connect {
+    display: inline-block;
+    padding: 14px 28px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    border-radius: 8px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.05s ease;
+    align-self: flex-start;
+  }
+
+  .cta-connect:hover {
+    background: #1a6dff;
+  }
+
+  .cta-connect:active {
+    transform: translateY(1px);
+    background: #003ACC;
+  }
+
+  .cta-connect:disabled {
+    background: var(--muted);
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 14px;
+    margin-top: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    opacity: 0.75;
+  }
+
+  footer .ip-tag {
+    color: var(--ink);
+  }
+
+  /* Offline state */
+  .offline-notice {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+  }
+
+  .offline-notice .eyebrow {
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .offline-notice p {
+    font-size: 0.95rem;
+    line-height: 1.55;
+    margin: 0;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <span class="wordmark">SIM <span class="accent">XR.</span></span>
+    <span class="subtitle">/&nbsp;CONNECT</span>
+  </header>
+
+  <main>
+    <div class="eyebrow">Live Sessions</div>
+    __SCENES_BLOCK__
+  </main>
+
+  <footer>
+    <span>UPDATED __TIMESTAMP__</span>
+    <span class="ip-tag">__IP__</span>
+    <span style="flex: 1; text-align: right;">powered by NVIDIA CloudXR</span>
+  </footer>
+</body>
+</html>
