@@ -1,9 +1,19 @@
 # SIM XR Connect — curated scene list
 # Source: live `gym.register` entries on /data_storage/simxr-native/IsaacLab as of 2026-05-02.
-# Status flags:
-#   live      — currently running on the server (set by deploy script reading /var/run/simxr/current-scene.txt)
-#   available — runnable, mesh-only / stereo-safe
-#   broken    — known visual bug in Quest stereo (NuRec/Gaussian background)
+#
+# Schema matches React's Scene type (client/src/lib/scenes.ts):
+#   id          (required) — gym task id
+#   name        (required) — short label shown on the card; NOT "label"
+#   status      (required) — "available" | "broken" only. Anything else is
+#                            silently DROPPED from /api/scenes.json by the
+#                            server-side converter (use this to hide draft
+#                            scenes without deleting them — e.g. status: draft).
+#   description (optional) — 1-line plain English
+#   note        (optional) — shown under the card when status == broken
+#
+# "Live" status (currently running on the server) is NOT a yaml flag — it's
+# computed at request-time from /api/healthz live_scene field. Don't add
+# status: live here; it would be filtered out as unknown.
 
 # ───── Manipulation / Pick-Place family (manager_based/manipulation/pick_place) ─────
 

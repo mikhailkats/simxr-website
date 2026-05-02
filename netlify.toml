@@ -1,9 +1,14 @@
 # SIM XR website — Netlify build config
-# Vite-only build (skips the server bundling that pnpm build would also do).
+# We bypass `pnpm build` (which also runs esbuild on the unused tRPC server
+# bundle) and call vite directly, but we need the scenes-fallback prebuild
+# step that converts client/public/connect/scenes.yaml → scenes.json so the
+# Connect page can render the catalog when api.simxr.app is offline. The
+# prebuild runs first; vite then copies dist/public/connect/scenes.json
+# verbatim (anything in client/public/ ships to dist/public/).
 # Output goes to dist/public/, which is the Vite default for this project.
 
 [build]
-  command = "pnpm vite build"
+  command = "pnpm run build:scenes-fallback && pnpm vite build"
   publish = "dist/public"
 
 [build.environment]

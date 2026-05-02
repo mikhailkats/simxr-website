@@ -24,7 +24,12 @@ const SRC = join(ROOT, "client/public/connect/scenes.yaml");
 const OUT = join(ROOT, "client/public/connect/scenes.json");
 
 const ALLOWED_KEYS = new Set(["id", "name", "description", "status", "note"]);
-const VALID_STATUS = new Set(["available", "broken", "live"]);
+// Aligned with server-side converter: anything not in this set is silently
+// DROPPED. Yaml entries with status: draft / status: deprecated etc. won't
+// appear in scenes.json — that's the supported way to hide a scene.
+// "Live" status is NOT a stored value — computed at request-time from
+// healthz.live_scene, never appears in scenes.yaml.
+const VALID_STATUS = new Set(["available", "broken"]);
 
 const raw = readFileSync(SRC, "utf8");
 const parsed = yaml.load(raw);
@@ -47,8 +52,9 @@ for (let i = 0; i < parsed.length; i++) {
   }
   if (!VALID_STATUS.has(scene.status)) {
     console.warn(
-      `scenes[${i}] status="${scene.status}" not in {${[...VALID_STATUS].join(", ")}}; passing through`,
+      `scenes[${i}] (${scene.id}) status="${scene.status}" not in {${[...VALID_STATUS].join(", ")}}; DROPPED (use this to hide draft scenes)`,
     );
+    continue;
   }
   const cleaned = {};
   for (const [k, v] of Object.entries(scene)) {

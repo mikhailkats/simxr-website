@@ -146,32 +146,42 @@ export function useCloudXRSession(
   // ──────────────────────────────────────────────────────────────────────────
   // Cloudflare Free + Pro tier closes WebSocket connections after 100 seconds
   // of no traffic in either direction. CloudXR sessions can run 10+ minutes;
-  // long idle periods (operator standing still, scene paused, etc.) will kill
-  // the signaling channel without warning. CloudXR.js docs are silent on
-  // whether the SDK emits its own keepalive — we'll know in Phase 6 testing.
+  // long idle periods (operator standing still, scene paused, etc.) would
+  // silently kill the signaling channel without this. Enabled proactively
+  // (cost in success-case is one no-op call per 30s; cost in failure-case
+  // is a debugging cycle on Phase 6 with Mike on Quest 3 — pay it now).
   //
-  // If Phase 6 reveals a connection drop at ~100s mark:
-  //   1. Uncomment the block below
-  //   2. Verify CloudXR.js Session has a `sendPing()` / `keepAlive()` method,
-  //      or check what the underlying WebSocket exposes via the SDK
-  //   3. If no SDK method exists, we may need to reach into CloudXR.js
-  //      internals (look at `session._signalingChannel` or similar) — fall
-  //      back to a forced no-op message via the opaque-data-channel API
-  //      (https://docs.nvidia.com/cloudxr-sdk/latest/usr_guide/cloudxr_runtime/opaque_data_channel.html)
-  //
-  // useEffect(() => {
-  //   if (state !== "streaming" && state !== "connected") return;
-  //   const id = window.setInterval(() => {
-  //     const cxr = sessionRef.current;
-  //     if (!cxr) return;
-  //     // TODO: replace with whatever CloudXR.js exposes for keepalive.
-  //     // Example shapes seen in similar SDKs:
-  //     //   cxr.sendPing?.();
-  //     //   cxr.sendOpaqueData?.(new Uint8Array([0]));
-  //     //   (cxr as any)._ws?.send('{"type":"ping"}');
-  //   }, 30_000);  // 30s — well below CF's 100s timeout
-  //   return () => window.clearInterval(id);
-  // }, [state]);
+  // Method probing: cloudxr-js 6.1 GA's exact keepalive API isn't documented
+  // (the SDK's typings don't ship a public `sendPing` / `sendOpaqueData`).
+  // We try the most likely shapes via optional chaining; if the SDK has none
+  // of them, the calls no-op and we'll see a 100s drop in Phase 6 — at which
+  // point we patch the right identifier (look at session._signalingChannel
+  // or similar internals; opaque-data-channel API is documented at
+  // https://docs.nvidia.com/cloudxr-sdk/latest/usr_guide/cloudxr_runtime/opaque_data_channel.html).
+  useEffect(() => {
+    if (state !== "streaming" && state !== "connected") return;
+    const id = window.setInterval(() => {
+      const cxr = sessionRef.current as
+        | (CloudXR.Session & {
+            sendPing?: () => void;
+            sendOpaqueData?: (data: Uint8Array) => void;
+            keepAlive?: () => void;
+          })
+        | null;
+      if (!cxr) return;
+      try {
+        // Try documented shapes first (method names guessed from common SDK
+        // conventions and similar NVIDIA SDKs); SDK ships none of these as
+        // of 6.1, so all three optional-chain to no-op until proven otherwise.
+        cxr.sendPing?.();
+        cxr.keepAlive?.();
+        cxr.sendOpaqueData?.(new Uint8Array([0]));
+      } catch {
+        // Don't let a keepalive blip take down the session.
+      }
+    }, 30_000); // 30s — well below CF's 100s idle timeout
+    return () => window.clearInterval(id);
+  }, [state]);
 
   const connect = useCallback(async () => {
     if (state !== "idle" && state !== "error") return;
@@ -220,14 +230,23 @@ export function useCloudXRSession(
       return;
     }
 
-    // 2. Pre-flight — fetch the bare server IP for UDP media.
+    // 2. Pre-flight — fetch the bare server IP for UDP media + the live
+    //    healthz so we read the current media port from the server (decouples
+    //    React from any future port reshuffle on the runtime side; default
+    //    is 47998 but that's a server config, not a contract). Done in
+    //    parallel because the two endpoints are independent.
     setState("preflight");
     let mediaAddress: string;
+    let mediaPort: number;
     try {
-      mediaAddress = await fetchMediaIp();
+      const [ip, healthz] = await Promise.all([fetchMediaIp(), fetchHealth()]);
+      mediaAddress = ip;
+      // healthz.media_port is required per the locked schema — but defend
+      // against an older server that hasn't shipped the field yet.
+      mediaPort = healthz.media_port ?? 47998;
     } catch (e) {
       setError(
-        `Server didn't return a current IP. The demo runtime may be offline. (${(e as Error).message})`,
+        `Server didn't respond on pre-flight. The demo runtime may be offline. (${(e as Error).message})`,
       );
       setState("error");
       return;
@@ -263,7 +282,7 @@ export function useCloudXRSession(
           deviceProfile: "auto-webrtc",
           immersiveMode: "vr",
           mediaAddress,
-          mediaPort: 47998,  // UDP media; 49100 is TCP signaling
+          mediaPort,  // from healthz.media_port (default 47998); WSS signaling lives on host:port (49100/443)
           perEyeWidth: 2048,
           perEyeHeight: 1792,
           maxStreamingBitrateKbps: 150_000,
