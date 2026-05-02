@@ -25,6 +25,9 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.2.2(react-hook-form@7.64.0(react@19.2.1))
+      '@nvidia/cloudxr':
+        specifier: file:./vendor/nvidia-cloudxr-6.1.0.tgz
+        version: file:vendor/nvidia-cloudxr-6.1.0.tgz(gl-matrix@3.4.4)(long@5.3.2)
       '@radix-ui/react-accordion':
         specifier: ^1.2.12
         version: 1.2.12(@types/react-dom@19.2.1(@types/react@19.2.1))(@types/react@19.2.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
@@ -148,12 +151,18 @@ importers:
       framer-motion:
         specifier: ^12.23.22
         version: 12.23.22(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      gl-matrix:
+        specifier: ^3.4.3
+        version: 3.4.4
       input-otp:
         specifier: ^1.4.2
         version: 1.4.2(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       jose:
         specifier: 6.1.0
         version: 6.1.0
+      long:
+        specifier: ^5.3.2
+        version: 5.3.2
       lucide-react:
         specifier: ^0.453.0
         version: 0.453.0(react@19.2.1)
@@ -1058,6 +1067,14 @@ packages:
 
   '@mermaid-js/parser@0.6.3':
     resolution: {integrity: sha512-lnjOhe7zyHjc+If7yT4zoedx2vo4sHaTmtkl1+or8BRTnCtDmcTpAjpzDSfCZrshM5bCoz0GyidzadJAH1xobA==}
+
+  '@nvidia/cloudxr@file:vendor/nvidia-cloudxr-6.1.0.tgz':
+    resolution: {integrity: sha512-JKqQeaOCy88n4sxGY5DjVDVVDYoPJAoAqDMKTM6wQG59AaG0zKIQIHUsVcDcPgmLwZZXSuuh56A+j0y0V5BXpA==, tarball: file:vendor/nvidia-cloudxr-6.1.0.tgz}
+    version: 6.1.0
+    engines: {node: '>=20.19.0'}
+    peerDependencies:
+      gl-matrix: ^3.4.3
+      long: ^5.3.2
 
   '@radix-ui/number@1.1.1':
     resolution: {integrity: sha512-MkKCwxlXTgz6CFoJx3pCwn07GKp36+aZyu/u2Ln2VrA5DcdyCZkASEDBTd8x5whTQQL5CiYf4prXKLcgQdv29g==}
@@ -3101,6 +3118,9 @@ packages:
 
   get-tsconfig@4.12.0:
     resolution: {integrity: sha512-LScr2aNr2FbjAjZh2C6X6BxRx1/x+aTDExct/xyq2XKbYOiG5c0aK7pMsSuyc0brz3ibr/lbQiHD9jzt4lccJw==}
+
+  gl-matrix@3.4.4:
+    resolution: {integrity: sha512-latSnyDNt/8zYUB6VIJ6PCh2jBjJX6gnDsoCZ7LyW7GkqrD51EWwa9qCoGixj8YqBtETQK/xY7OmpTF8xz1DdQ==}
 
   globals@15.15.0:
     resolution: {integrity: sha512-7ACyT3wmyp3I61S4fG682L0VA2RGD9otkqGJIwNUMF1SWUombIIk+af1unuDYgMm082aHYwD+mzJvv9Iu8dsgg==}
@@ -5233,6 +5253,11 @@ snapshots:
   '@mermaid-js/parser@0.6.3':
     dependencies:
       langium: 3.3.1
+
+  '@nvidia/cloudxr@file:vendor/nvidia-cloudxr-6.1.0.tgz(gl-matrix@3.4.4)(long@5.3.2)':
+    dependencies:
+      gl-matrix: 3.4.4
+      long: 5.3.2
 
   '@radix-ui/number@1.1.1': {}
 
@@ -7433,6 +7458,8 @@ snapshots:
   get-tsconfig@4.12.0:
     dependencies:
       resolve-pkg-maps: 1.0.0
+
+  gl-matrix@3.4.4: {}
 
   globals@15.15.0: {}
 

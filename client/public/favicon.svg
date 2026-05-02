@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- SIM XR favicon — dark navy bg + white "X" + accent blue dot.
+       Evokes the wordmark "SIM XR." where "." is the distinctive accent.
+       Brand colors:
+         #0B0F1A = page background navy
+         #E6EAF0 = primary text white
+         #4D80FF = accent blue (lighter variant of #0057FF for visibility) -->
+  <rect width="32" height="32" rx="6" fill="#0B0F1A"/>
+  <path d="M8 8 L19 19 M19 8 L8 19"
+        stroke="#E6EAF0"
+        stroke-width="3"
+        stroke-linecap="round"/>
+  <circle cx="24" cy="24" r="3.2" fill="#4D80FF"/>
+</svg>
