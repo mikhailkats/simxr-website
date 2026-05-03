@@ -504,6 +504,15 @@ export function useCloudXRSession(
         const cxr = sessionRef.current;
         if (cxr && layer) {
           try {
+            // CRITICAL — bind the XR layer's framebuffer FIRST. SDK doesn't
+            // do this itself; without the bind, render() draws into whatever
+            // framebuffer was last bound (default = canvas backbuffer, not
+            // the XR layer the headset reads from). Diagnosed 2026-05-03 —
+            // server was streaming video, sendTracking was working, but
+            // Quest stayed dark because composited frames went to nowhere
+            // visible to the XR compositor. Bind pattern documented in
+            // standard WebXR rendering loop + NVIDIA's CloudXR.js samples.
+            gl.bindFramebuffer(gl.FRAMEBUFFER, layer.framebuffer);
             cxr.sendTrackingStateToServer(time, xrFrame);
             cxr.render(time, xrFrame, layer);
           } catch {
