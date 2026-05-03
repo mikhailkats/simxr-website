@@ -422,10 +422,17 @@ export function useCloudXRSession(
           perEyeWidth: 2048,
           perEyeHeight: 1792,
           deviceFrameRate: 90,
-          maxStreamingBitrateKbps: 150_000,
-          // NVIDIA defaults from bundle.js (verified 2026-05-03 by CC).
-          // av1 with h265/h264 fallback negotiated server-side.
-          codec: "av1",
+          // 30 Mbps (was 150 — runtime / CF tunnel may reject too-greedy
+          // sessions; NVIDIA's UI defaults are in this range).
+          maxStreamingBitrateKbps: 30_000,
+          // h264 (was "av1" per NVIDIA bundle default — Quest 3 hardware AV1
+          // decode is historically unstable, h264 universal-stable).
+          codec: "h264",
+          // Reprojection grid — SDK validator allows undefined but the
+          // server-side runtime appears to require these for session accept
+          // (isaac log silence with undefined; CC's bundle.js shows :64).
+          reprojectionGridCols: 64,
+          reprojectionGridRows: 64,
           enablePoseSmoothing: true,
           posePredictionFactor: 1,
           enableTexSubImage2D: false,
@@ -472,8 +479,22 @@ export function useCloudXRSession(
       // land — Quest sees black screen even though UDP video is flowing.
       // The SDK draws into XRWebGLLayer.framebuffer itself via the
       // glBinding we passed; we just need to keep the cycle alive.
-      const frame = (_time: number, _xrFrame: XRFrame) => {
-        rafHandleRef.current = xrSession.requestAnimationFrame(frame);
+      //
+      // Purple-flag diagnostic (CC's idea): clear the framebuffer to purple
+      // before SDK draws on top. If Quest shows purple → rAF + framebuffer
+      // bind chain is correct, problem is upstream (SDK isn't writing
+      // frames). If Quest shows black → rAF/framebuffer broken at our level.
+      // Bin diagnostic, ~3 lines. Keep until Quest test confirms or remove
+      // when SDK draws over us.
+      const frame = (_time: number, xrFrame: XRFrame) => {
+        const session = xrFrame.session;
+        const layer = session.renderState.baseLayer;
+        if (layer) {
+          gl.bindFramebuffer(gl.FRAMEBUFFER, layer.framebuffer);
+          gl.clearColor(0.5, 0, 0.5, 1); // purple
+          gl.clear(gl.COLOR_BUFFER_BIT);
+        }
+        rafHandleRef.current = session.requestAnimationFrame(frame);
       };
       rafHandleRef.current = xrSession.requestAnimationFrame(frame);
     } catch (e) {
