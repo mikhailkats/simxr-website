@@ -1,0 +1,1042 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIM XR — Connect v2 (preview)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* SIM XR Connect v2 — design draft.
+     Borrows operator-dashboard visual language (ink/surface/volt/mono) but
+     adapts content model from "operator earns" to "partner enters demo".
+     Standalone preview — open as file:// in a browser, scene images load
+     from https://simxr.tech/operator/images/* (deployed). When approved,
+     this becomes Dashboard.tsx wired to /v2 route on simxr.app. */
+
+  :root {
+    --ink: #0E1014;
+    --ink-deep: #08090C;
+    --surface: #17181E;
+    --surface-hi: #1D1F26;
+    --stroke: #22242C;
+    --stroke-hi: #2D303A;
+    --volt: #4361FF;
+    --volt-light: #6A85FF;
+    --volt-deep: #2940C9;
+    --success: #4ECE8C;
+    --warn: #F5B842;
+    --danger: #FF4A5C;
+    --muted: #6B7280;
+    --text: #E7E8EC;
+    --text-dim: #A1A4AD;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { background: var(--ink); color: var(--text); margin: 0; padding: 0; min-height: 100vh; transition: background 180ms ease, color 180ms ease; }
+  body { font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-size: 14px; line-height: 1.5; }
+  .mono { font-family: 'IBM Plex Mono', monospace; font-feature-settings: 'tnum'; }
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  /* ── Light theme overrides — ported from operator dashboard's palette.
+        Body class swap toggles all surfaces; volt accent stays constant. ── */
+  body.light {
+    --ink: #FAFAF8;
+    --ink-deep: #F2F0EB;
+    --surface: #FFFFFF;
+    --surface-hi: #F4F2EC;
+    --stroke: #E5E2DA;
+    --stroke-hi: #D4D0C6;
+    --text: #111217;
+    --text-dim: #4B5563;
+    --muted: #6B7280;
+  }
+  body.light .grid-dark {
+    background-image:
+      linear-gradient(to right, rgba(17,18,23,0.025) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(17,18,23,0.025) 1px, transparent 1px);
+  }
+  body.light .topbar { background: rgba(255,255,255,0.85); }
+
+  /* Subtle 40px grid on main bg — almost invisible, gives texture */
+  .grid-dark {
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,0.018) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.018) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* Pulses */
+  @keyframes pulse-volt {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(67,97,255,0.5); }
+    70% { box-shadow: 0 0 0 7px rgba(67,97,255,0); }
+  }
+  .pulse-volt { animation: pulse-volt 1.8s ease-out infinite; }
+
+  @keyframes pulse-success {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(78,206,140,0.5); }
+    70% { box-shadow: 0 0 0 6px rgba(78,206,140,0); }
+  }
+  .pulse-success { animation: pulse-success 2.4s ease-out infinite; }
+
+  @keyframes pulse-danger {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,74,92,0.5); }
+    70% { box-shadow: 0 0 0 6px rgba(255,74,92,0); }
+  }
+  .pulse-danger { animation: pulse-danger 2.4s ease-out infinite; }
+
+  /* App layout — sidebar + main */
+  .layout { display: flex; min-height: 100vh; }
+  .main { flex: 1; min-width: 0; }
+
+  /* Sidebar (240px) */
+  .sidebar {
+    width: 240px; flex-shrink: 0;
+    background: var(--ink-deep); border-right: 1px solid var(--stroke);
+    display: flex; flex-direction: column;
+    position: sticky; top: 0; height: 100vh; z-index: 20;
+  }
+  .sidebar .logo-block {
+    height: 60px; padding: 0 20px; border-bottom: 1px solid var(--stroke);
+    display: flex; align-items: center;
+  }
+  /* Brand wordmark — same shape as on simxr.tech / Connect.tsx
+     ("SIM" in text colour + "XR." with blue accent on the period). */
+  .sidebar .wordmark-side {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-weight: 700; font-size: 18px; letter-spacing: -0.02em; color: var(--text);
+  }
+  .sidebar .wordmark-side .accent { color: var(--volt); }
+
+  /* Sidebar device card — bottom-left small block. Mirrors operator's GEAR
+     card but with only the data we actually know (Quest 3). Other gear rows
+     (certificate, sim link, user identity) we don't have a source for yet. */
+  .sidebar-bottom { padding: 12px; border-top: 1px solid var(--stroke); }
+  .device-card {
+    background: var(--surface); border-radius: 8px; padding: 12px;
+  }
+  .device-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .device-label {
+    font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+    color: var(--muted); letter-spacing: 0.12em;
+  }
+  .device-status {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+    color: var(--success); letter-spacing: 0.05em;
+  }
+  .device-status .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--success); }
+  .device-row {
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+    color: var(--text-dim);
+  }
+  .device-row .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--success); }
+
+  /* User pill — initials + name. Subtitle (operator's "DIAMOND · T-4" tier)
+     omitted; partner-side has no tier system yet. */
+  .user-pill {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 12px; padding: 0 4px;
+  }
+  .user-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(67,97,255,0.15);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px; font-weight: 600; color: var(--volt);
+    flex-shrink: 0;
+  }
+  .user-name {
+    font-size: 13px; color: var(--text); font-weight: 500;
+  }
+
+  .sidebar nav { padding: 12px; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .nav-section-label {
+    padding: 8px 12px; font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px; color: var(--muted); letter-spacing: 0.15em;
+    text-transform: uppercase; margin-top: 12px;
+  }
+  .nav-section-label:first-child { margin-top: 0; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; border-radius: 6px;
+    color: var(--text-dim); font-size: 13px; font-weight: 400;
+    cursor: pointer; text-decoration: none; transition: background 120ms ease, color 120ms ease;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.03); color: var(--text); }
+  .nav-item.active {
+    background: rgba(67,97,255,0.10); color: var(--text);
+  }
+  .nav-item.active svg { stroke: var(--volt); }
+  .nav-item svg { flex-shrink: 0; opacity: 0.85; }
+  .nav-item .badge {
+    margin-left: auto; font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px; color: var(--text-dim);
+    background: var(--surface-hi); padding: 2px 6px; border-radius: 4px;
+    letter-spacing: 0.02em;
+  }
+  .nav-item.active .badge { background: rgba(67,97,255,0.18); color: var(--volt-light); }
+  .nav-item.disabled {
+    color: var(--muted); cursor: default; opacity: 0.55;
+  }
+  .nav-item.disabled:hover { background: transparent; color: var(--muted); }
+  .nav-item.disabled .soon {
+    margin-left: auto; font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px; color: var(--muted);
+    border: 1px solid var(--stroke); padding: 1px 5px; border-radius: 3px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+
+  body.light .sidebar { background: var(--ink-deep); }
+  body.light .nav-item:hover { background: rgba(17,18,23,0.04); }
+  body.light .nav-item.active { background: rgba(67,97,255,0.08); color: var(--text); }
+
+  /* Top bar — rich version (welcome + datetime + pills + theme + bell) */
+  .topbar {
+    height: 60px;
+    border-bottom: 1px solid var(--stroke);
+    background: rgba(8, 9, 12, 0.6);
+    backdrop-filter: blur(12px);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px;
+    position: sticky; top: 0; z-index: 25;
+  }
+  .topbar .welcome {
+    font-size: 13px; font-weight: 500; color: var(--text);
+  }
+  .topbar .welcome-date {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted);
+    margin-top: 2px; letter-spacing: 0.02em;
+  }
+
+  /* Header pill — generic for the streak/earnings/status slots */
+  .h-pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 6px 11px; border-radius: 6px;
+    background: var(--surface); border: 1px solid var(--stroke);
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-dim);
+  }
+  .h-pill .accent-volt { color: var(--volt); font-weight: 500; }
+  .h-pill .accent-warn { color: var(--warn); font-weight: 500; }
+  .h-pill .accent-success { color: var(--success); font-weight: 500; }
+  .h-pill.volt-soft {
+    background: rgba(67,97,255,0.08); border-color: rgba(67,97,255,0.25);
+    color: var(--text);
+  }
+  .h-icon-btn {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: var(--surface); border: 1px solid var(--stroke);
+    color: var(--text-dim); cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: border-color 120ms ease, color 120ms ease;
+    position: relative;
+  }
+  .h-icon-btn:hover { border-color: var(--stroke-hi); color: var(--text); }
+  .h-icon-btn .notif-dot {
+    position: absolute; top: 6px; right: 6px;
+    width: 6px; height: 6px; border-radius: 50%; background: var(--volt);
+  }
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 12px; border-radius: 6px;
+    background: rgba(78,206,140,0.08); border: 1px solid rgba(78,206,140,0.25);
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--success);
+    letter-spacing: 0.05em;
+  }
+  .status-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+  .status-pill.offline {
+    background: rgba(255,74,92,0.08); border-color: rgba(255,74,92,0.25); color: var(--danger);
+  }
+  .status-pill.offline .dot { background: var(--danger); }
+
+  /* Main wrap */
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 28px 32px 60px; }
+
+  /* H1 + subtitle */
+  .page-header { margin-bottom: 28px; }
+  .page-header h1 {
+    font-size: 22px; font-weight: 500; letter-spacing: -0.01em;
+    margin: 0; color: var(--text);
+  }
+  .page-header .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px; color: var(--muted); letter-spacing: 0.15em;
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+
+  /* Stats row */
+  .stats-row {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--stroke);
+    border-radius: 12px; padding: 18px 20px;
+  }
+  .stat-card .label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px; color: var(--muted); letter-spacing: 0.12em;
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .stat-card .value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 22px; font-weight: 500; color: var(--text);
+    line-height: 1.1; font-variant-numeric: tabular-nums;
+  }
+  .stat-card .value.small { font-size: 16px; }
+  .stat-card .meta {
+    margin-top: 10px; font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px; color: var(--text-dim);
+  }
+  .stat-card .meta.success { color: var(--success); }
+  .stat-card .meta.warn { color: var(--warn); }
+
+  /* Live scene banner */
+  .live-banner {
+    display: grid; grid-template-columns: 220px 1fr auto; gap: 24px; align-items: center;
+    background: var(--surface); border: 1px solid var(--stroke);
+    border-radius: 12px; padding: 20px;
+    margin-bottom: 28px; position: relative; overflow: hidden;
+  }
+  .live-banner::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--volt);
+  }
+  .live-banner .image {
+    width: 220px; height: 140px;
+    border-radius: 8px; overflow: hidden;
+    background: var(--ink-deep);
+    position: relative;
+  }
+  .live-banner .image img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .live-banner .image .live-badge {
+    position: absolute; top: 8px; left: 8px;
+    padding: 3px 8px; border-radius: 4px;
+    background: rgba(78,206,140,0.18); border: 1px solid rgba(78,206,140,0.4);
+    color: var(--success);
+    font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 500;
+    letter-spacing: 0.1em; display: inline-flex; align-items: center; gap: 5px;
+  }
+  .live-banner .image .live-badge .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--success); }
+  .live-banner .body .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px; color: var(--volt); letter-spacing: 0.18em;
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .live-banner .body h2 {
+    font-size: 18px; font-weight: 500; letter-spacing: -0.005em;
+    color: var(--text); margin: 0 0 6px;
+  }
+  .live-banner .body p {
+    color: var(--text-dim); margin: 0; font-size: 13px; line-height: 1.55;
+    max-width: 540px;
+  }
+  .btn-primary {
+    background: var(--volt); color: white; border: none;
+    padding: 10px 22px; border-radius: 8px;
+    font-family: 'Inter', sans-serif; font-weight: 500; font-size: 14px;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+    transition: background 120ms ease;
+  }
+  .btn-primary:hover { background: var(--volt-light); }
+  .btn-primary svg { width: 14px; height: 14px; }
+
+  /* Catalog header */
+  .catalog-header {
+    display: flex; align-items: end; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .catalog-header h2 {
+    font-size: 16px; font-weight: 500; margin: 0; color: var(--text);
+  }
+  .catalog-header .count {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+
+  /* Filter chips */
+  .chips { display: flex; align-items: center; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
+  .chips .label {
+    font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted);
+    letter-spacing: 0.12em; text-transform: uppercase; margin-right: 4px;
+  }
+  .chip {
+    padding: 5px 10px; border-radius: 6px;
+    background: var(--surface); border: 1px solid var(--stroke);
+    color: var(--text-dim);
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 400;
+    letter-spacing: 0.02em; cursor: pointer; transition: all 120ms ease;
+  }
+  .chip:hover { border-color: var(--stroke-hi); color: var(--text); }
+  .chip.active {
+    background: rgba(67,97,255,0.1); border-color: rgba(67,97,255,0.4); color: var(--volt-light);
+  }
+  .chips .sep { width: 1px; height: 14px; background: var(--stroke); margin: 0 6px; }
+
+  /* Scene grid */
+  .scene-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+  }
+  .scene-card {
+    background: var(--surface); border: 1px solid var(--stroke);
+    border-radius: 12px; overflow: hidden;
+    transition: border-color 120ms ease, transform 120ms ease;
+    display: flex; flex-direction: column;
+  }
+  .scene-card:hover { border-color: var(--stroke-hi); }
+  .scene-card.live { border-color: rgba(67,97,255,0.4); }
+  /* Offline cards — clearly subordinate to the live one. Tiered de-emphasis:
+     image desaturated + dimmed (visitor still sees what the scene IS), card
+     border + text slightly faded, hover restores so curious visitor can
+     inspect without committing. */
+  .scene-card.offline { opacity: 0.7; transition: opacity 160ms ease; }
+  .scene-card.offline:hover { opacity: 0.95; }
+  .scene-card.offline .image img,
+  .scene-card.offline .image video { filter: saturate(0.35) brightness(0.85); transition: filter 160ms ease; }
+  .scene-card.offline:hover .image img,
+  .scene-card.offline:hover .image video { filter: saturate(1) brightness(1); }
+  .scene-card.broken { opacity: 0.5; }
+  .scene-card.broken .image img,
+  .scene-card.broken .image video { filter: saturate(0.2) brightness(0.75); }
+  .scene-card .image {
+    aspect-ratio: 16/10; background: var(--ink-deep); overflow: hidden;
+    position: relative;
+  }
+  .scene-card .image img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .scene-card .image .badge {
+    position: absolute; top: 10px; left: 10px;
+    padding: 3px 8px; border-radius: 4px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 500;
+    letter-spacing: 0.1em; display: inline-flex; align-items: center; gap: 5px;
+  }
+  .scene-card .image .badge.live {
+    background: rgba(78,206,140,0.18); border: 1px solid rgba(78,206,140,0.4);
+    color: var(--success);
+  }
+  .scene-card .image .badge.live .dot {
+    width: 5px; height: 5px; border-radius: 50%; background: var(--success);
+  }
+  .scene-card .image .badge.broken {
+    background: rgba(245,184,66,0.18); border: 1px solid rgba(245,184,66,0.4);
+    color: var(--warn);
+  }
+  .scene-card .body { padding: 14px 16px 16px; flex: 1; display: flex; flex-direction: column; }
+  .scene-card .tags {
+    display: flex; gap: 8px; margin-bottom: 8px;
+  }
+  .scene-card .tag {
+    font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+    color: var(--text-dim); letter-spacing: 0.05em;
+  }
+  .scene-card .tag.dot::before {
+    content: '•'; margin-right: 6px; color: var(--stroke-hi);
+  }
+  .scene-card h3 {
+    font-size: 14px; font-weight: 500; margin: 0 0 6px;
+    color: var(--text); line-height: 1.3;
+  }
+  .scene-card p {
+    color: var(--text-dim); font-size: 12.5px; line-height: 1.5;
+    margin: 0 0 12px; flex: 1;
+  }
+  .scene-card .footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: 12px; border-top: 1px solid var(--stroke);
+  }
+  .scene-card .status {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+    color: var(--muted); letter-spacing: 0.05em;
+  }
+  .scene-card .status.offline { color: var(--text-dim); }
+  .scene-card .status.broken { color: var(--warn); }
+  .scene-card .btn-connect {
+    background: var(--volt); color: white; border: none;
+    padding: 6px 14px; border-radius: 6px;
+    font-family: 'Inter', sans-serif; font-weight: 500; font-size: 12px;
+    cursor: pointer;
+  }
+  .scene-card .btn-connect:hover { background: var(--volt-light); }
+  .scene-card .btn-disabled {
+    background: transparent; border: 1px solid var(--stroke); color: var(--muted);
+    padding: 6px 14px; border-radius: 6px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+    letter-spacing: 0.05em;
+  }
+  .scene-card .note {
+    margin-top: 10px; padding: 8px 10px; background: rgba(245,184,66,0.06);
+    border: 1px solid rgba(245,184,66,0.2); border-radius: 6px;
+    font-size: 11.5px; color: var(--warn); line-height: 1.5;
+  }
+
+  /* Footer strip */
+  .footer-strip {
+    margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--stroke);
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted);
+    letter-spacing: 0.1em; flex-wrap: wrap; gap: 8px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="layout">
+
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="sidebar">
+      <div class="logo-block">
+        <span class="wordmark-side">
+          SIM <span class="accent">XR.</span>
+        </span>
+      </div>
+
+      <nav>
+        <div class="nav-section-label">Demo</div>
+        <a class="nav-item active">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <rect x="3" y="3" width="7" height="9" rx="1"/>
+            <rect x="14" y="3" width="7" height="5" rx="1"/>
+            <rect x="14" y="12" width="7" height="9" rx="1"/>
+            <rect x="3" y="16" width="7" height="5" rx="1"/>
+          </svg>
+          <span>Tasks</span>
+          <span class="badge">9</span>
+        </a>
+        <a class="nav-item disabled">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <circle cx="12" cy="12" r="9"/>
+            <polygon points="10 8 16 12 10 16" fill="currentColor"/>
+          </svg>
+          <span>Live session</span>
+          <span class="soon">soon</span>
+        </a>
+        <a class="nav-item disabled">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <rect x="3" y="5" width="18" height="14" rx="2"/>
+            <path d="M3 10h18"/>
+          </svg>
+          <span>Recordings</span>
+          <span class="soon">soon</span>
+        </a>
+        <a class="nav-item disabled">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <circle cx="12" cy="8" r="4"/>
+            <path d="M4 21c0-4 4-7 8-7s8 3 8 7"/>
+          </svg>
+          <span>Profile</span>
+          <span class="soon">soon</span>
+        </a>
+
+        <div class="nav-section-label">Library</div>
+        <a class="nav-item disabled">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M2 20h20M6 20V10M11 20V4M16 20v-8M21 20v-5"/>
+          </svg>
+          <span>Stats</span>
+          <span class="soon">soon</span>
+        </a>
+        <a class="nav-item disabled">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          <span>Docs</span>
+          <span class="soon">soon</span>
+        </a>
+      </nav>
+
+      <!-- Bottom block: device card (Quest 3 only — other gear lines omitted
+           until we have a real source) + user pill (initials + name). -->
+      <div class="sidebar-bottom">
+        <div class="device-card">
+          <div class="device-header">
+            <span class="device-label">DEVICE</span>
+            <span class="device-status">
+              <span class="dot"></span>
+              DETECTED
+            </span>
+          </div>
+          <div class="device-row">
+            <span>Quest 3</span>
+            <span class="dot"></span>
+          </div>
+        </div>
+        <div class="user-pill">
+          <div class="user-avatar">MK</div>
+          <div class="user-name">Mike K.</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ============ MAIN ============ -->
+    <main class="main">
+
+      <!-- TOP BAR — ported from operator dashboard -->
+      <div class="topbar">
+        <div>
+          <div class="welcome">Welcome back, Mike.</div>
+          <div class="welcome-date" id="header-datetime">—</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span id="pill-status" class="status-pill">
+            <span id="pill-status-dot" class="dot pulse-success"></span>
+            <span id="pill-status-text">Checking…</span>
+          </span>
+          <span class="h-pill" title="Round-trip to api.simxr.app/api/healthz">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+            </svg>
+            Latency <span id="pill-latency" class="accent-success">—</span>
+          </span>
+          <span class="h-pill" title="Server timestamp of last successful poll">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="12" cy="12" r="9"/>
+              <polyline points="12 7 12 12 15 14"/>
+            </svg>
+            Last poll <span id="pill-lastpoll" class="accent-volt">—</span>
+          </span>
+          <span class="h-pill volt-soft">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4361FF" stroke-width="2">
+              <rect x="3" y="3" width="7" height="9" rx="1"/>
+              <rect x="14" y="3" width="7" height="5" rx="1"/>
+              <rect x="14" y="12" width="7" height="9" rx="1"/>
+              <rect x="3" y="16" width="7" height="5" rx="1"/>
+            </svg>
+            <span id="pill-scenes" class="accent-volt">—</span> scenes
+          </span>
+          <button id="theme-toggle" class="h-icon-btn" title="Toggle theme">
+            <svg id="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+            </svg>
+            <svg id="icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="display: none;">
+              <circle cx="12" cy="12" r="4"/>
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+            </svg>
+          </button>
+          <button class="h-icon-btn" title="Notifications">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
+              <path d="M10 21a2 2 0 0 0 4 0"/>
+            </svg>
+            <span class="notif-dot"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- MAIN CONTENT -->
+      <div class="grid-dark" style="min-height: calc(100vh - 60px);">
+    <div class="wrap">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <div class="eyebrow">Live demo · sim-xr-dev-test</div>
+        <h1>Choose a scene to step into.</h1>
+      </div>
+
+      <!-- Stats row -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="label">Live scene</div>
+          <div class="value small">Locomanip G1</div>
+          <div class="meta success">Ready · tap to enter</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Session state</div>
+          <div class="value small">ready</div>
+          <div class="meta">0 active clients</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Scenes available</div>
+          <div class="value tabular">9</div>
+          <div class="meta">7 ready · 2 in repair</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Server</div>
+          <div class="value small">eu-north-1</div>
+          <div class="meta">UDP 47998 · WSS 443</div>
+        </div>
+      </div>
+
+      <!-- Live scene banner -->
+      <div class="live-banner">
+        <div class="image">
+          <img src="https://simxr.tech/operator/images/task-references/g1_galileo_arena_box_pnp_locomanip.gif" alt="Locomanipulation G1 preview">
+          <span class="live-badge"><span class="dot"></span> LIVE</span>
+        </div>
+        <div class="body">
+          <div class="eyebrow">In session · ready</div>
+          <h2>Locomanipulation Pick &amp; Place — G1</h2>
+          <p>Mobile Unitree G1 walks across a mesh-only environment, picks up containers, and places them on the target shelf. Designed for stereo-safe rendering — no Gaussian background.</p>
+        </div>
+        <button class="btn-primary">
+          Connect
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+
+      <!-- Catalog header -->
+      <div class="catalog-header">
+        <div>
+          <h2>Scene catalog</h2>
+          <div class="count" style="margin-top: 4px;">9 scenes total · pulled from server scenes.yaml</div>
+        </div>
+      </div>
+
+      <!-- Filter chips -->
+      <div class="chips">
+        <span class="label">Robot</span>
+        <button class="chip active">All</button>
+        <button class="chip">GR1T2</button>
+        <button class="chip">G1</button>
+        <span class="sep"></span>
+        <span class="label">Status</span>
+        <button class="chip active">All</button>
+        <button class="chip">Available</button>
+        <button class="chip">In repair</button>
+      </div>
+
+      <!-- Scene catalog grid -->
+      <div class="scene-grid">
+
+        <!-- LIVE scene first -->
+        <div class="scene-card live">
+          <div class="image">
+            <img src="https://simxr.tech/operator/images/task-references/g1_galileo_arena_box_pnp_locomanip.gif" alt="">
+            <span class="badge live"><span class="dot"></span> LIVE</span>
+          </div>
+          <div class="body">
+            <div class="tags">
+              <span class="tag">Unitree G1</span>
+              <span class="tag dot">Locomanipulation</span>
+            </div>
+            <h3>Locomanipulation Pick &amp; Place — G1</h3>
+            <p>Mobile Unitree G1 walks and manipulates; mesh-only background.</p>
+            <div class="footer">
+              <span class="status">Ready · tap to enter</span>
+              <button class="btn-connect">Connect →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Available scenes -->
+        <div class="scene-card offline">
+          <div class="image">
+            <video src="https://simxr.tech/operator/videos/mission-pour.mp4"
+                   poster="https://simxr.tech/operator/images/mission-pour.png"
+                   muted playsinline preload="metadata" loop autoplay
+                   style="width:100%;height:100%;object-fit:cover;display:block;"></video>
+          </div>
+          <div class="body">
+            <div class="tags">
+              <span class="tag">Fourier GR1T2</span>
+              <span class="tag dot">Pink-IK · Pour</span>
+            </div>
+            <h3>NutPour — GR1T2</h3>
+            <p>Humanoid GR1T2 with Pink-IK arms pours nuts from a beaker into a target bowl.</p>
+            <div class="footer">
+              <span class="status offline">Currently offline</span>
+              <button class="btn-disabled">—</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="scene-card offline">
+          <div class="image">
+            <img src="https://simxr.tech/operator/images/robot-gr1t2.png" alt="">
+          </div>
+          <div class="body">
+            <div class="tags">
+              <span class="tag">Fourier GR1T2</span>
+              <span class="tag dot">Bimanual</span>
+            </div>
+            <h3>Pick &amp; Place — GR1T2</h3>
+            <p>Vanilla bimanual pick-and-place with Fourier GR1T2 humanoid; no special IK.</p>
+            <div class="footer">
+              <span class="status offline">Currently offline</span>
+              <button class="btn-disabled">—</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="scene-card offline">
+          <div class="image">
+            <img src="https://simxr.tech/operator/images/task-references/robocasa-gr1-task-suite.png" alt="">
+          </div>
+          <div class="body">
+            <div class="tags">
+              <span class="tag">Fourier GR1T2</span>
+              <span class="tag dot">Waist-enabled</span>
+            </div>
+            <h3>Pick &amp; Place — Waist-Enabled</h3>
+            <p>Bimanual pick-and-place with full GR1T2 waist articulation enabled.</p>
+            <div class="footer">
+              <span class="status offline">Currently offline</span>
+              <button class="btn-disabled">—</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="scene-card offline">
+          <div class="image">
+            <img src="https://simxr.tech/operator/images/task-pull-case.png" alt="">
+          </div>
+          <div class="body">
+            <div class="tags">
+              <span class="tag">Fourier GR1T2</span>
+              <span class="tag dot">Assembly</span>
+            </div>
+            <h3>Exhaust Pipe Assembly</h3>
+            <p>Industrial exhaust-pipe routing task with Pink-IK arms.</p>
+            <div class="footer">
+              <span class="status offline">Currently offline</span>
+              <button class="btn-disabled">—</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="scene-card offline">
+          <div class="image">
+            <img src="https://simxr.tech/operator/images/task-references/kitchen_gr1_arena.gif" alt="">
+          </div>
+          <div class="body">
+            <div class="tags">
+              <span class="tag">Unitree G1 + Inspire</span>
+              <span class="tag dot">Dexterous</span>
+            </div>
+            <h3>Pick &amp; Place — Unitree G1 + Inspire</h3>
+            <p>Pick-and-place with Unitree G1 humanoid wearing the Inspire dexterous hand.</p>
+            <div class="footer">
+              <span class="status offline">Currently offline</span>
+              <button class="btn-disabled">—</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="scene-card offline">
+          <div class="image">
+            <img src="https://simxr.tech/operator/images/task-references/franka_kitchen_pickup.gif" alt="">
+          </div>
+          <div class="body">
+            <div class="tags">
+              <span class="tag">Unitree G1</span>
+              <span class="tag dot">Fixed-base · Upper body IK</span>
+            </div>
+            <h3>Fixed-Base Upper-Body IK — G1</h3>
+            <p>Unitree G1 with fixed base, upper-body IK only; mesh-only background.</p>
+            <div class="footer">
+              <span class="status offline">Currently offline</span>
+              <button class="btn-disabled">—</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- BROKEN scenes -->
+        <div class="scene-card broken">
+          <div class="image">
+            <img src="https://simxr.tech/operator/images/task-references/scene-cosmos-data-reasoning.gif" alt="">
+            <span class="badge broken">⚠ IN REPAIR</span>
+          </div>
+          <div class="body">
+            <div class="tags">
+              <span class="tag">Unitree G1</span>
+              <span class="tag dot">Locomanip · 3DGS</span>
+            </div>
+            <h3>Locomanipulation 3DGS — G1</h3>
+            <p>Mobile Unitree G1 with NuRec/Gaussian Bali room background.</p>
+            <div class="footer">
+              <span class="status broken">Stereo render bug</span>
+              <button class="btn-disabled">—</button>
+            </div>
+            <div class="note">3DGS background renders incorrectly in Quest stereo. Foreground robot/hands/table fine. Tracking the NuRec stereo investigation.</div>
+          </div>
+        </div>
+
+        <div class="scene-card broken">
+          <div class="image">
+            <img src="https://simxr.tech/operator/images/task-references/scene-isaac-groot-loop.gif" alt="">
+            <span class="badge broken">⚠ IN REPAIR</span>
+          </div>
+          <div class="body">
+            <div class="tags">
+              <span class="tag">Unitree G1</span>
+              <span class="tag dot">Fixed-base · 3DGS</span>
+            </div>
+            <h3>Fixed-Base Upper-Body IK 3DGS — G1</h3>
+            <p>Unitree G1 fixed-base with NuRec/Gaussian Bali room background.</p>
+            <div class="footer">
+              <span class="status broken">Stereo render bug</span>
+              <button class="btn-disabled">—</button>
+            </div>
+            <div class="note">Same 3DGS-stereo blocker as the locomanipulation 3DGS variant.</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Footer strip -->
+      <div class="footer-strip">
+        <span>powered by NVIDIA CloudXR</span>
+      </div>
+
+    </div>
+  </div>
+
+    </main>
+  </div>
+
+  <script>
+    // Theme toggle — same pattern as the operator dashboard.
+    // Persists to localStorage; defaults to dark on first load.
+    (function () {
+      var body = document.body;
+      var btn = document.getElementById('theme-toggle');
+      var iconMoon = document.getElementById('icon-moon');
+      var iconSun = document.getElementById('icon-sun');
+
+      function applyTheme(theme) {
+        if (theme === 'light') {
+          body.classList.add('light');
+          iconMoon.style.display = 'none';
+          iconSun.style.display = 'inline-block';
+        } else {
+          body.classList.remove('light');
+          iconMoon.style.display = 'inline-block';
+          iconSun.style.display = 'none';
+        }
+      }
+
+      var saved = null;
+      try { saved = localStorage.getItem('sim-xr-theme'); } catch (e) {}
+      applyTheme(saved === 'light' ? 'light' : 'dark');
+
+      btn.addEventListener('click', function () {
+        var next = body.classList.contains('light') ? 'dark' : 'light';
+        applyTheme(next);
+        try { localStorage.setItem('sim-xr-theme', next); } catch (e) {}
+      });
+    })();
+
+    // Live datetime in header — updates every minute. Format mirrors operator
+    // dashboard ("Saturday, April 18 · 14:32 PT") but with real Date.now().
+    (function () {
+      var el = document.getElementById('header-datetime');
+      function tick() {
+        var d = new Date();
+        var weekday = d.toLocaleDateString('en-US', { weekday: 'long' });
+        var monthDay = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+        var time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+        var tzMatch = d.toLocaleTimeString('en-US', { timeZoneName: 'short' }).match(/[A-Z]{2,5}$/);
+        var tz = tzMatch ? tzMatch[0] : '';
+        el.textContent = weekday + ', ' + monthDay + ' · ' + time + (tz ? ' ' + tz : '');
+      }
+      tick();
+      setInterval(tick, 60 * 1000);
+    })();
+
+    // Real header pills — fetch api.simxr.app every 5s for liveness + latency
+    // + last-poll timestamp. Scenes count fetched once on load. CORS=* on
+    // api.simxr.app makes this work from any origin (file://, simxr.tech,
+    // simxr.app — same code). If the page is opened locally and the browser
+    // blocks file://→https:// fetches, pills honestly fall to "Server offline".
+    (function () {
+      var API = 'https://api.simxr.app/api';
+      var elStatusPill = document.getElementById('pill-status');
+      var elStatusDot = document.getElementById('pill-status-dot');
+      var elStatusText = document.getElementById('pill-status-text');
+      var elLatency = document.getElementById('pill-latency');
+      var elLastPoll = document.getElementById('pill-lastpoll');
+      var elScenes = document.getElementById('pill-scenes');
+
+      function setLive(latencyMs, ts) {
+        elStatusPill.classList.remove('offline');
+        elStatusDot.classList.add('pulse-success');
+        elStatusDot.classList.remove('pulse-danger');
+        elStatusText.textContent = 'Server live';
+
+        // Latency colour: green <200ms, amber 200-500, red >500
+        var cls = 'accent-success';
+        if (latencyMs > 500) cls = 'accent-warn';
+        else if (latencyMs > 200) cls = 'accent-warn';
+        elLatency.className = cls;
+        elLatency.textContent = '~' + latencyMs + 'ms';
+
+        // Last poll: server `ts` is ISO 8601 UTC. Render as HH:MM:SSZ.
+        if (ts) {
+          var t = ts.match(/T(\d{2}:\d{2}:\d{2})/);
+          elLastPoll.textContent = t ? t[1] + 'Z' : ts;
+        }
+      }
+
+      function setOffline(reason) {
+        elStatusPill.classList.add('offline');
+        elStatusDot.classList.remove('pulse-success');
+        elStatusDot.classList.add('pulse-danger');
+        elStatusText.textContent = 'Server offline';
+        elLatency.className = '';
+        elLatency.textContent = '—';
+        // keep elLastPoll as last-known value (don't wipe — partner sees how stale state is)
+      }
+
+      function pollHealthz() {
+        var t0 = performance.now();
+        fetch(API + '/healthz', { cache: 'no-store', mode: 'cors' })
+          .then(function (r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json().then(function (data) {
+              var latency = Math.round(performance.now() - t0);
+              setLive(latency, data.ts);
+            });
+          })
+          .catch(function (e) {
+            setOffline(e.message);
+          });
+      }
+
+      function loadScenesCount() {
+        fetch(API + '/scenes.json', { cache: 'no-store', mode: 'cors' })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (data) {
+            if (data && Array.isArray(data.scenes)) {
+              elScenes.textContent = data.scenes.length;
+            }
+          })
+          .catch(function () { /* leave as — */ });
+      }
+
+      // Polling lifecycle — only run while tab is visible. Page Visibility
+      // API gives us free server-load reduction: one visitor with 4 tabs
+      // open ends up polling from only 1 (the active). When tab goes hidden
+      // we clear the interval; when it comes back we fire an immediate poll
+      // so the partner sees fresh state before the 5s tick lands.
+      var pollTimer = null;
+      function startPolling() {
+        if (pollTimer) return;
+        pollHealthz();
+        pollTimer = setInterval(pollHealthz, 5000);
+      }
+      function stopPolling() {
+        if (!pollTimer) return;
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+
+      loadScenesCount();
+      if (!document.hidden) startPolling();
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden) stopPolling();
+        else startPolling();
+      });
+    })();
+  </script>
+
+</body>
+</html>

@@ -7,17 +7,22 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 
-// Connect is the inline-CloudXR.js VR connect page. Lazy-loaded so the homepage
-// bundle isn't bloated by the streaming SDK (~200–500 KB).
+// Dashboard is the operator-console version of the inline-CloudXR.js VR
+// connect page. Lazy-loaded so the marketing-side homepage bundle isn't
+// bloated by the streaming SDK (~200–500 KB).
 //
 // Domain-based apex routing:
-//   simxr.app   apex (`/`)      → Connect (operator-facing VR demo)
+//   simxr.app   apex (`/`)      → Dashboard (operator-facing VR demo)
 //   simxr.tech  apex (`/`)      → Home (marketing site)
-//   either domain `/connect`    → Connect (legacy / direct path)
+//   either domain `/connect`    → Dashboard (legacy direct path; v1 alias)
+//   either domain `/v2`         → Dashboard (versioned alias kept stable)
 //
-// The legacy v1 multi-scene picker (NVIDIA-hosted client via Netlify proxy)
-// lives at `/connect-classic` as a static file in client/public/connect-classic/.
-const Connect = lazy(() => import("./pages/Connect"));
+// The original simpler `Connect.tsx` page is preserved in src/pages/ for
+// reference and easy rollback (re-route here if the dashboard ever ships
+// a regression). The legacy v1 multi-scene picker (NVIDIA-hosted client
+// via Netlify proxy) still lives at `/connect-classic` as a static file
+// in client/public/connect-classic/.
+const Dashboard = lazy(() => import("./pages/Dashboard"));
 
 function isAppDomain(): boolean {
   if (typeof window === "undefined") return false;
@@ -28,7 +33,7 @@ function isAppDomain(): boolean {
 function Root() {
   return isAppDomain() ? (
     <Suspense fallback={null}>
-      <Connect />
+      <Dashboard />
     </Suspense>
   ) : (
     <Home />
@@ -41,12 +46,22 @@ function Router() {
       <Route path={"/"} component={Root} />
       <Route path={"/connect"}>
         <Suspense fallback={null}>
-          <Connect />
+          <Dashboard />
         </Suspense>
       </Route>
       <Route path={"/connect/"}>
         <Suspense fallback={null}>
-          <Connect />
+          <Dashboard />
+        </Suspense>
+      </Route>
+      <Route path={"/v2"}>
+        <Suspense fallback={null}>
+          <Dashboard />
+        </Suspense>
+      </Route>
+      <Route path={"/v2/"}>
+        <Suspense fallback={null}>
+          <Dashboard />
         </Suspense>
       </Route>
       <Route path={"/404"} component={NotFound} />
