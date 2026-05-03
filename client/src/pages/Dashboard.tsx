@@ -31,8 +31,9 @@ const SCENE_ASSETS: Record<string, SceneAsset> = {
     poster: "/operator/images/mission-pour.png",
   },
   "Isaac-PickPlace-GR1T2-Abs-v0": {
-    type: "image",
-    src: "/operator/images/robot-gr1t2.png",
+    // Custom Pick & Place GR1T2 clip — Mike's hand-picked footage 2026-05-03.
+    type: "video",
+    src: "/operator/videos/pickplace-gr1t2.mp4",
   },
   "Isaac-PickPlace-GR1T2-WaistEnabled-Abs-v0": {
     // Inherited the looping arena gif from Locomanip-G1 (Mike's swap 2026-05-03):
@@ -42,8 +43,9 @@ const SCENE_ASSETS: Record<string, SceneAsset> = {
     src: "/operator/images/task-references/g1_galileo_arena_box_pnp_locomanip.gif",
   },
   "Isaac-ExhaustPipe-GR1T2-Pink-IK-Abs-v0": {
-    type: "image",
-    src: "/operator/images/task-pull-case.png",
+    // Custom Exhaust Pipe Assembly clip — Mike's hand-picked footage 2026-05-03.
+    type: "video",
+    src: "/operator/videos/exhaust-pipe-gr1t2.mp4",
   },
   "Isaac-PickPlace-G1-InspireFTP-Abs-v0": {
     type: "image",
