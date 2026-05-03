@@ -35,8 +35,11 @@ const SCENE_ASSETS: Record<string, SceneAsset> = {
     src: "/operator/images/robot-gr1t2.png",
   },
   "Isaac-PickPlace-GR1T2-WaistEnabled-Abs-v0": {
+    // Inherited the looping arena gif from Locomanip-G1 (Mike's swap 2026-05-03):
+    // Locomanip-G1 got a custom mp4 of the actual scene we connected to,
+    // and this card keeps the previously-shared placeholder for now.
     type: "image",
-    src: "/operator/images/task-references/robocasa-gr1-task-suite.png",
+    src: "/operator/images/task-references/g1_galileo_arena_box_pnp_locomanip.gif",
   },
   "Isaac-ExhaustPipe-GR1T2-Pink-IK-Abs-v0": {
     type: "image",
@@ -47,8 +50,11 @@ const SCENE_ASSETS: Record<string, SceneAsset> = {
     src: "/operator/images/task-references/kitchen_gr1_arena.gif",
   },
   "Isaac-PickPlace-Locomanipulation-G1-Abs-v0": {
-    type: "image",
-    src: "/operator/images/task-references/g1_galileo_arena_box_pnp_locomanip.gif",
+    // Custom clip of the actual Locomanip-G1 scene we connected to via VR
+    // 2026-05-03 — Mike's hand-picked footage, not a generic operator
+    // placeholder. When we ship per-scene preview pipeline, swap here.
+    type: "video",
+    src: "/operator/videos/locomanip-g1.mp4",
   },
   "Isaac-PickPlace-FixedBaseUpperBodyIK-G1-Abs-v0": {
     type: "image",
