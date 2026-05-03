@@ -43,13 +43,17 @@ const SCENE_ASSETS: Record<string, SceneAsset> = {
     src: "/operator/images/task-references/g1_galileo_arena_box_pnp_locomanip.gif",
   },
   "Isaac-ExhaustPipe-GR1T2-Pink-IK-Abs-v0": {
-    // Custom Exhaust Pipe Assembly clip — Mike's hand-picked footage 2026-05-03.
+    // Custom Exhaust Pipe Assembly clip — Mike swapped 2026-05-03 evening
+    // to a more accurate clip ("robot reaching for the pipe"). Same path,
+    // new file content; the previous clip moved to the G1+Inspire card.
     type: "video",
     src: "/operator/videos/exhaust-pipe-gr1t2.mp4",
   },
   "Isaac-PickPlace-G1-InspireFTP-Abs-v0": {
-    type: "image",
-    src: "/operator/images/task-references/kitchen_gr1_arena.gif",
+    // Inherited the previous Exhaust Pipe mp4 (renamed) per Mike's reshuffle
+    // 2026-05-03. Robot manipulating cup, fits the dexterous Inspire-hand pick.
+    type: "video",
+    src: "/operator/videos/pickplace-g1-inspire.mp4",
   },
   "Isaac-PickPlace-Locomanipulation-G1-Abs-v0": {
     // Custom clip of the actual Locomanip-G1 scene we connected to via VR
@@ -63,8 +67,11 @@ const SCENE_ASSETS: Record<string, SceneAsset> = {
     src: "/operator/images/task-references/franka_kitchen_pickup.gif",
   },
   "Isaac-PickPlace-Locomanipulation-G1-3DGS-Abs-v0": {
+    // Inherited the kitchen_gr1_arena gif from the G1+Inspire card per
+    // Mike's reshuffle 2026-05-03. Card stays in 'broken' visual state
+    // anyway (3DGS stereo bug); cosmos-reasoning gif unused for now.
     type: "image",
-    src: "/operator/images/task-references/scene-cosmos-data-reasoning.gif",
+    src: "/operator/images/task-references/kitchen_gr1_arena.gif",
   },
   "Isaac-PickPlace-FixedBaseUpperBodyIK-G1-3DGS-Abs-v0": {
     type: "image",
