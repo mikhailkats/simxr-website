@@ -140,6 +140,12 @@ export function useCloudXRSession(
   const [error, setError] = useState<string | null>(null);
   const sessionRef = useRef<CloudXR.Session | null>(null);
   const xrSessionRef = useRef<XRSession | null>(null);
+  // Tracked for cleanup on disconnect/unmount. Quest WebXR needs the WebGL2
+  // canvas attached to DOM for XR-layer framebuffers to actually surface to
+  // the headset; rAF handle keeps the XR compositor ticking so CloudXR
+  // frames have somewhere to land.
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const rafHandleRef = useRef<number>(0);
 
   // Poll /healthz for live-scene + server-state.
   useEffect(() => {
@@ -164,11 +170,21 @@ export function useCloudXRSession(
   // Cleanup on unmount.
   useEffect(() => {
     return () => {
+      // Cancel rAF first so the SDK doesn't try to draw into a dead XR layer.
+      if (rafHandleRef.current && xrSessionRef.current) {
+        try { xrSessionRef.current.cancelAnimationFrame(rafHandleRef.current); } catch { /* ignore */ }
+      }
+      rafHandleRef.current = 0;
       void sessionRef.current?.disconnect().catch(() => {});
       sessionRef.current?.dispose();
       sessionRef.current = null;
       void xrSessionRef.current?.end().catch(() => {});
       xrSessionRef.current = null;
+      // Detach the WebGL2 canvas we attached to body in step 3a.
+      if (canvasRef.current) {
+        try { canvasRef.current.remove(); } catch { /* ignore */ }
+        canvasRef.current = null;
+      }
     };
   }, []);
 
@@ -293,10 +309,17 @@ export function useCloudXRSession(
     //    transient activation, which Quest browser preserves across awaits.
     setState("requesting-xr");
 
-    // 3a. Create off-screen WebGL2 context with xrCompatible upfront.
-    //     Falls back to gl.makeXRCompatible() if the constructor flag fails
-    //     (rare on Quest 3; common on some desktop browsers).
+    // 3a. Create WebGL2 context with xrCompatible upfront. Canvas MUST be
+    //     attached to DOM (1px invisible) for Quest 3 — pure off-screen
+    //     canvas accepts xrCompatible:true but the resulting XRWebGLLayer
+    //     framebuffers don't actually display, you get black screen on the
+    //     headset. CC verified this 2026-05-03 via tcpdump (UDP frames
+    //     reaching Quest, just not rendering).
     const canvas = document.createElement("canvas");
+    canvas.style.cssText =
+      "position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; left:0; top:0";
+    document.body.appendChild(canvas);
+    canvasRef.current = canvas;
     let gl: WebGL2RenderingContext;
     try {
       // Cast: canvas.getContext("webgl2", attrs) returns WebGL2RenderingContext | null
@@ -443,6 +466,16 @@ export function useCloudXRSession(
       // started yet — onStreamStarted will fire when they do).
       await cxr.connect();
       setState("connected");
+
+      // Start the WebXR render loop. Without an active rAF cycle the XR
+      // compositor never ticks and CloudXR-decoded frames have nowhere to
+      // land — Quest sees black screen even though UDP video is flowing.
+      // The SDK draws into XRWebGLLayer.framebuffer itself via the
+      // glBinding we passed; we just need to keep the cycle alive.
+      const frame = (_time: number, _xrFrame: XRFrame) => {
+        rafHandleRef.current = xrSession.requestAnimationFrame(frame);
+      };
+      rafHandleRef.current = xrSession.requestAnimationFrame(frame);
     } catch (e) {
       void xrSession.end().catch(() => {});
       xrSessionRef.current = null;
@@ -458,6 +491,11 @@ export function useCloudXRSession(
       setState("idle");
       return;
     }
+    // Cancel rAF first so the SDK doesn't redraw into a tearing-down layer.
+    if (rafHandleRef.current && xrSessionRef.current) {
+      try { xrSessionRef.current.cancelAnimationFrame(rafHandleRef.current); } catch { /* ignore */ }
+    }
+    rafHandleRef.current = 0;
     try {
       await sessionRef.current?.disconnect();
     } catch {
@@ -471,6 +509,11 @@ export function useCloudXRSession(
       /* ignore */
     }
     xrSessionRef.current = null;
+    // Detach the WebGL2 canvas we attached to body in step 3a.
+    if (canvasRef.current) {
+      try { canvasRef.current.remove(); } catch { /* ignore */ }
+      canvasRef.current = null;
+    }
     setState("idle");
   }, []);
 
