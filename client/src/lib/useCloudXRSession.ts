@@ -77,6 +77,17 @@ declare global {
       connect(): Promise<void>;
       disconnect(): Promise<void>;
       dispose(): void;
+      // Per-frame methods called inside the WebXR rAF callback. NVIDIA's
+      // documented pattern (developer.nvidia.com CloudXR.js sample):
+      //   session.sendTrackingStateToServer(time, frame)  ← MUST call each
+      //     frame so server knows we're an active client and where head/
+      //     controllers are pointing. Without this, server-side runtime
+      //     never registers us as a client, never starts encoding video.
+      //   session.render(time, frame, baseLayer)  ← composites the decoded
+      //     video frame into the XR layer's framebuffer. Without this, SDK
+      //     never writes pixels and Quest sees black screen.
+      sendTrackingStateToServer(time: number, frame: XRFrame): void;
+      render(time: number, frame: XRFrame, baseLayer: XRWebGLLayer): void;
       // Optional keepalive surface — exact method name untyped in the SDK,
       // probed via optional chaining in the keepalive useEffect.
       sendPing?: () => void;
@@ -474,25 +485,30 @@ export function useCloudXRSession(
       await cxr.connect();
       setState("connected");
 
-      // Start the WebXR render loop. Without an active rAF cycle the XR
-      // compositor never ticks and CloudXR-decoded frames have nowhere to
-      // land — Quest sees black screen even though UDP video is flowing.
-      // The SDK draws into XRWebGLLayer.framebuffer itself via the
-      // glBinding we passed; we just need to keep the cycle alive.
-      //
-      // Purple-flag diagnostic (CC's idea): clear the framebuffer to purple
-      // before SDK draws on top. If Quest shows purple → rAF + framebuffer
-      // bind chain is correct, problem is upstream (SDK isn't writing
-      // frames). If Quest shows black → rAF/framebuffer broken at our level.
-      // Bin diagnostic, ~3 lines. Keep until Quest test confirms or remove
-      // when SDK draws over us.
-      const frame = (_time: number, xrFrame: XRFrame) => {
+      // Start the WebXR render loop — NVIDIA's CloudXR.js documented pattern.
+      // Two method-calls per frame are MANDATORY:
+      //   1. session.sendTrackingStateToServer(time, frame)
+      //      Tells the server-side runtime where head/controllers are. Without
+      //      this, server doesn't know it has a client and never starts
+      //      encoding video. Diagnosed 2026-05-03 — earlier "empty rAF that
+      //      just keeps the cycle alive" pattern (CC's first spec) caused
+      //      isaac log silence + zero 1180b video frames in tcpdump.
+      //   2. session.render(time, frame, baseLayer)
+      //      SDK composites the decoded video into the XR layer's framebuffer.
+      //      Without this, the SDK never draws pixels, headset stays black.
+      //      The earlier purple-flag diagnostic confirmed our framebuffer/rAF
+      //      chain was correct — SDK just wasn't being asked to draw.
+      const frame = (time: number, xrFrame: XRFrame) => {
         const session = xrFrame.session;
         const layer = session.renderState.baseLayer;
-        if (layer) {
-          gl.bindFramebuffer(gl.FRAMEBUFFER, layer.framebuffer);
-          gl.clearColor(0.5, 0, 0.5, 1); // purple
-          gl.clear(gl.COLOR_BUFFER_BIT);
+        const cxr = sessionRef.current;
+        if (cxr && layer) {
+          try {
+            cxr.sendTrackingStateToServer(time, xrFrame);
+            cxr.render(time, xrFrame, layer);
+          } catch {
+            // SDK throws happen if session torn down mid-frame. Don't kill rAF.
+          }
         }
         rafHandleRef.current = session.requestAnimationFrame(frame);
       };
