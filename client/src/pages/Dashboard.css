@@ -476,6 +476,107 @@
 }
 .dashboard-root .footer-mark .pipe { color: var(--stroke-hi); margin: 0 2px; }
 
+/* Recordings list — second sidebar section. Dense row pattern: thumbnail
+   + scene/robot meta + duration + episodes + quality + status badge. */
+.dashboard-root .rec-list {
+  display: flex; flex-direction: column; gap: 10px;
+}
+.dashboard-root .rec-row {
+  display: grid;
+  grid-template-columns: 96px 1fr auto auto;
+  gap: 18px; align-items: center;
+  padding: 12px 16px;
+  background: var(--surface); border: 1px solid var(--stroke);
+  border-radius: 10px;
+  transition: border-color 120ms ease, transform 120ms ease;
+}
+.dashboard-root .rec-row:hover {
+  border-color: var(--stroke-hi);
+  transform: translateY(-1px);
+}
+.dashboard-root .rec-thumb {
+  width: 96px; height: 60px; border-radius: 6px; overflow: hidden;
+  background: var(--ink-deep); flex-shrink: 0;
+}
+.dashboard-root .rec-thumb img,
+.dashboard-root .rec-thumb video {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.dashboard-root .rec-meta { min-width: 0; }
+.dashboard-root .rec-meta .scene {
+  font-size: 14px; font-weight: 500; color: var(--text);
+  margin: 0 0 3px; line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dashboard-root .rec-meta .sub {
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+  color: var(--text-dim); letter-spacing: 0.02em;
+}
+.dashboard-root .rec-meta .sub .pipe { color: var(--stroke-hi); margin: 0 6px; }
+.dashboard-root .rec-meta .when {
+  font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+  color: var(--muted); letter-spacing: 0.05em; margin-top: 5px;
+}
+
+.dashboard-root .rec-stats {
+  display: flex; gap: 18px; align-items: center;
+  font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+  color: var(--text-dim);
+}
+.dashboard-root .rec-stats .v {
+  color: var(--text); font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.dashboard-root .rec-stats .label {
+  font-size: 10px; color: var(--muted);
+  letter-spacing: 0.1em; text-transform: uppercase;
+  display: block; margin-top: 1px;
+}
+
+.dashboard-root .rec-status {
+  font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+  font-weight: 500; letter-spacing: 0.12em;
+  padding: 4px 10px; border-radius: 5px;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.dashboard-root .rec-status.approved {
+  background: rgba(78,206,140,0.12); border: 1px solid rgba(78,206,140,0.3);
+  color: var(--success);
+}
+.dashboard-root .rec-status.pending {
+  background: rgba(245,184,66,0.10); border: 1px solid rgba(245,184,66,0.3);
+  color: var(--warn);
+}
+.dashboard-root .rec-status.flagged {
+  background: rgba(255,74,92,0.10); border: 1px solid rgba(255,74,92,0.3);
+  color: var(--danger);
+}
+.dashboard-root .rec-status .dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: currentColor;
+}
+
+@keyframes db-fade-up-rec {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.dashboard-root .rec-row {
+  animation: db-fade-up-rec 320ms ease-out both;
+}
+.dashboard-root .rec-list .rec-row:nth-child(1) { animation-delay: 40ms; }
+.dashboard-root .rec-list .rec-row:nth-child(2) { animation-delay: 80ms; }
+.dashboard-root .rec-list .rec-row:nth-child(3) { animation-delay: 120ms; }
+.dashboard-root .rec-list .rec-row:nth-child(4) { animation-delay: 160ms; }
+.dashboard-root .rec-list .rec-row:nth-child(5) { animation-delay: 200ms; }
+.dashboard-root .rec-list .rec-row:nth-child(6) { animation-delay: 240ms; }
+.dashboard-root .rec-list .rec-row:nth-child(7) { animation-delay: 280ms; }
+.dashboard-root .rec-list .rec-row:nth-child(8) { animation-delay: 320ms; }
+.dashboard-root .rec-list .rec-row:nth-child(9) { animation-delay: 360ms; }
+.dashboard-root .rec-list .rec-row:nth-child(n+10) { animation-delay: 400ms; }
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-root .rec-row { animation: none; }
+}
+
 /* Filter chips */
 .dashboard-root .chips { display: flex; align-items: center; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
 .dashboard-root .chips .label {

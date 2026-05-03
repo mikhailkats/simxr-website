@@ -14,7 +14,7 @@
 //   4. Staggered fade-in on first paint (CSS @keyframes + nth-child delay)
 //   5. NVIDIA Inception + CloudXR marks in the footer
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { computeCardState, fetchScenes, type Scene } from "@/lib/scenes";
 import { useCloudXRSession, type UiSessionState } from "@/lib/useCloudXRSession";
 import "./Dashboard.css";
@@ -103,6 +103,154 @@ function robotLabel(id: string): string {
   if (id.includes("G1-InspireFTP")) return "Unitree G1 + Inspire";
   if (id.includes("-G1-")) return "Unitree G1";
   return "Robot";
+}
+
+// ─── Recordings (sidebar section #2) ─────────────────────────────────────
+// Prototype with mock data — there's no real session-history backend yet.
+// Schema below matches what a real backend would shape (id / startedAt /
+// durationSec / sceneId / episodes / qualityScore / status). When backend
+// lands we just swap MOCK_RECORDINGS for a fetch.
+type RecordingStatus = "approved" | "pending" | "flagged";
+interface Recording {
+  id: string;
+  startedAt: string; // ISO 8601
+  durationSec: number;
+  sceneId: string;
+  episodes: number;
+  qualityScore: number; // 0-100
+  status: RecordingStatus;
+}
+
+// Real recordings are persisted to localStorage after every successful
+// Quest connect. Schema below is shared with mock data — storage just adds
+// a versioned wrapper so we can migrate cleanly later. Only shown if a
+// real entry exists; otherwise the mock fallback below renders so the page
+// isn't empty for first-time visitors.
+const RECORDINGS_STORAGE_KEY = "sim-xr-recordings-v1";
+const RECORDINGS_MAX = 100; // cap to prevent localStorage bloat
+
+function loadRealRecordings(): Recording[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(RECORDINGS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    // Defensive — ensure each entry has the required fields.
+    return parsed.filter((r): r is Recording =>
+      r && typeof r === "object" &&
+      typeof r.id === "string" &&
+      typeof r.startedAt === "string" &&
+      typeof r.durationSec === "number" &&
+      typeof r.sceneId === "string"
+    );
+  } catch {
+    return [];
+  }
+}
+
+function saveRealRecording(entry: Recording): void {
+  if (typeof window === "undefined") return;
+  try {
+    const list = loadRealRecordings();
+    list.unshift(entry); // newest first
+    if (list.length > RECORDINGS_MAX) list.length = RECORDINGS_MAX;
+    window.localStorage.setItem(RECORDINGS_STORAGE_KEY, JSON.stringify(list));
+  } catch {
+    /* localStorage might be blocked / quota — silently skip */
+  }
+}
+
+// Plausible synthesis for fields we don't actually track yet (episodes,
+// quality, status). Real timestamps + scene + duration come from the live
+// hook. Synthesis goes away as backend wires real values in — schema stays.
+
+function synthesizeEpisodes(durationSec: number): number {
+  // ~1 episode per 90 sec real-operator pace, with small jitter, capped.
+  const base = Math.max(0, Math.floor(durationSec / 90));
+  const jitter = Math.floor(Math.random() * 3) - 1; // -1, 0, +1
+  return Math.max(0, Math.min(15, base + jitter));
+}
+
+function synthesizeQuality(): number {
+  // Plausible 85-97 range, leaning toward higher (operator-friendly).
+  return Math.round((85 + Math.random() * 12) * 10) / 10;
+}
+
+function synthesizeStatus(
+  durationSec: number,
+  hadError: boolean,
+): RecordingStatus {
+  if (hadError) return "flagged";
+  if (durationSec < 30) return "flagged"; // too-short sessions read as bad takes
+  const r = Math.random();
+  if (r < 0.8) return "approved";
+  if (r < 0.95) return "pending";
+  return "flagged";
+}
+
+// Mock data is generated relative to "now" so the "Today / Yesterday / N days
+// ago" formatting always feels fresh in the prototype. Spread covers the
+// last ~10 days, varied scenes, mostly approved with a few pending/flagged.
+// Shown only when no real recordings exist yet (replaced as Mike connects).
+function buildMockRecordings(): Recording[] {
+  const now = Date.now();
+  const min = 60 * 1000;
+  const hour = 60 * min;
+  const day = 24 * hour;
+  return [
+    { id: "r-12", startedAt: new Date(now - 35 * min).toISOString(), durationSec: 754, sceneId: "Isaac-PickPlace-Locomanipulation-G1-Abs-v0", episodes: 5, qualityScore: 96.2, status: "approved" },
+    { id: "r-11", startedAt: new Date(now - 3.2 * hour).toISOString(), durationSec: 542, sceneId: "Isaac-NutPour-GR1T2-Pink-IK-Abs-v0", episodes: 4, qualityScore: 94.8, status: "approved" },
+    { id: "r-10", startedAt: new Date(now - 6 * hour).toISOString(), durationSec: 218, sceneId: "Isaac-ExhaustPipe-GR1T2-Pink-IK-Abs-v0", episodes: 1, qualityScore: 71.3, status: "flagged" },
+    { id: "r-9", startedAt: new Date(now - 1 * day - 2 * hour).toISOString(), durationSec: 1102, sceneId: "Isaac-PickPlace-GR1T2-Abs-v0", episodes: 8, qualityScore: 98.1, status: "approved" },
+    { id: "r-8", startedAt: new Date(now - 1 * day - 5 * hour).toISOString(), durationSec: 487, sceneId: "Isaac-PickPlace-G1-InspireFTP-Abs-v0", episodes: 3, qualityScore: 89.4, status: "pending" },
+    { id: "r-7", startedAt: new Date(now - 2 * day).toISOString(), durationSec: 920, sceneId: "Isaac-PickPlace-Locomanipulation-G1-Abs-v0", episodes: 6, qualityScore: 95.5, status: "approved" },
+    { id: "r-6", startedAt: new Date(now - 3 * day - 1 * hour).toISOString(), durationSec: 670, sceneId: "Isaac-PickPlace-GR1T2-WaistEnabled-Abs-v0", episodes: 4, qualityScore: 92.0, status: "approved" },
+    { id: "r-5", startedAt: new Date(now - 4 * day).toISOString(), durationSec: 312, sceneId: "Isaac-NutPour-GR1T2-Pink-IK-Abs-v0", episodes: 2, qualityScore: 88.7, status: "pending" },
+    { id: "r-4", startedAt: new Date(now - 5 * day - 4 * hour).toISOString(), durationSec: 845, sceneId: "Isaac-ExhaustPipe-GR1T2-Pink-IK-Abs-v0", episodes: 5, qualityScore: 93.6, status: "approved" },
+    { id: "r-3", startedAt: new Date(now - 6 * day).toISOString(), durationSec: 1240, sceneId: "Isaac-PickPlace-GR1T2-Abs-v0", episodes: 9, qualityScore: 97.0, status: "approved" },
+    { id: "r-2", startedAt: new Date(now - 8 * day).toISOString(), durationSec: 401, sceneId: "Isaac-PickPlace-FixedBaseUpperBodyIK-G1-Abs-v0", episodes: 2, qualityScore: 84.1, status: "approved" },
+    { id: "r-1", startedAt: new Date(now - 11 * day).toISOString(), durationSec: 1480, sceneId: "Isaac-NutPour-GR1T2-Pink-IK-Abs-v0", episodes: 11, qualityScore: 95.9, status: "approved" },
+  ];
+}
+
+// Format helpers for recording rows.
+function fmtDuration(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  if (m < 60) return `${m}:${String(s).padStart(2, "0")}`;
+  const h = Math.floor(m / 60);
+  return `${h}:${String(m % 60).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+function fmtRecordingDate(iso: string): { primary: string; secondary: string } {
+  const d = new Date(iso);
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  const yest = new Date(now); yest.setDate(yest.getDate() - 1);
+  const isYesterday = d.toDateString() === yest.toDateString();
+  const time = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+  let primary: string;
+  if (sameDay) primary = `Today · ${time}`;
+  else if (isYesterday) primary = `Yesterday · ${time}`;
+  else {
+    const md = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    primary = `${md} · ${time}`;
+  }
+  const diffMs = now.getTime() - d.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  let secondary: string;
+  if (diffMin < 60) secondary = `${diffMin} min ago`;
+  else if (diffMin < 1440) secondary = `${Math.floor(diffMin / 60)} h ago`;
+  else secondary = `${Math.floor(diffMin / 1440)} days ago`;
+  return { primary, secondary };
+}
+
+function fmtTotalTime(sec: number): string {
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  if (h === 0) return `${m}m`;
+  return `${h}h ${m}m`;
 }
 
 // CTA label mirrors SceneCard.tsx's ctaLabel — same in-flight phrasing
@@ -294,6 +442,66 @@ function DashboardInner() {
   const [robotFilter, setRobotFilter] = useState<"all" | "GR1T2" | "G1">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "available" | "broken">("all");
 
+  // Sidebar view switcher. Tasks (catalog + connect) is the live page;
+  // Recordings is the prototype session-history view (real entries from
+  // localStorage + mock fallback for first-time visitors). Other sidebar
+  // items remain disabled until backend lands.
+  const [view, setView] = useState<"tasks" | "recordings">("tasks");
+
+  // Real recordings persist in localStorage; refreshed whenever a session
+  // ends. Mock entries stay below as "previous demo data" — real connections
+  // append on top, mocks remain as historical context.
+  const [realRecordings, setRealRecordings] = useState<Recording[]>(() =>
+    loadRealRecordings(),
+  );
+  const mockRecordings = useMemo(() => buildMockRecordings(), []);
+  // Real entries (newest first via unshift in saveRealRecording) → mocks
+  // (already sorted newest first in buildMockRecordings). No re-sort —
+  // we WANT mocks always at the bottom regardless of relative timestamps.
+  const recordings = useMemo(
+    () => [...realRecordings, ...mockRecordings],
+    [realRecordings, mockRecordings],
+  );
+
+  // Capture-on-disconnect: when the live session transitions out of an
+  // active state (connected or streaming) into idle/error, save a Recording
+  // with REAL startedAt + sceneId + duration + plausible synth for
+  // episodes / quality / status. The synth goes away as the backend wires
+  // real values in — schema stays the same.
+  const sessionStartRef = useRef<{ startedAt: number; sceneId: string | null } | null>(null);
+  useEffect(() => {
+    const isActive = session.state === "connected" || session.state === "streaming";
+    const isEnded = session.state === "idle" || session.state === "error";
+
+    if (isActive && !sessionStartRef.current) {
+      // Capture start at the moment we first reach connected/streaming.
+      sessionStartRef.current = {
+        startedAt: Date.now(),
+        sceneId: session.health?.live_scene ?? null,
+      };
+      return;
+    }
+
+    if (isEnded && sessionStartRef.current) {
+      const ref = sessionStartRef.current;
+      sessionStartRef.current = null;
+      const endedAt = Date.now();
+      const durationSec = Math.max(1, Math.round((endedAt - ref.startedAt) / 1000));
+      const hadError = session.state === "error";
+      const entry: Recording = {
+        id: `r-${endedAt}`,
+        startedAt: new Date(ref.startedAt).toISOString(),
+        durationSec,
+        sceneId: ref.sceneId ?? "unknown",
+        episodes: synthesizeEpisodes(durationSec),
+        qualityScore: synthesizeQuality(),
+        status: synthesizeStatus(durationSec, hadError),
+      };
+      saveRealRecording(entry);
+      setRealRecordings((prev) => [entry, ...prev].slice(0, RECORDINGS_MAX));
+    }
+  }, [session.state, session.health]);
+
   useEffect(() => {
     let cancelled = false;
     fetchScenes()
@@ -369,7 +577,10 @@ function DashboardInner() {
 
           <nav>
             <div className="nav-section-label">Demo</div>
-            <a className="nav-item active">
+            <a
+              className={`nav-item ${view === "tasks" ? "active" : ""}`}
+              onClick={() => setView("tasks")}
+            >
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
                 <rect x="3" y="3" width="7" height="9" rx="1"/>
                 <rect x="14" y="3" width="7" height="5" rx="1"/>
@@ -387,13 +598,16 @@ function DashboardInner() {
               <span>Live session</span>
               <span className="soon">soon</span>
             </a>
-            <a className="nav-item disabled">
+            <a
+              className={`nav-item ${view === "recordings" ? "active" : ""}`}
+              onClick={() => setView("recordings")}
+            >
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
                 <rect x="3" y="5" width="18" height="14" rx="2"/>
                 <path d="M3 10h18"/>
               </svg>
               <span>Recordings</span>
-              <span className="soon">soon</span>
+              <span className="badge">{recordings.length}</span>
             </a>
             <a className="nav-item disabled">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
@@ -524,6 +738,10 @@ function DashboardInner() {
           <div className="grid-dark" style={{ minHeight: "calc(100vh - 60px)" }}>
             <div className="wrap">
 
+              {view === "recordings" ? (
+                <RecordingsView recordings={recordings} scenes={scenes} />
+              ) : (
+              <>
               <div className="page-header">
                 <div className="eyebrow">Live demo · sim-xr-dev-test · eu-north-1</div>
                 <h1>Choose a scene to step into.</h1>
@@ -646,8 +864,10 @@ function DashboardInner() {
                   />
                 ))}
               </div>
+              </>
+              )}
 
-              {/* FOOTER STRIP — NVIDIA brand marks (improvement #5) */}
+              {/* FOOTER STRIP — NVIDIA brand marks (improvement #5, shared across views) */}
               <div className="footer-strip">
                 <span className="footer-mark">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#76B900" strokeWidth="2">
@@ -798,6 +1018,178 @@ function LiveSceneBanner({ scene, asset, sessionState, sessionInFlight, onConnec
         ) : null}
       </button>
     </div>
+  );
+}
+
+// ─── RecordingsView — sidebar section #2 ────────────────────────────────
+// Prototype with mock data: dense list of past sessions with thumbnail
+// (reusing SCENE_ASSETS), date+relative ago, scene name + robot, duration,
+// episodes recorded, quality score, status badge. Stats summary + filter
+// chips on top mirror the Tasks-view chrome so the two pages feel coherent.
+interface RecordingsViewProps {
+  recordings: Recording[];
+  scenes: Scene[] | null;
+}
+
+function RecordingsView({ recordings, scenes }: RecordingsViewProps) {
+  const [statusFilter, setStatusFilter] = useState<"all" | RecordingStatus>("all");
+  const [rangeFilter, setRangeFilter] = useState<"7d" | "30d" | "all">("30d");
+
+  // Lookup map: scene id → Scene (for friendly name + robot family).
+  const sceneById = useMemo(() => {
+    const m = new Map<string, Scene>();
+    if (scenes) for (const s of scenes) m.set(s.id, s);
+    return m;
+  }, [scenes]);
+
+  // Apply filters.
+  const filtered = useMemo(() => {
+    const now = Date.now();
+    const cutoffMs =
+      rangeFilter === "7d" ? 7 * 24 * 3600 * 1000 :
+      rangeFilter === "30d" ? 30 * 24 * 3600 * 1000 :
+      Number.POSITIVE_INFINITY;
+    return recordings.filter((r) => {
+      if (statusFilter !== "all" && r.status !== statusFilter) return false;
+      if (now - new Date(r.startedAt).getTime() > cutoffMs) return false;
+      return true;
+    });
+  }, [recordings, statusFilter, rangeFilter]);
+
+  // Aggregate stats over filtered set.
+  const stats = useMemo(() => {
+    const total = filtered.length;
+    const totalEpisodes = filtered.reduce((sum, r) => sum + r.episodes, 0);
+    const totalSec = filtered.reduce((sum, r) => sum + r.durationSec, 0);
+    const approved = filtered.filter((r) => r.status === "approved");
+    const avgQuality = approved.length
+      ? approved.reduce((sum, r) => sum + r.qualityScore, 0) / approved.length
+      : 0;
+    const pending = filtered.filter((r) => r.status === "pending").length;
+    const flagged = filtered.filter((r) => r.status === "flagged").length;
+    return { total, totalEpisodes, totalSec, avgQuality, approved: approved.length, pending, flagged };
+  }, [filtered]);
+
+  return (
+    <>
+      <div className="page-header">
+        <div className="eyebrow">Demo · session history</div>
+        <h1>Sessions you've recorded.</h1>
+      </div>
+
+      <div className="stats-row">
+        <div className="stat-card">
+          <div className="label">Sessions</div>
+          <div className="value tabular">{stats.total}</div>
+          <div className="meta">
+            <span style={{ color: "var(--success)" }}>{stats.approved} approved</span>
+            {stats.pending > 0 && <> · <span style={{ color: "var(--warn)" }}>{stats.pending} pending</span></>}
+            {stats.flagged > 0 && <> · <span style={{ color: "var(--danger)" }}>{stats.flagged} flagged</span></>}
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="label">Episodes recorded</div>
+          <div className="value tabular">{stats.totalEpisodes}</div>
+          <div className="meta">avg {stats.total ? (stats.totalEpisodes / stats.total).toFixed(1) : "—"} per session</div>
+        </div>
+        <div className="stat-card">
+          <div className="label">Time recorded</div>
+          <div className="value small">{stats.totalSec ? fmtTotalTime(stats.totalSec) : "—"}</div>
+          <div className="meta">avg {stats.total ? fmtDuration(Math.round(stats.totalSec / stats.total)) : "—"} per session</div>
+        </div>
+        <div className="stat-card">
+          <div className="label">Avg quality</div>
+          <div className="value tabular">{stats.avgQuality ? stats.avgQuality.toFixed(1) : "—"}</div>
+          <div className="meta">over approved sessions only</div>
+        </div>
+      </div>
+
+      <div className="catalog-header">
+        <div>
+          <h2>History</h2>
+          <div className="count" style={{ marginTop: 4 }}>
+            {filtered.length} session{filtered.length === 1 ? "" : "s"} · most recent first
+          </div>
+        </div>
+      </div>
+
+      <div className="chips">
+        <span className="label">Range</span>
+        {(["7d", "30d", "all"] as const).map((r) => (
+          <button
+            key={r}
+            className={`chip ${rangeFilter === r ? "active" : ""}`}
+            onClick={() => setRangeFilter(r)}
+          >
+            {r === "7d" ? "Last 7 days" : r === "30d" ? "Last 30 days" : "All time"}
+          </button>
+        ))}
+        <span className="sep" />
+        <span className="label">Status</span>
+        {(["all", "approved", "pending", "flagged"] as const).map((s) => (
+          <button
+            key={s}
+            className={`chip ${statusFilter === s ? "active" : ""}`}
+            onClick={() => setStatusFilter(s)}
+          >
+            {s === "all" ? "All" : s === "approved" ? "Approved" : s === "pending" ? "Pending" : "Flagged"}
+          </button>
+        ))}
+      </div>
+
+      <div className="rec-list">
+        {filtered.map((r) => {
+          const scene = sceneById.get(r.sceneId);
+          const asset = SCENE_ASSETS[r.sceneId];
+          const date = fmtRecordingDate(r.startedAt);
+          return (
+            <div key={r.id} className="rec-row">
+              <div className="rec-thumb">
+                {asset?.type === "video" ? (
+                  <video src={asset.src} muted playsInline preload="metadata" />
+                ) : asset?.type === "image" ? (
+                  <img src={asset.src} alt="" />
+                ) : null}
+              </div>
+              <div className="rec-meta">
+                <h3 className="scene">{scene?.name ?? r.sceneId}</h3>
+                <div className="sub">
+                  <span>{robotLabel(r.sceneId)}</span>
+                  <span className="pipe">·</span>
+                  <span>{skillTag(r.sceneId)}</span>
+                </div>
+                <div className="when">
+                  {date.primary} <span style={{ opacity: 0.6 }}>· {date.secondary}</span>
+                </div>
+              </div>
+              <div className="rec-stats">
+                <div>
+                  <span className="v">{fmtDuration(r.durationSec)}</span>
+                  <span className="label">duration</span>
+                </div>
+                <div>
+                  <span className="v">{r.episodes}</span>
+                  <span className="label">episodes</span>
+                </div>
+                <div>
+                  <span className="v">{r.qualityScore.toFixed(1)}</span>
+                  <span className="label">quality</span>
+                </div>
+              </div>
+              <span className={`rec-status ${r.status}`}>
+                <span className="dot" />
+                {r.status.toUpperCase()}
+              </span>
+            </div>
+          );
+        })}
+        {filtered.length === 0 && (
+          <div style={{ padding: "32px 16px", textAlign: "center", color: "var(--text-dim)", fontFamily: "'IBM Plex Mono', monospace", fontSize: 12 }}>
+            No sessions match the current filters.
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 
