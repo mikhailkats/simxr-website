@@ -315,11 +315,16 @@ export function useCloudXRSession(
     }
 
     // 3b. Open the WebXR immersive-vr session.
+    //     Features list matches NVIDIA's IsaacTeleop default (per CC's decode
+    //     of bundle.js 2026-05-03): requiredFeatures: ["local-floor"],
+    //     optionalFeatures: ["hand-tracking"]. Earlier "unbounded" inclusion
+    //     was rejected by some Quest 3 Browser versions even though it should
+    //     silent-skip from optional — strict CFG validation in those builds.
     let xrSession: XRSession;
     try {
       xrSession = await xr.requestSession("immersive-vr", {
         requiredFeatures: ["local-floor"],
-        optionalFeatures: ["hand-tracking", "unbounded"],
+        optionalFeatures: ["hand-tracking"],
       });
       xrSessionRef.current = xrSession;
     } catch (e) {
@@ -348,9 +353,11 @@ export function useCloudXRSession(
       const xrLayer = new XRWebGLLayer(xrSession, gl, { antialias: false });
       await xrSession.updateRenderState({ baseLayer: xrLayer });
 
-      // NVIDIA's IsaacTeleop iterates the same fallback list. Quest 3 always
-      // accepts local-floor; the rest are insurance for other headsets.
-      for (const t of ["local-floor", "local", "viewer", "unbounded"] as const) {
+      // Reference-space fallback. Dropped "unbounded" same reason as in the
+      // optionalFeatures list — Quest 3 Browser doesn't support it and some
+      // builds reject the request entirely. Quest 3 accepts local-floor as
+      // primary; "local" / "viewer" are insurance for other headsets.
+      for (const t of ["local-floor", "local", "viewer"] as const) {
         try {
           refSpace = await xrSession.requestReferenceSpace(t);
           break;
@@ -360,7 +367,7 @@ export function useCloudXRSession(
       }
       if (!refSpace) {
         throw new Error(
-          "No usable XR reference space (tried local-floor / local / viewer / unbounded)",
+          "No usable XR reference space (tried local-floor / local / viewer)",
         );
       }
 
