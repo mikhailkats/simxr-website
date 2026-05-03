@@ -22,43 +22,74 @@ import { fetchMediaIp, fetchHealth, isMockMode, type Healthz } from "./scenes";
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace CloudXR {
-    type SessionState =
-      | "idle"
-      | "connecting"
-      | "connected"
-      | "streaming"
-      | "disconnecting"
-      | "error";
-
-    interface SessionCreateOptions {
-      server: { host: string; port: number; ssl: boolean };
-      client: {
-        deviceProfile: string;
-        immersiveMode: "vr" | "ar";
-        mediaAddress: string;
-        mediaPort: number;
-        perEyeWidth?: number;
-        perEyeHeight?: number;
-        maxStreamingBitrateKbps?: number;
-        deviceFrameRate?: number;
-      };
-    }
-
     interface StreamingError {
       code: number;
       message: string;
     }
 
-    interface Session {
-      onStateChange?: (state: SessionState) => void;
-      onError?: (error: StreamingError) => void;
+    // Reverse-engineered from NVIDIA's deployed IsaacTeleop bundle.js
+    // (`u.createSession=function(E,I)`) by CC 2026-05-03. The earlier nested
+    // `{server, client}` shape was hallucinated — actual SDK 6.1 takes a
+    // single FLAT object as first arg + callbacks as second arg.
+    interface SessionCreateOptions {
+      // Server connection (signaling)
+      serverAddress: string;
+      serverPort: number;
+      useSecureConnection: boolean;
+      signalingResourcePath: string;
+      // UDP media
+      mediaAddress: string;
+      mediaPort: number;
+      // Render
+      perEyeWidth: number;          // validator: positive int, multiple of 16, ≥256
+      perEyeHeight: number;         // validator: positive int, multiple of 64, ≥256
+      deviceFrameRate?: number;
+      maxStreamingBitrateKbps?: number;
+      codec?: "av1" | "h265" | "h264";
+      reprojectionGridCols?: number;
+      reprojectionGridRows?: number;
+      enablePoseSmoothing?: boolean;
+      posePredictionFactor?: number;
+      enableTexSubImage2D?: boolean;
+      useQuestColorWorkaround?: boolean;
+      // WebGL / WebXR bridge — REQUIRED. Caller wires these up before
+      // calling createSession. See connect() below for the setup chain.
+      gl: WebGL2RenderingContext;
+      referenceSpace: XRReferenceSpace;
+      glBinding: XRWebGLBinding;
+      // Telemetry
+      telemetry?: {
+        enabled: boolean;
+        appInfo: { version: string; product: string };
+      };
+    }
+
+    interface SessionCallbacks {
+      onWebGLStateChangeBegin?: () => void;
+      onWebGLStateChangeEnd?: () => void;
+      onStreamStarted?: () => void;
       onStreamStopped?: (error?: StreamingError) => void;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      onMetrics?: (metrics: any, cadence: any) => void;
+    }
+
+    interface Session {
       connect(): Promise<void>;
       disconnect(): Promise<void>;
       dispose(): void;
+      // Optional keepalive surface — exact method name untyped in the SDK,
+      // probed via optional chaining in the keepalive useEffect.
+      sendPing?: () => void;
+      keepAlive?: () => void;
+      sendOpaqueData?: (data: Uint8Array) => void;
     }
 
-    function createSession(options: SessionCreateOptions): Promise<Session>;
+    // createSession returns Session SYNCHRONOUSLY (no Promise wrapper) per
+    // NVIDIA's bundle: `I = u.createSession(m, w); I.connect();`
+    function createSession(
+      options: SessionCreateOptions,
+      callbacks: SessionCallbacks,
+    ): Session;
   }
 }
 
@@ -161,13 +192,7 @@ export function useCloudXRSession(
   useEffect(() => {
     if (state !== "streaming" && state !== "connected") return;
     const id = window.setInterval(() => {
-      const cxr = sessionRef.current as
-        | (CloudXR.Session & {
-            sendPing?: () => void;
-            sendOpaqueData?: (data: Uint8Array) => void;
-            keepAlive?: () => void;
-          })
-        | null;
+      const cxr = sessionRef.current;
       if (!cxr) return;
       try {
         // Try documented shapes first (method names guessed from common SDK
@@ -260,16 +285,41 @@ export function useCloudXRSession(
       return;
     }
 
-    // 3. Request the WebXR session — this MUST happen synchronously inside the
-    //    user-gesture handler. The fetch above happens before the gesture ends
-    //    only because async work in a click handler still keeps the gesture
-    //    active in modern browsers; if this turns out to be flaky we'll move
-    //    fetchMediaIp() to a polling phase before the click and cache the IP.
+    // 3. WebGL2 + WebXR setup — CloudXR.js 6.1 needs the GL/XR bridge
+    //    (gl + glBinding + referenceSpace) wired in BEFORE createSession.
+    //    Reverse-engineered from NVIDIA's IsaacTeleop bundle 2026-05-03.
+    //    requestSession MUST happen inside the user-gesture chain (browser
+    //    rule); the fetch above stays inside the gesture window via
+    //    transient activation, which Quest browser preserves across awaits.
     setState("requesting-xr");
+
+    // 3a. Create off-screen WebGL2 context with xrCompatible upfront.
+    //     Falls back to gl.makeXRCompatible() if the constructor flag fails
+    //     (rare on Quest 3; common on some desktop browsers).
+    const canvas = document.createElement("canvas");
+    let gl: WebGL2RenderingContext;
+    try {
+      // Cast: canvas.getContext("webgl2", attrs) returns WebGL2RenderingContext | null
+      // per spec, but TS overload resolution with the second-arg attrs object
+      // sometimes widens the return to RenderingContext. Cast back to the specific
+      // type we know we requested.
+      const ctx = canvas.getContext("webgl2", { xrCompatible: true }) as
+        | WebGL2RenderingContext
+        | null;
+      if (!ctx) throw new Error("WebGL2 not available in this browser");
+      gl = ctx;
+    } catch (e) {
+      setError(`WebGL2 setup failed: ${(e as Error).message}`);
+      setState("error");
+      return;
+    }
+
+    // 3b. Open the WebXR immersive-vr session.
     let xrSession: XRSession;
     try {
       xrSession = await xr.requestSession("immersive-vr", {
-        optionalFeatures: ["hand-tracking", "local-floor"],
+        requiredFeatures: ["local-floor"],
+        optionalFeatures: ["hand-tracking", "unbounded"],
       });
       xrSessionRef.current = xrSession;
     } catch (e) {
@@ -280,50 +330,113 @@ export function useCloudXRSession(
       return;
     }
 
-    // 4. Open the CloudXR session.
+    // 3c. Wire WebGL into the XR session — XRWebGLLayer + reference space
+    //     fallback chain + XRWebGLBinding. This is the bridge CloudXR uses
+    //     to submit rendered frames back into the headset's compositor.
+    let refSpace: XRReferenceSpace | null = null;
+    let xrBinding: XRWebGLBinding;
+    try {
+      // Late xrCompatible upgrade if the constructor hint didn't take.
+      // gl.makeXRCompatible exists on WebGL2 contexts; cast to access it.
+      const glAny = gl as WebGL2RenderingContext & {
+        makeXRCompatible?: () => Promise<void>;
+      };
+      if (typeof glAny.makeXRCompatible === "function") {
+        await glAny.makeXRCompatible();
+      }
+
+      const xrLayer = new XRWebGLLayer(xrSession, gl, { antialias: false });
+      await xrSession.updateRenderState({ baseLayer: xrLayer });
+
+      // NVIDIA's IsaacTeleop iterates the same fallback list. Quest 3 always
+      // accepts local-floor; the rest are insurance for other headsets.
+      for (const t of ["local-floor", "local", "viewer", "unbounded"] as const) {
+        try {
+          refSpace = await xrSession.requestReferenceSpace(t);
+          break;
+        } catch {
+          /* try next */
+        }
+      }
+      if (!refSpace) {
+        throw new Error(
+          "No usable XR reference space (tried local-floor / local / viewer / unbounded)",
+        );
+      }
+
+      xrBinding = new XRWebGLBinding(xrSession, gl);
+    } catch (e) {
+      void xrSession.end().catch(() => {});
+      xrSessionRef.current = null;
+      setError(`XR/WebGL bridge setup failed: ${(e as Error).message}`);
+      setState("error");
+      return;
+    }
+
+    // 4. Open the CloudXR session — flat options (NOT nested {server,client})
+    //    + callbacks as second arg + sync return.
     setState("connecting");
     try {
       const sdk = await loadSdk();
-      const cxr = await sdk.createSession({
-        server: { host, port, ssl: port === 443 },
-        client: {
-          deviceProfile: "auto-webrtc",
-          immersiveMode: "vr",
+      const cxr = sdk.createSession(
+        {
+          // Server signaling
+          serverAddress: host,
+          serverPort: port,
+          useSecureConnection: port === 443,
+          signalingResourcePath: "/",
+          // UDP media (host:port for signaling, mediaAddress:mediaPort for video)
           mediaAddress,
-          mediaPort,  // from healthz.media_port (default 47998); WSS signaling lives on host:port (49100/443)
+          mediaPort,
+          // Render. Per-eye sizes must be multiples of (16w, 64h) and ≥256.
           perEyeWidth: 2048,
           perEyeHeight: 1792,
-          maxStreamingBitrateKbps: 150_000,
           deviceFrameRate: 90,
+          maxStreamingBitrateKbps: 150_000,
+          // NVIDIA defaults from bundle.js (verified 2026-05-03 by CC).
+          // av1 with h265/h264 fallback negotiated server-side.
+          codec: "av1",
+          enablePoseSmoothing: true,
+          posePredictionFactor: 1,
+          enableTexSubImage2D: false,
+          useQuestColorWorkaround: true, // we target Quest 3 — flip if color renders odd
+          // GL/XR bridge (built in step 3c)
+          gl,
+          referenceSpace: refSpace,
+          glBinding: xrBinding,
+          telemetry: {
+            enabled: true,
+            appInfo: { version: "6.1.0", product: "simxr.app" },
+          },
         },
-      });
+        {
+          // We don't draw to gl outside CloudXR, so the WebGL state-change
+          // hooks are no-ops. Implement save/restore here if you ever overlay
+          // any custom rendering on top of the CloudXR-driven frame.
+          onWebGLStateChangeBegin: () => {},
+          onWebGLStateChangeEnd: () => {},
+          onStreamStarted: () => setState("streaming"),
+          onStreamStopped: (err) => {
+            if (err) {
+              setError(`Stream ended unexpectedly: ${err.message}`);
+              setState("error");
+            } else {
+              setState("idle");
+            }
+          },
+          onMetrics: () => {
+            /* SDK-side telemetry already handles bitrate/dropped-frames. No-op for now. */
+          },
+        },
+      );
       sessionRef.current = cxr;
 
-      cxr.onStateChange = (s) => {
-        // Map SDK state to our UI state.
-        if (s === "connected") setState("connected");
-        else if (s === "streaming") setState("streaming");
-        else if (s === "disconnecting") setState("disconnecting");
-        else if (s === "error") setState("error");
-        else if (s === "idle") setState("idle");
-      };
-      cxr.onError = (err) => {
-        setError(`CloudXR error 0x${err.code.toString(16)}: ${err.message}`);
-        setState("error");
-      };
-      cxr.onStreamStopped = (err) => {
-        if (err) {
-          setError(`Stream ended unexpectedly: ${err.message}`);
-          setState("error");
-        } else {
-          setState("idle");
-        }
-      };
-
+      // cxr.connect() opens the WSS signaling channel + handshakes UDP
+      // media. Resolves when session is "connected" (frames may not have
+      // started yet — onStreamStarted will fire when they do).
       await cxr.connect();
+      setState("connected");
     } catch (e) {
-      // CloudXR failed; tear down the WebXR session we already opened so
-      // the headset doesn't sit on a black screen.
       void xrSession.end().catch(() => {});
       xrSessionRef.current = null;
       setError(`CloudXR connect failed: ${(e as Error).message}`);
