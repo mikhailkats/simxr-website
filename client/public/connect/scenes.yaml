@@ -65,3 +65,8 @@
   description: "Unitree G1 fixed-base with NuRec/Gaussian Bali room background."
   status: broken
   note: "Same 3DGS-stereo blocker as the locomanipulation 3DGS variant. Listed for completeness; will flip to available when the NuRec stereo fix lands."
+
+- id: Isaac-PickPlace-Locomanipulation-G1-3DGS-BrightLivingRoom-Abs-v0
+  name: "Bright Living Room 3DGS — G1"
+  description: "Unitree G1 with pinned base + upper-body IK in a bright living room 3DGS background, imported from the old sim-xr-server."
+  status: available
