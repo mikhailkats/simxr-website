@@ -77,6 +77,13 @@ const SCENE_ASSETS: Record<string, SceneAsset> = {
     type: "image",
     src: "/operator/images/task-references/scene-isaac-groot-loop.gif",
   },
+  "Isaac-PickPlace-Locomanipulation-G1-3DGS-BrightLivingRoom-Abs-v0": {
+    // Reusing locomanip-g1.mp4 same as Locomanipulation-G1-Abs-v0 per Mike
+    // 2026-05-06 (this is the same scene visually, just with a different
+    // 3DGS background from old-server import).
+    type: "video",
+    src: "/operator/videos/locomanip-g1.mp4",
+  },
 };
 
 // Robot tag derived from scene id — used by filter chips and card tags.
