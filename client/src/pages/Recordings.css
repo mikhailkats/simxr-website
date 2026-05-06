@@ -1,0 +1,212 @@
+/* SIM XR — Recordings page (additions on top of Dashboard.css).
+ *
+ * Page chrome (topbar / wrap / grid-dark) reuses Dashboard.css. Only the
+ * recordings-page-specific bits live here:
+ *   - .rec-row.fresh — volt halo on the just-recorded entry
+ *   - .badge-fresh   — "JUST RECORDED" pill, sits inline with rec-status slot
+ *   - .recordings-back-btn — top-bar "← Dashboard" affordance, mirrors h-pill
+ *                           but with a leading arrow-icon font color
+ *   - .empty-state   — centered "no recordings yet" placeholder
+ */
+
+.rec-row.fresh {
+  outline: 2px solid var(--volt);
+  outline-offset: -1px;
+  background: linear-gradient(
+    to right,
+    rgba(67, 97, 255, 0.10),
+    rgba(67, 97, 255, 0.02) 40%,
+    transparent
+  );
+  /* Two stacked entrance animations:
+   *   1. rec-fresh-slide-in: row drops in from above + fades up + tiny scale
+   *      bounce, so when the polled entry first appears it visibly arrives.
+   *   2. rec-fresh-pulse: volt halo pulse to draw the eye after the slide.
+   * `backwards` fill-mode keeps the from-state applied during animation
+   * delay so the row doesn't flash at full opacity before sliding in.
+   */
+  animation:
+    rec-fresh-slide-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) 1 backwards,
+    rec-fresh-pulse 2s ease-out 0.6s 1 backwards;
+}
+
+@keyframes rec-fresh-slide-in {
+  0% {
+    transform: translateY(-22px) scale(0.97);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(0) scale(1.015);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes rec-fresh-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(67, 97, 255, 0.55); }
+  60%  { box-shadow: 0 0 0 14px rgba(67, 97, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(67, 97, 255, 0); }
+}
+
+/* "Waiting for your new recording…" banner — visible while the targeted
+ * poll is in flight (~60s ceiling). Sits just above .rec-list so it's
+ * adjacent to where the new row will appear. Disappears once the entry
+ * is surfaced (pollState → idle) or surfaces a softer warn variant if
+ * MAX_POLLS attempts complete without finding it (pollState → exhausted).
+ */
+.recordings-poll-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  background: rgba(67, 97, 255, 0.08);
+  border: 1px solid rgba(67, 97, 255, 0.45);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.recordings-poll-banner .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--volt);
+  flex-shrink: 0;
+  animation: poll-dot-pulse 1.4s ease-in-out infinite;
+}
+
+.recordings-poll-banner .dot.warn {
+  background: var(--warn);
+  animation: none;
+}
+
+@keyframes poll-dot-pulse {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(67, 97, 255, 0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.3);
+    box-shadow: 0 0 8px rgba(67, 97, 255, 0.6);
+  }
+}
+
+.recordings-poll-banner.exhausted {
+  background: rgba(245, 184, 66, 0.08);
+  border-color: rgba(245, 184, 66, 0.4);
+}
+
+.recordings-poll-banner .poll-hint {
+  margin-left: auto;
+  color: var(--text-dim);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.badge-fresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(67, 97, 255, 0.18);
+  border: 1px solid var(--volt);
+  color: var(--volt);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badge-fresh .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--volt);
+  box-shadow: 0 0 6px rgba(67, 97, 255, 0.7);
+}
+
+.recordings-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.recordings-back-btn:hover {
+  border-color: var(--volt);
+  color: var(--volt);
+}
+
+.recordings-empty {
+  padding: 56px 24px;
+  text-align: center;
+  color: var(--text-dim);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  border: 1px dashed var(--stroke);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.recordings-empty .title {
+  display: block;
+  font-size: 14px;
+  color: var(--text);
+  margin-bottom: 8px;
+  letter-spacing: 0.06em;
+}
+
+.recordings-loading {
+  padding: 32px 16px;
+  color: var(--text-dim);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+}
+
+.recordings-loading .dots::after {
+  content: "";
+  display: inline-block;
+  width: 1em;
+  text-align: left;
+  animation: rec-loading-dots 1.2s steps(4, end) infinite;
+}
+
+@keyframes rec-loading-dots {
+  0%   { content: ""; }
+  25%  { content: "."; }
+  50%  { content: ".."; }
+  75%  { content: "..."; }
+  100% { content: ""; }
+}
+
+.rec-thumb-fallback {
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 0.08em;
+}

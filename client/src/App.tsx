@@ -23,6 +23,7 @@ import Home from "./pages/Home";
 // via Netlify proxy) still lives at `/connect-classic` as a static file
 // in client/public/connect-classic/.
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Recordings = lazy(() => import("./pages/Recordings"));
 
 function isAppDomain(): boolean {
   if (typeof window === "undefined") return false;
@@ -62,6 +63,16 @@ function Router() {
       <Route path={"/v2/"}>
         <Suspense fallback={null}>
           <Dashboard />
+        </Suspense>
+      </Route>
+      <Route path={"/recordings"}>
+        <Suspense fallback={null}>
+          <Recordings />
+        </Suspense>
+      </Route>
+      <Route path={"/recordings/"}>
+        <Suspense fallback={null}>
+          <Recordings />
         </Suspense>
       </Route>
       <Route path={"/404"} component={NotFound} />

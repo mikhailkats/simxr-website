@@ -128,7 +128,17 @@ export interface UseCloudXRSessionResult {
   state: UiSessionState;
   health: Healthz | null;
   error: string | null;
-  connect: () => Promise<void>;
+  /**
+   * Open the WebXR + CloudXR session for the given scene. Pass the gym
+   * task_id (e.g. "Isaac-PickPlace-Locomanipulation-G1-3DGS-BrightLivingRoom-Abs-v0")
+   * so the hook can pass it back through `onSessionEnded` for the
+   * `/recordings?fresh=<task_id>` redirect after Quest exits VR.
+   *
+   * Backward-compatible: callers that don't yet pass a taskId still work;
+   * the redirect just won't include a `?fresh=` param and the recordings
+   * page won't highlight a specific entry.
+   */
+  connect: (taskId?: string) => Promise<void>;
   disconnect: () => Promise<void>;
 }
 
@@ -139,6 +149,18 @@ export interface UseCloudXRSessionOptions {
   port?: number;
   /** Polling interval for /api/healthz, in ms. 0 disables polling. */
   healthPollMs?: number;
+  /**
+   * Fired when the CloudXR stream stops — both clean exits (Quest gesture,
+   * server-side stop) and crash paths. Receives the taskId passed to the
+   * matching `connect()` call (null if connect was called without one, e.g.
+   * legacy callers). Dashboard wires this to wouter's setLocation so Quest
+   * automatically lands on /recordings?fresh=... after exiting VR.
+   *
+   * Fires AFTER the hook has already cleaned up the WebXR session and set
+   * state to "idle" / "error", so the callback can safely navigate without
+   * racing with hook teardown.
+   */
+  onSessionEnded?: (taskId: string | null) => void;
 }
 
 export function useCloudXRSession(
@@ -157,6 +179,22 @@ export function useCloudXRSession(
   // frames have somewhere to land.
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rafHandleRef = useRef<number>(0);
+
+  // Track the task_id of the scene the user last clicked Connect on, so the
+  // `onStreamStopped` callback (which is registered once at createSession
+  // time, no closure access to the Dashboard's per-card scope) can pass it
+  // back through `onSessionEnded` for the `/recordings?fresh=<taskId>`
+  // redirect. null when caller didn't supply a taskId.
+  const lastTaskIdRef = useRef<string | null>(null);
+
+  // Mirror `opts` so the SDK callbacks (registered once at createSession
+  // time) always see the current onSessionEnded handler, even if the
+  // consumer re-creates it on re-render. Without this, a navigate handler
+  // captured at first connect would stay stale across remounts.
+  const optsRef = useRef(opts);
+  useEffect(() => {
+    optsRef.current = opts;
+  }, [opts]);
 
   // Poll /healthz for live-scene + server-state.
   useEffect(() => {
@@ -235,9 +273,12 @@ export function useCloudXRSession(
     return () => window.clearInterval(id);
   }, [state]);
 
-  const connect = useCallback(async () => {
+  const connect = useCallback(async (taskId?: string) => {
     if (state !== "idle" && state !== "error") return;
     setError(null);
+    // Capture the scene the user clicked Connect on; consumed by
+    // onStreamStopped → onSessionEnded for the post-VR redirect.
+    lastTaskIdRef.current = taskId ?? null;
 
     // Mock mode — simulate the lifecycle without touching WebXR or the SDK.
     // Set ?mock=1 in the URL to enable. ?mock=1&error=connect simulates a
@@ -465,12 +506,37 @@ export function useCloudXRSession(
           onWebGLStateChangeEnd: () => {},
           onStreamStarted: () => setState("streaming"),
           onStreamStopped: (err) => {
+            // 1. End the WebXR session so Quest exits immersive mode and
+            //    lands the user back on the browser tab. Without this, the
+            //    headset stays in VR after the server-side stream stops —
+            //    user has to manually exit. Safe to call multiple times;
+            //    the explicit disconnect() path also calls .end() and the
+            //    SDK no-ops a second teardown.
+            void xrSessionRef.current?.end().catch(() => {});
+            xrSessionRef.current = null;
+            // 2. Cancel rAF — same reason as in disconnect(). The next
+            //    requestAnimationFrame inside the frame() closure would
+            //    try to draw into a torn-down XR layer.
+            rafHandleRef.current = 0;
+            // 3. Detach the off-screen WebGL2 canvas attached in step 3a
+            //    of connect(). Otherwise it leaks across re-connects.
+            if (canvasRef.current) {
+              try { canvasRef.current.remove(); } catch { /* ignore */ }
+              canvasRef.current = null;
+            }
+            // 4. Surface the SDK's stop reason in state.
             if (err) {
               setError(`Stream ended unexpectedly: ${err.message}`);
               setState("error");
             } else {
               setState("idle");
             }
+            // 5. Fire the user-provided callback last — Dashboard wires
+            //    this to setLocation("/recordings?fresh=" + taskId) so
+            //    the post-VR redirect kicks in for both clean and dirty
+            //    stops (server crash mid-recording still navigates per
+            //    the recordings-page brief).
+            optsRef.current.onSessionEnded?.(lastTaskIdRef.current);
           },
           onMetrics: () => {
             /* SDK-side telemetry already handles bitrate/dropped-frames. No-op for now. */
