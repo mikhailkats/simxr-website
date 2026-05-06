@@ -74,4 +74,5 @@
 - id: Isaac-PickPlace-G1-InspireFTP-3DGS-BrightLivingRoom-Abs-v0
   name: "Bright Living Room 3DGS — G1 + Inspire (Hand Tracking)"
   description: "Unitree G1 + Inspire dexterous hands with WebXR hand-tracking (no controllers) in the bright living room 3DGS background."
-  status: available
+  status: broken
+  note: "Quest 3 connect crashes with XR_ERROR_INSTANCE_LOST + xrConvertTimespecTimeToTimeKHR (-12) on the new server's native CloudXR 6.0.4 runtime. Same crash on mesh-only base task verifies it's a runtime/OpenXR bridge issue, not the 3DGS overlay. Server-side env_cfg + asset bundle stay deployed; flip back to available once the OpenXR-CloudXR runtime is fixed (separate work)."
