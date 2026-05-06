@@ -70,3 +70,8 @@
   name: "Bright Living Room 3DGS — G1"
   description: "Unitree G1 with pinned base + upper-body IK in a bright living room 3DGS background, imported from the old sim-xr-server."
   status: available
+
+- id: Isaac-PickPlace-G1-InspireFTP-3DGS-BrightLivingRoom-Abs-v0
+  name: "Bright Living Room 3DGS — G1 + Inspire (Hand Tracking)"
+  description: "Unitree G1 + Inspire dexterous hands with WebXR hand-tracking (no controllers) in the bright living room 3DGS background."
+  status: available
