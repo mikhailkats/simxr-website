@@ -687,11 +687,35 @@
   pointer-events: none;
   z-index: 9000;
 }
-.dashboard-root .xr-overlay.inactive {
-  /* Keep DOM mounted but visually empty when no session — content is
-     gated in JSX so there's nothing to hide here other than to make sure
-     the container itself is fully transparent and inert. */
-  visibility: visible; /* must stay visible for ref to be usable */
+/* Card is always rendered (Quest 3 Browser captures overlay layout at
+   xr.requestSession time — empty container = no compositor layer). When
+   no active session, hide via CSS: opacity 0 + visibility hidden makes
+   it invisible AND removes it from controller raycast hit-testing in 2D
+   browser mode. The DOM tree itself stays stable. */
+.dashboard-root .xr-overlay.inactive .xr-overlay-card {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.dashboard-root .xr-overlay.active .xr-overlay-card {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+.dashboard-root .xr-overlay-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.dashboard-root .xr-overlay-btn:disabled:hover {
+  border-color: var(--stroke-hi);
+  color: var(--text);
+  background: var(--surface);
+  transform: none;
+  box-shadow: none;
+}
+.dashboard-root .xr-overlay-btn.primary:disabled:hover {
+  background: var(--volt);
+  color: #fff;
 }
 
 .dashboard-root .xr-overlay-card {

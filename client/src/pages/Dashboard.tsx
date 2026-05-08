@@ -868,75 +868,96 @@ function DashboardInner() {
       <div
         ref={overlayRef}
         className={`xr-overlay ${
-          session.state === "streaming" || session.state === "connected"
+          session.state === "streaming" ||
+          session.state === "connected" ||
+          session.state === "connecting" ||
+          session.state === "requesting-xr"
             ? "active"
             : "inactive"
         }`}
       >
-        {(session.state === "streaming" ||
-          session.state === "connected" ||
-          session.state === "connecting") && (
-          <div className="xr-overlay-card">
-            <div className="xr-overlay-header">
-              <span className="xr-overlay-title">
-                SIM <span className="accent">XR.</span>
-              </span>
-              <span className="xr-overlay-scene">
-                {liveScene?.name ?? "—"}
+        {/* Card is ALWAYS in DOM (not conditionally rendered). Quest 3
+            Browser captures the domOverlay.root element's child layout
+            at xr.requestSession() time; if empty at that moment, the
+            compositor can register a null/empty layer and ignore late-
+            mounted children. NVIDIA's IsaacTeleop bundle renders
+            statically for the same reason. We toggle visibility via
+            the .xr-overlay.inactive CSS class instead — DOM tree
+            stable across the entire session lifecycle. Buttons are
+            disabled when no session is active so taps before/after
+            VR are no-ops. */}
+        <div className="xr-overlay-card">
+          <div className="xr-overlay-header">
+            <span className="xr-overlay-title">
+              SIM <span className="accent">XR.</span>
+            </span>
+            <span className="xr-overlay-scene">
+              {liveScene?.name ?? "—"}
+            </span>
+          </div>
+          <div className="xr-overlay-stats">
+            <div className="stat">
+              <span className="stat-label">Latency</span>
+              <span
+                className={`stat-value ${
+                  !reachable || latency == null
+                    ? ""
+                    : latency > 500
+                    ? "warn"
+                    : latency > 200
+                    ? "warn"
+                    : "success"
+                }`}
+              >
+                {reachable && latency != null ? `~${latency}ms` : "—"}
               </span>
             </div>
-            <div className="xr-overlay-stats">
-              <div className="stat">
-                <span className="stat-label">Latency</span>
-                <span
-                  className={`stat-value ${
-                    !reachable || latency == null
-                      ? ""
-                      : latency > 500
-                      ? "warn"
-                      : latency > 200
-                      ? "warn"
-                      : "success"
-                  }`}
-                >
-                  {reachable && latency != null ? `~${latency}ms` : "—"}
-                </span>
-              </div>
-              <div className="stat">
-                <span className="stat-label">Session</span>
-                <span className="stat-value">
-                  {session.health?.session_state ?? "—"}
-                </span>
-              </div>
-            </div>
-            <div className="xr-overlay-actions">
-              <button
-                type="button"
-                className="xr-overlay-btn primary"
-                onClick={() => session.sendTeleopCommand("start teleop")}
-              >
-                <span className="xr-overlay-btn-icon">▶</span>
-                Start
-              </button>
-              <button
-                type="button"
-                className="xr-overlay-btn"
-                onClick={() => session.sendTeleopCommand("reset teleop")}
-              >
-                <span className="xr-overlay-btn-icon">⟳</span>
-                Recenter
-              </button>
-              <button
-                type="button"
-                className="xr-overlay-btn"
-                onClick={() => session.sendTeleopCommand("stop teleop")}
-              >
-                <span className="xr-overlay-btn-icon">■</span>
-                Stop
-              </button>
+            <div className="stat">
+              <span className="stat-label">Session</span>
+              <span className="stat-value">
+                {session.health?.session_state ?? "—"}
+              </span>
             </div>
           </div>
-        )}
+          <div className="xr-overlay-actions">
+            <button
+              type="button"
+              className="xr-overlay-btn primary"
+              onClick={() => session.sendTeleopCommand("start teleop")}
+              disabled={
+                session.state !== "streaming" &&
+                session.state !== "connected"
+              }
+            >
+              <span className="xr-overlay-btn-icon">▶</span>
+              Start
+            </button>
+            <button
+              type="button"
+              className="xr-overlay-btn"
+              onClick={() => session.sendTeleopCommand("reset teleop")}
+              disabled={
+                session.state !== "streaming" &&
+                session.state !== "connected"
+              }
+            >
+              <span className="xr-overlay-btn-icon">⟳</span>
+              Recenter
+            </button>
+            <button
+              type="button"
+              className="xr-overlay-btn"
+              onClick={() => session.sendTeleopCommand("stop teleop")}
+              disabled={
+                session.state !== "streaming" &&
+                session.state !== "connected"
+              }
+            >
+              <span className="xr-overlay-btn-icon">■</span>
+              Stop
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -464,6 +464,22 @@ export function useCloudXRSession(
       // raycast). On any device that doesn't grant the feature, the session
       // still opens — operator just won't have an in-VR control panel.
       const domOverlayRoot = optsRef.current.getDomOverlayRoot?.() ?? null;
+      // Diagnostic — visible in Quest browser console via chrome://inspect.
+      // Confirms overlay element exists and has rendered children at the
+      // moment we hand it to xr.requestSession(). If `childrenCount=0`
+      // here, Quest 3 Browser will register an empty layer and not
+      // composite late-mounted children (NVIDIA bundle dodges this by
+      // always-rendering its UI; we mirror that pattern via
+      // .xr-overlay.inactive CSS hiding instead of conditional render).
+      // eslint-disable-next-line no-console
+      console.log(
+        "[simxr] requestSession with domOverlay root:",
+        domOverlayRoot,
+        "childrenCount:",
+        domOverlayRoot?.childElementCount,
+        "innerHTMLpreview:",
+        domOverlayRoot?.innerHTML?.slice(0, 200),
+      );
       // Structural type, NOT `XRSessionInit & { ... }` — `XRSessionInit`
       // isn't in this codebase's TS lib config (same family as XRSession,
       // XRWebGLBinding, etc. that the rest of this file references via
