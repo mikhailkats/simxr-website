@@ -358,11 +358,24 @@ function useTheme(): { theme: "dark" | "light"; toggle: () => void } {
 // ─── Component ──────────────────────────────────────────────────────────
 function DashboardInner() {
   const [, setLocation] = useLocation();
+  // WebXR DOM Overlay container ref — declared first so the
+  // `getDomOverlayRoot` callback below can capture it. The actual <div
+  // ref={overlayRef}> is rendered at the end of the dashboard's JSX so
+  // the ref is wired by the time the user taps Connect.
+  const overlayRef = useRef<HTMLDivElement>(null);
+
   // After the CloudXR stream stops (Quest exit gesture, server-side stop, or
   // crash mid-recording), redirect the operator to /recordings with the
   // just-recorded scene highlighted. The hook ends the WebXR session and
   // cleans up before this fires, so navigation can proceed without racing.
   // taskId comes from the corresponding session.connect(scene.id) call.
+  //
+  // `getDomOverlayRoot` lets the hook fetch the live DOM ref at
+  // requestSession time. We use a getter (not a static prop) because
+  // refs don't trigger re-renders — by the time the operator taps
+  // Connect, the <div ref={overlayRef}> has been mounted and ref is
+  // populated. Hook reads this lazily when it needs to pass `domOverlay`
+  // to xr.requestSession().
   const session = useCloudXRSession({
     onSessionEnded: (taskId) => {
       const target = taskId
@@ -370,6 +383,7 @@ function DashboardInner() {
         : "/recordings";
       setLocation(target);
     },
+    getDomOverlayRoot: () => overlayRef.current,
   });
   const { latency, reachable, history: latencyHistory } = useLatencyPing(5000);
   const datetime = useLiveClock();
@@ -387,6 +401,13 @@ function DashboardInner() {
   // localStorage + mock fallback for first-time visitors). Other sidebar
   // items remain disabled until backend lands.
   const [view, setView] = useState<"tasks" | "recordings">("tasks");
+
+  // (overlayRef declared above next to the useCloudXRSession call; it
+  // backs the WebXR DOM Overlay layer that Quest 3 Browser composites
+  // on top of the CloudXR-streamed scene during an active session.
+  // Outer container always rendered; visible content is gated on
+  // session.state so the operator only sees Start/Recenter/Stop while
+  // a session is open.)
 
   // Real recordings persist in localStorage; refreshed whenever a session
   // ends. Mock entries stay below as "previous demo data" — real connections
@@ -825,6 +846,97 @@ function DashboardInner() {
             </div>
           </div>
         </main>
+      </div>
+
+      {/* WebXR DOM Overlay — passed via xr.requestSession's `domOverlay`
+          option (see useCloudXRSession.ts). Quest 3 Browser supports the
+          dom-overlay feature: when granted, the compositor renders this
+          element as a flat layer in 3D space on top of the CloudXR-
+          streamed scene. Operator aims controller, ray hit-tests against
+          the DOM, button clicks fire normal HTML click events.
+
+          The `<div ref={overlayRef}>` MUST be present in DOM at
+          requestSession time — keep it always rendered. Visible content
+          is conditionally rendered based on session.state so the operator
+          sees Start/Recenter/Stop buttons only during an active session.
+
+          Outer container has `pointer-events: none` so it doesn't block
+          mouse clicks in the dashboard's flat 2D mode; the inner card
+          flips back to `pointer-events: auto`. In VR, pointer-events
+          gating doesn't matter (the WebXR DOM Overlay raycaster always
+          hits the layer), so this is purely a 2D-mode UX guard. */}
+      <div
+        ref={overlayRef}
+        className={`xr-overlay ${
+          session.state === "streaming" || session.state === "connected"
+            ? "active"
+            : "inactive"
+        }`}
+      >
+        {(session.state === "streaming" ||
+          session.state === "connected" ||
+          session.state === "connecting") && (
+          <div className="xr-overlay-card">
+            <div className="xr-overlay-header">
+              <span className="xr-overlay-title">
+                SIM <span className="accent">XR.</span>
+              </span>
+              <span className="xr-overlay-scene">
+                {liveScene?.name ?? "—"}
+              </span>
+            </div>
+            <div className="xr-overlay-stats">
+              <div className="stat">
+                <span className="stat-label">Latency</span>
+                <span
+                  className={`stat-value ${
+                    !reachable || latency == null
+                      ? ""
+                      : latency > 500
+                      ? "warn"
+                      : latency > 200
+                      ? "warn"
+                      : "success"
+                  }`}
+                >
+                  {reachable && latency != null ? `~${latency}ms` : "—"}
+                </span>
+              </div>
+              <div className="stat">
+                <span className="stat-label">Session</span>
+                <span className="stat-value">
+                  {session.health?.session_state ?? "—"}
+                </span>
+              </div>
+            </div>
+            <div className="xr-overlay-actions">
+              <button
+                type="button"
+                className="xr-overlay-btn primary"
+                onClick={() => session.sendTeleopCommand("start teleop")}
+              >
+                <span className="xr-overlay-btn-icon">▶</span>
+                Start
+              </button>
+              <button
+                type="button"
+                className="xr-overlay-btn"
+                onClick={() => session.sendTeleopCommand("reset teleop")}
+              >
+                <span className="xr-overlay-btn-icon">⟳</span>
+                Recenter
+              </button>
+              <button
+                type="button"
+                className="xr-overlay-btn"
+                onClick={() => session.sendTeleopCommand("stop teleop")}
+              >
+                <span className="xr-overlay-btn-icon">■</span>
+                Stop
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

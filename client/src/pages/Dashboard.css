@@ -660,3 +660,175 @@
     animation: none;
   }
 }
+
+/* ─── In-VR DOM Overlay ──────────────────────────────────────────────────
+   Container is always rendered (so the ref stays valid for
+   xr.requestSession's `domOverlay.root`), but visible content shows only
+   while a CloudXR session is active. Quest 3 Browser composites this
+   layer flat on top of the streamed scene; operator points the Touch Plus
+   controller at it and clicks Start / Recenter / Stop via standard
+   WebXR raycast → DOM hit-test → button onClick. Matches NVIDIA
+   IsaacTeleop hosted-client UX one-to-one.
+
+   Outer container has `pointer-events: none` to NOT block 2D-mode mouse
+   clicks against the dashboard underneath; inner card flips back to
+   `pointer-events: auto` so its own buttons are clickable. In immersive
+   VR mode, pointer-events gating doesn't matter (the WebXR overlay
+   raycaster always hits the layer regardless), so this is purely a
+   2D-mode UX guard. */
+
+.dashboard-root .xr-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 28px;
+  pointer-events: none;
+  z-index: 9000;
+}
+.dashboard-root .xr-overlay.inactive {
+  /* Keep DOM mounted but visually empty when no session — content is
+     gated in JSX so there's nothing to hide here other than to make sure
+     the container itself is fully transparent and inert. */
+  visibility: visible; /* must stay visible for ref to be usable */
+}
+
+.dashboard-root .xr-overlay-card {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(560px, 100%);
+  padding: 18px 22px;
+  background: rgba(8, 9, 12, 0.92);
+  border: 1px solid var(--stroke-hi);
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(67, 97, 255, 0.18);
+  animation: xro-fade-in 200ms ease-out;
+}
+.dashboard-root.light .xr-overlay-card {
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.18),
+    0 0 0 1px rgba(67, 97, 255, 0.18);
+}
+
+@keyframes xro-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.dashboard-root .xr-overlay-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.dashboard-root .xr-overlay-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.dashboard-root .xr-overlay-title .accent {
+  color: var(--volt);
+}
+.dashboard-root .xr-overlay-scene {
+  font-size: 13px;
+  color: var(--text-dim);
+  font-weight: 500;
+  border-left: 1px solid var(--stroke);
+  padding-left: 10px;
+}
+
+.dashboard-root .xr-overlay-stats {
+  display: flex;
+  gap: 16px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--ink-deep);
+  border: 1px solid var(--stroke);
+}
+.dashboard-root.light .xr-overlay-stats {
+  background: var(--surface-hi);
+}
+.dashboard-root .xr-overlay-stats .stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+.dashboard-root .xr-overlay-stats .stat-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.dashboard-root .xr-overlay-stats .stat-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.dashboard-root .xr-overlay-stats .stat-value.success { color: var(--success); }
+.dashboard-root .xr-overlay-stats .stat-value.warn    { color: var(--warn); }
+
+.dashboard-root .xr-overlay-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.dashboard-root .xr-overlay-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  border: 1px solid var(--stroke-hi);
+  background: var(--surface);
+  color: var(--text);
+  /* Larger min hit area for VR controller raycast — fingers don't aim
+     as precisely as a desktop mouse. */
+  min-height: 48px;
+}
+.dashboard-root .xr-overlay-btn:hover {
+  border-color: var(--volt);
+  color: var(--volt);
+}
+.dashboard-root .xr-overlay-btn:active {
+  transform: translateY(1px);
+}
+.dashboard-root .xr-overlay-btn.primary {
+  background: var(--volt);
+  color: #fff;
+  border-color: var(--volt-deep);
+  box-shadow: 0 4px 14px rgba(67, 97, 255, 0.32);
+}
+.dashboard-root .xr-overlay-btn.primary:hover {
+  background: var(--volt-light);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(67, 97, 255, 0.45);
+}
+.dashboard-root .xr-overlay-btn-icon {
+  font-size: 14px;
+  line-height: 1;
+  display: inline-block;
+  width: 16px;
+  text-align: center;
+}

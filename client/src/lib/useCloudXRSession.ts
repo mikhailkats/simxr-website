@@ -88,6 +88,24 @@ declare global {
       //     never writes pixels and Quest sees black screen.
       sendTrackingStateToServer(time: number, frame: XRFrame): void;
       render(time: number, frame: XRFrame, baseLayer: XRWebGLLayer): void;
+      // Custom-message channel — sends a JSON-serializable object over the
+      // CloudXR runtime's WebRTC `control_channel` DataChannel. Used to
+      // trigger server-side state changes (e.g. switch IsaacLab teleop into
+      // RUNNING execution state, recenter the XR anchor). The SDK
+      // internally wraps as `{customMessage: JSON.stringify(message)}` and
+      // queues until control_channel is open.
+      //
+      // Reverse-engineered from NVIDIA IsaacTeleop bundle 2026-05-08
+      // (`https://nvidia.github.io/IsaacTeleop/client/main/bundle.js`):
+      //   {type: "teleop_command", message: {command: "start teleop"}} → RUN
+      //   {type: "teleop_command", message: {command: "stop teleop"}}  → STOP
+      //   {type: "teleop_command", message: {command: "reset teleop"}} → RESET ANCHOR
+      // Server-side mapping:
+      //   isaaclab_teleop/session_lifecycle.py:_execution_events_to_control()
+      //   → ctrl.is_active=True → record_demos.py running_recording_instance=True
+      // Marked optional because not every SDK build advertises it; we
+      // probe via optional chaining and warn-log if absent.
+      sendCustomMessage?: (message: unknown) => void;
       // Optional keepalive surface — exact method name untyped in the SDK,
       // probed via optional chaining in the keepalive useEffect.
       sendPing?: () => void;
@@ -124,6 +142,21 @@ export type UiSessionState =
   | "disconnecting"
   | "error";
 
+/**
+ * Server-side IsaacLab teleop control commands. Sent over the SDK's
+ * custom-message channel (WebRTC `control_channel`); server-side
+ * `isaaclab_teleop/session_lifecycle.py:_execution_events_to_control()`
+ * maps these to ExecutionState transitions which the record_demos.py
+ * runtime polls each step:
+ *   "start teleop" → ctrl.is_active=True → running_recording_instance=True
+ *                     (env.reset() side-effect re-anchors HMD pose)
+ *   "stop teleop"  → ctrl.is_active=False → operator can resume or disconnect
+ *   "reset teleop" → teleop_interface.reset() → re-anchor HMD without restart
+ *
+ * Reverse-engineered from NVIDIA IsaacTeleop bundle.js 2026-05-08.
+ */
+export type TeleopCommand = "start teleop" | "stop teleop" | "reset teleop";
+
 export interface UseCloudXRSessionResult {
   state: UiSessionState;
   health: Healthz | null;
@@ -140,6 +173,18 @@ export interface UseCloudXRSessionResult {
    */
   connect: (taskId?: string) => Promise<void>;
   disconnect: () => Promise<void>;
+  /**
+   * Send a teleop control command to the server. Returns true if the SDK
+   * accepted the call (best-effort: the message is queued internally
+   * until WebRTC control_channel opens, so calling this immediately after
+   * Connect is safe). Returns false if the SDK doesn't expose
+   * `sendCustomMessage` in this build — falls through to a console.warn
+   * so the operator can fall back to NVIDIA hosted client overlay.
+   *
+   * Wired to Start / Recenter / Stop buttons in the in-VR DOM Overlay.
+   * No automatic firing — every command is an explicit operator gesture.
+   */
+  sendTeleopCommand: (command: TeleopCommand) => boolean;
 }
 
 export interface UseCloudXRSessionOptions {
@@ -161,6 +206,20 @@ export interface UseCloudXRSessionOptions {
    * racing with hook teardown.
    */
   onSessionEnded?: (taskId: string | null) => void;
+  /**
+   * Lazy getter for the DOM element passed as WebXR's `domOverlay.root`.
+   * When Quest 3 Browser grants the `dom-overlay` feature, the headset
+   * compositor renders the returned element as a flat layer in 3D space
+   * on top of the CloudXR-streamed scene — operator can aim controllers
+   * at it and click DOM buttons via WebXR raycast.
+   *
+   * Lazy getter (not a static prop) because refs don't trigger re-renders;
+   * by the time `connect()` runs, the consumer's `<div ref={ref}>` has
+   * mounted. Returning null gracefully degrades to a session WITHOUT
+   * dom-overlay — no UI panel in VR, operator must use Quest exit
+   * gestures and other client (NVIDIA hosted) for teleop control.
+   */
+  getDomOverlayRoot?: () => HTMLElement | null;
 }
 
 export function useCloudXRSession(
@@ -397,10 +456,35 @@ export function useCloudXRSession(
     //     silent-skip from optional — strict CFG validation in those builds.
     let xrSession: XRSession;
     try {
-      xrSession = await xr.requestSession("immersive-vr", {
+      // WebXR DOM Overlay — when the consumer provides `getDomOverlayRoot`
+      // and the returned element is non-null, request the `dom-overlay`
+      // feature and pass the element as `domOverlay.root`. Quest 3 Browser
+      // supports this; the headset compositor then renders the DOM as a
+      // flat layer in VR (Start/Recenter/Stop buttons usable via controller
+      // raycast). On any device that doesn't grant the feature, the session
+      // still opens — operator just won't have an in-VR control panel.
+      const domOverlayRoot = optsRef.current.getDomOverlayRoot?.() ?? null;
+      // Structural type, NOT `XRSessionInit & { ... }` — `XRSessionInit`
+      // isn't in this codebase's TS lib config (same family as XRSession,
+      // XRWebGLBinding, etc. that the rest of this file references via
+      // ambient WebXR types from runtime). Inline shape avoids adding
+      // another to the pre-existing 13 baseline tsc-errors that vite/
+      // esbuild already strips cleanly.
+      type SessionInitOpts = {
+        requiredFeatures?: string[];
+        optionalFeatures?: string[];
+        domOverlay?: { root: HTMLElement };
+      };
+      const sessionInit: SessionInitOpts = {
         requiredFeatures: ["local-floor"],
-        optionalFeatures: ["hand-tracking"],
-      });
+        optionalFeatures: domOverlayRoot
+          ? ["hand-tracking", "dom-overlay"]
+          : ["hand-tracking"],
+      };
+      if (domOverlayRoot) {
+        sessionInit.domOverlay = { root: domOverlayRoot };
+      }
+      xrSession = await xr.requestSession("immersive-vr", sessionInit);
       xrSessionRef.current = xrSession;
     } catch (e) {
       setError(
@@ -476,10 +560,21 @@ export function useCloudXRSession(
           deviceFrameRate: 90,
           // 30 Mbps (was 150 — runtime / CF tunnel may reject too-greedy
           // sessions; NVIDIA's UI defaults are in this range).
-          maxStreamingBitrateKbps: 30_000,
-          // h264 (was "av1" per NVIDIA bundle default — Quest 3 hardware AV1
-          // decode is historically unstable, h264 universal-stable).
-          codec: "h264",
+          // 100 Mbps — closer to NVIDIA bundle default (1e5/1.5e5 Kbps i.e.
+          // 100/150 Mbps). 30 Mbps was the original conservative pick to
+          // limit Cloudflare-tunnel risk; empirically the tunnel handles
+          // 100 Mbps cleanly (CC's 2026-05-08 cxr_server timing report:
+          // PoseInterarrivalTime max stays under 30ms on Quest WiFi).
+          // If next iteration shows network jitter, can step down or move
+          // to 150 Mbps (NVIDIA top default) — gauged on per-frame timing.
+          maxStreamingBitrateKbps: 100_000,
+          // h265 (HEVC) — Quest 3 has full hardware HEVC decode. Was "h264"
+          // originally chosen for universal stability, but at our bitrate
+          // h264 was the quality floor vs NVIDIA hosted client. h265 gives
+          // ~30-50% better quality at same bitrate. The earlier "AV1
+          // unstable" memory note was specifically about AV1, not HEVC —
+          // Quest 3 hardware HEVC decode is mature and standard.
+          codec: "h265",
           // Reprojection grid — SDK validator allows undefined but the
           // server-side runtime appears to require these for session accept
           // (isaac log silence with undefined; CC's bundle.js shows :64).
@@ -504,6 +599,13 @@ export function useCloudXRSession(
           // any custom rendering on top of the CloudXR-driven frame.
           onWebGLStateChangeBegin: () => {},
           onWebGLStateChangeEnd: () => {},
+          // No auto-send of "start teleop" here — replaced by explicit
+          // operator gesture via the in-VR DOM Overlay's Start button.
+          // Operator: tap Connect on scene card → enter VR → see overlay →
+          // tap Start → robot becomes responsive. This matches NVIDIA
+          // hosted client's UX exactly and gives the operator visible
+          // control over when the recording starts (vs silently auto-
+          // arming on session connect).
           onStreamStarted: () => setState("streaming"),
           onStreamStopped: (err) => {
             // 1. End the WebXR session so Quest exits immersive mode and
@@ -629,5 +731,47 @@ export function useCloudXRSession(
     setState("idle");
   }, []);
 
-  return { state, health, error, connect, disconnect };
+  // ─── sendTeleopCommand ──────────────────────────────────────────────
+  // Wired to Start / Recenter / Stop buttons in the in-VR DOM Overlay.
+  // Sends `{type:"teleop_command", message:{command}}` over the SDK's
+  // custom-message channel (WebRTC control_channel internally). The SDK
+  // queues the message until the channel is open, so calling immediately
+  // after `connect()` resolves is safe even if onStreamStarted hasn't
+  // fired yet. Server-side IsaacLab's session_lifecycle.py maps the
+  // command to ExecutionState transitions consumed by record_demos.py's
+  // teleop loop.
+  //
+  // Returns true on best-effort accept; false (and console.warn) if the
+  // SDK build doesn't expose sendCustomMessage. Reverse-engineered from
+  // NVIDIA IsaacTeleop bundle 2026-05-08 — public SDK API surface, not
+  // an internal-only method.
+  const sendTeleopCommand = useCallback(
+    (command: TeleopCommand): boolean => {
+      const sess = sessionRef.current;
+      if (!sess?.sendCustomMessage) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[simxr] SDK Session.sendCustomMessage not available; cannot send "${command}". Fall back to NVIDIA hosted client for teleop control.`,
+        );
+        return false;
+      }
+      try {
+        sess.sendCustomMessage({
+          type: "teleop_command",
+          message: { command },
+        });
+        return true;
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[simxr] sendCustomMessage failed for "${command}":`,
+          e,
+        );
+        return false;
+      }
+    },
+    [],
+  );
+
+  return { state, health, error, connect, disconnect, sendTeleopCommand };
 }
