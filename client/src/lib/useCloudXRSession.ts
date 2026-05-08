@@ -15,6 +15,49 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchMediaIp, fetchHealth, isMockMode, type Healthz } from "./scenes";
 
+// UUID v5 of the string "teleop_command" with namespace DNS.
+//
+// CloudXR.js 6.1 Session exposes per-channel routing on
+// `availableMessageChannels`; each channel is identified by a 16-byte
+// UUID (Uint8Array). NVIDIA's bundle.js computes the channel uuid by
+// calling `uuidV5("teleop_command", uuidV5.DNS, new Uint8Array(16))`
+// (third arg = output buffer; the v5 function is deterministic).
+//
+// We pre-computed the bytes once (Node's standalone v5 implementation,
+// cross-checked by spec'd UUID v5 algorithm: SHA-1 of namespace+name,
+// version=5 nibble + variant=10 bits) and hardcode them here so the
+// React bundle doesn't need to ship the `uuid` package just for this
+// constant. Result hex: ab2380eb-80ee-53a3-9a3c-eaca71ed5444.
+//
+// If you ever need to add another channel (e.g. "diagnostics"), repeat
+// the same computation — see `compute_uuid.mjs` in repo notes for the
+// exact recipe, or use any uuid library `v5(name, v5.DNS, output)`.
+const TELEOP_CHANNEL_UUID = new Uint8Array([
+  171, 35, 128, 235, 128, 238, 83, 163,
+  154, 60, 234, 202, 113, 237, 84, 68,
+]);
+
+/**
+ * Locate a CloudXR Session message channel by its 16-byte UUID.
+ *
+ * Each entry in `session.availableMessageChannels` carries `uuid:
+ * Uint8Array(16)`. We compare byte-by-byte rather than coerce to string
+ * because (a) the SDK gives us bytes, not a string, and (b) byte
+ * comparison sidesteps any JS-side ambiguity around UUID textual
+ * formatting (case, dashes, byte order).
+ */
+function findChannelByUuid<T extends { uuid: Uint8Array }>(
+  channels: ReadonlyArray<T> | null | undefined,
+  targetUuid: Uint8Array,
+): T | undefined {
+  if (!channels) return undefined;
+  return channels.find(
+    (c) =>
+      c.uuid?.length === targetUuid.length &&
+      targetUuid.every((b, i) => c.uuid[i] === b),
+  );
+}
+
 // CloudXR.js types — declared here as a minimal shape because the SDK ships
 // its own .d.ts and we'll get full IDE completion once the vendored tarball
 // is installed via package.json. These local interfaces let TypeScript
@@ -88,24 +131,38 @@ declare global {
       //     never writes pixels and Quest sees black screen.
       sendTrackingStateToServer(time: number, frame: XRFrame): void;
       render(time: number, frame: XRFrame, baseLayer: XRWebGLLayer): void;
-      // Custom-message channel — sends a JSON-serializable object over the
-      // CloudXR runtime's WebRTC `control_channel` DataChannel. Used to
-      // trigger server-side state changes (e.g. switch IsaacLab teleop into
-      // RUNNING execution state, recenter the XR anchor). The SDK
-      // internally wraps as `{customMessage: JSON.stringify(message)}` and
-      // queues until control_channel is open.
+      // Server-bound message API — reverse-engineered (corrected) from
+      // NVIDIA IsaacTeleop bundle.js 2026-05-08. Earlier session memory
+      // had `sendCustomMessage(message)` documented; that method does not
+      // exist on CloudXR.js 6.1 Session. The actual SDK shape is:
       //
-      // Reverse-engineered from NVIDIA IsaacTeleop bundle 2026-05-08
-      // (`https://nvidia.github.io/IsaacTeleop/client/main/bundle.js`):
+      //   session.availableMessageChannels: Array<MessageChannel>
+      //     where each MessageChannel = { uuid: Uint8Array;
+      //                                   sendServerMessage(bytes: Uint8Array): boolean }
+      //   session.sendServerMessage(payload: object): void   // legacy fallback
+      //
+      // NVIDIA's Start/Stop/Reset path (their `ue` function in bundle.js):
+      //   1. Compute the channel UUID = uuidV5("teleop_command", DNS).
+      //   2. Look up the matching channel by uuid bytes in availableMessageChannels.
+      //   3. If found: encode payload as UTF-8 bytes, call channel.sendServerMessage(bytes).
+      //   4. Else fall back to session.sendServerMessage(payload) (object, not bytes).
+      //
+      // Payload shape for IsaacLab teleop:
       //   {type: "teleop_command", message: {command: "start teleop"}} → RUN
       //   {type: "teleop_command", message: {command: "stop teleop"}}  → STOP
       //   {type: "teleop_command", message: {command: "reset teleop"}} → RESET ANCHOR
       // Server-side mapping:
       //   isaaclab_teleop/session_lifecycle.py:_execution_events_to_control()
       //   → ctrl.is_active=True → record_demos.py running_recording_instance=True
-      // Marked optional because not every SDK build advertises it; we
-      // probe via optional chaining and warn-log if absent.
-      sendCustomMessage?: (message: unknown) => void;
+      //
+      // Both fields are optional in the type because not every SDK build
+      // exposes both surfaces; `sendTeleopCommand` below probes channels
+      // first, falls back to legacy, console.errors if neither exists.
+      availableMessageChannels?: Array<{
+        uuid: Uint8Array;
+        sendServerMessage(bytes: Uint8Array): boolean;
+      }>;
+      sendServerMessage?: (payload: unknown) => void;
       // Optional keepalive surface — exact method name untyped in the SDK,
       // probed via optional chaining in the keepalive useEffect.
       sendPing?: () => void;
@@ -174,15 +231,15 @@ export interface UseCloudXRSessionResult {
   connect: (taskId?: string) => Promise<void>;
   disconnect: () => Promise<void>;
   /**
-   * Send a teleop control command to the server. Returns true if the SDK
-   * accepted the call (best-effort: the message is queued internally
-   * until WebRTC control_channel opens, so calling this immediately after
-   * Connect is safe). Returns false if the SDK doesn't expose
-   * `sendCustomMessage` in this build — falls through to a console.warn
-   * so the operator can fall back to NVIDIA hosted client overlay.
+   * Send a teleop control command to the server. Returns true if either
+   * SDK path accepted (modern `availableMessageChannels[teleop].sendServerMessage(bytes)`
+   * or legacy top-level `sendServerMessage(payload)`); false + console.error
+   * if neither surface is exposed by the SDK build (caller should fall
+   * back to the NVIDIA hosted client overlay).
    *
-   * Wired to Start / Recenter / Stop buttons in the in-VR DOM Overlay.
-   * No automatic firing — every command is an explicit operator gesture.
+   * Wired both to the in-VR DOM Overlay buttons (Start / Recenter / Stop)
+   * and to the auto-arm in onStreamStarted — same shared codepath for
+   * both manual and automatic firing.
    */
   sendTeleopCommand: (command: TeleopCommand) => boolean;
 }
@@ -245,6 +302,22 @@ export function useCloudXRSession(
   // back through `onSessionEnded` for the `/recordings?fresh=<taskId>`
   // redirect. null when caller didn't supply a taskId.
   const lastTaskIdRef = useRef<string | null>(null);
+
+  // Tracks whether `onSessionEnded` has already fired for the current
+  // connect() invocation. Reset to false at the top of connect(); flipped
+  // to true after the first call (whichever path — WebXR 'end' event or
+  // CloudXR onStreamStopped — wins the race).
+  //
+  // Why both paths: with record_demos.py --num_demos 0 the server keeps
+  // pushing frames even after the operator does the Quest exit gesture,
+  // so CloudXR's onStreamStopped doesn't fire reliably / on time. WebXR's
+  // 'end' event is the guaranteed primary trigger (fires on Quest exit
+  // gesture, browser tab close, programmatic .end()). onStreamStopped
+  // remains as fallback for server-tears-down-first paths (network drop,
+  // mid-recording crash). The guard prevents double-navigation when both
+  // fire in close succession (e.g. xrSession.end() inside onStreamStopped
+  // synchronously triggers the 'end' listener).
+  const sessionEndedFiredRef = useRef<boolean>(false);
 
   // Whether the most-recent xr.requestSession() actually granted the
   // `dom-overlay` feature. Set in connect() right after the session
@@ -343,12 +416,123 @@ export function useCloudXRSession(
     return () => window.clearInterval(id);
   }, [state]);
 
+  // ─── sendTeleopCommand ──────────────────────────────────────────────
+  // Wired to Start / Recenter / Stop buttons in the in-VR DOM Overlay
+  // AND to the auto-arm in connect()'s onStreamStarted callback. Sends
+  // `{type:"teleop_command", message:{command}}` to the server.
+  //
+  // CloudXR.js 6.1 exposes two paths to reach the runtime:
+  //   1. PREFERRED: session.availableMessageChannels[ch].sendServerMessage(bytes)
+  //      where `ch` is the channel whose 16-byte uuid matches
+  //      uuidV5("teleop_command", DNS) (= TELEOP_CHANNEL_UUID above).
+  //      Bytes are UTF-8 JSON of the payload.
+  //   2. LEGACY: session.sendServerMessage(payloadObject)
+  //      Object form, no encoding. Used by older SDK builds that don't
+  //      expose `availableMessageChannels` at all.
+  //
+  // Reverse-engineered from NVIDIA IsaacTeleop bundle.js 2026-05-08
+  // (their `ue` function — Start/Stop/Reset call site). Earlier session
+  // memory had `sendCustomMessage(message)` documented; that was wrong —
+  // the method doesn't exist on this SDK build, calls silently no-op'd
+  // and the optional-chain check returned false → robot never moved.
+  //
+  // Returns true if either path accepted; false + console.error
+  // otherwise. console.info on success so chrome://inspect logs show
+  // exactly which path won (channel vs legacy) — actionable diagnostic
+  // when the next build bump changes SDK surface.
+  //
+  // Declared BEFORE connect() so the onStreamStarted closure inside
+  // createSession's callbacks can reference it without a TDZ headache.
+  const sendTeleopCommand = useCallback(
+    (command: TeleopCommand): boolean => {
+      const session = sessionRef.current;
+      if (!session) {
+        // eslint-disable-next-line no-console
+        console.error(
+          `[simxr] sendTeleopCommand("${command}"): no active CloudXR session`,
+        );
+        return false;
+      }
+
+      const payload = {
+        type: "teleop_command" as const,
+        message: { command },
+      };
+
+      // Path 1 — modern: dedicated message channel.
+      const channels = session.availableMessageChannels;
+      if (channels && Array.isArray(channels)) {
+        const channel = findChannelByUuid(channels, TELEOP_CHANNEL_UUID);
+        if (channel) {
+          try {
+            const bytes = new TextEncoder().encode(JSON.stringify(payload));
+            const ok = channel.sendServerMessage(bytes);
+            // eslint-disable-next-line no-console
+            console.info(
+              `[simxr] teleop_command sent via MessageChannel: "${command}" → ok=${ok}`,
+            );
+            return !!ok;
+          } catch (e) {
+            // eslint-disable-next-line no-console
+            console.error(
+              `[simxr] channel.sendServerMessage("${command}") threw:`,
+              e,
+            );
+            // fall through to legacy path
+          }
+        } else {
+          // eslint-disable-next-line no-console
+          console.warn(
+            `[simxr] teleop_command channel not found in availableMessageChannels (${channels.length} channels), trying legacy`,
+          );
+        }
+      }
+
+      // Path 2 — legacy: top-level sendServerMessage(payload).
+      if (typeof session.sendServerMessage === "function") {
+        try {
+          session.sendServerMessage(payload);
+          // eslint-disable-next-line no-console
+          console.info(
+            `[simxr] teleop_command sent via legacy sendServerMessage: "${command}"`,
+          );
+          return true;
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.error(
+            `[simxr] legacy sendServerMessage("${command}") threw:`,
+            e,
+          );
+          return false;
+        }
+      }
+
+      // eslint-disable-next-line no-console
+      console.error(
+        `[simxr] no usable send method on Session for "${command}" — neither availableMessageChannels nor sendServerMessage available. Robot won't respond. SDK build may have shifted; check chrome://inspect Session object shape.`,
+      );
+      return false;
+    },
+    [],
+  );
+
   const connect = useCallback(async (taskId?: string) => {
     if (state !== "idle" && state !== "error") return;
     setError(null);
     // Capture the scene the user clicked Connect on; consumed by
     // onStreamStopped → onSessionEnded for the post-VR redirect.
     lastTaskIdRef.current = taskId ?? null;
+    // Lexical capture for the WebXR 'end' listener installed below — the
+    // listener is attached once per connect() invocation, so closing over
+    // a const here is the cleanest way to associate that specific session
+    // with the taskId that opened it (without depending on lastTaskIdRef
+    // which mutates on every connect()).
+    const connectTaskId: string | null = taskId ?? null;
+    // Reset the session-ended guard for this fresh invocation. Both the
+    // WebXR 'end' listener (primary) and onStreamStopped (fallback) call
+    // onSessionEnded; without this flag they'd double-fire and Dashboard
+    // would navigate to /recordings twice.
+    sessionEndedFiredRef.current = false;
 
     // Mock mode — simulate the lifecycle without touching WebXR or the SDK.
     // Set ?mock=1 in the URL to enable. ?mock=1&error=connect simulates a
@@ -514,6 +698,71 @@ export function useCloudXRSession(
       xrSession = await xr.requestSession("immersive-vr", sessionInit);
       xrSessionRef.current = xrSession;
 
+      // PRIMARY session-end trigger. WebXR's XRSession spec guarantees the
+      // 'end' event fires exactly once when the session terminates — Quest
+      // exit gesture, browser tab close, or programmatic xrSession.end().
+      // This is independent of whether the server-side CloudXR stream
+      // actually stopped: with record_demos.py --num_demos 0 the server
+      // keeps pushing frames after the operator leaves VR, so the SDK's
+      // onStreamStopped callback (registered below in createSession's
+      // callbacks block) doesn't fire reliably / on time. Wiring the
+      // 'end' event ensures Dashboard navigates to /recordings?fresh=...
+      // immediately on Quest exit. onStreamStopped remains as fallback
+      // for paths where the server tears down first (network drop,
+      // mid-recording crash).
+      //
+      // Both paths converge on `optsRef.current.onSessionEnded?.()`,
+      // guarded by `sessionEndedFiredRef` so only the first one fires
+      // navigation. Cleanup is done in both — defensive duplication, all
+      // teardown calls below are idempotent (try/catch + null-checks).
+      //
+      // Closure note: this listener uses `connectTaskId` (captured at
+      // top of connect()) rather than `lastTaskIdRef.current` because
+      // by the time 'end' fires the user may have started another
+      // connect() that mutated the ref; the listener is attached once
+      // per session and the taskId it should report is the one THIS
+      // session was opened with.
+      xrSession.addEventListener("end", () => {
+        // eslint-disable-next-line no-console
+        console.log("[simxr] WebXR session 'end' event fired", {
+          taskId: connectTaskId,
+        });
+
+        // 1. Cancel rAF — without this, a final requestAnimationFrame
+        //    callback would try to draw into a torn-down XR layer.
+        if (rafHandleRef.current) {
+          try { xrSession.cancelAnimationFrame(rafHandleRef.current); } catch { /* ignore */ }
+          rafHandleRef.current = 0;
+        }
+        // 2. Tear down the CloudXR session if it's still around. SDK
+        //    no-ops a second teardown so this is safe even when
+        //    onStreamStopped already ran.
+        if (sessionRef.current) {
+          void sessionRef.current.disconnect().catch(() => {});
+          sessionRef.current.dispose?.();
+          sessionRef.current = null;
+        }
+        // 3. Detach the off-screen WebGL2 canvas from step 3a so it
+        //    doesn't leak across re-connects.
+        if (canvasRef.current) {
+          try { canvasRef.current.remove(); } catch { /* ignore */ }
+          canvasRef.current = null;
+        }
+        xrSessionRef.current = null;
+
+        // 4. Land in idle, but don't clobber a server-error state set by
+        //    onStreamStopped — that's more informative than the followup
+        //    'end' event that fires when we tear the WebXR session down
+        //    in response to the error.
+        setState((s) => (s === "error" ? "error" : "idle"));
+
+        // 5. Fire the consumer's session-end callback exactly once.
+        if (!sessionEndedFiredRef.current) {
+          sessionEndedFiredRef.current = true;
+          optsRef.current.onSessionEnded?.(connectTaskId);
+        }
+      });
+
       // Post-grant diagnostic — what features did Quest actually accept?
       // `enabledFeatures` is a WebXR proposal exposed by Quest 3 Browser
       // but not always typed in DOM lib; `domOverlayState` is part of
@@ -667,43 +916,17 @@ export function useCloudXRSession(
             // button tap), but Quest 3 Browser unreliably reports
             // domOverlayState — it claims `type: 'screen'` (granted)
             // while the compositor doesn't actually render the layer.
-            // Conditional check sees 'granted' and waits for a button
-            // that never gets tapped. Result: cold-start through simxr.app
-            // never fires the start command, server stays at
-            // running_recording_instance=False, robot doesn't respond.
+            // The button never gets tapped; cold-start through simxr.app
+            // never fires the start command; server stays at
+            // running_recording_instance=False; robot doesn't respond.
             //
-            // Drop the conditional. Always send 'start teleop'. Overlay
-            // buttons still work as override on devices where the layer
-            // does render (e.g. desktop WebXR clients) — they call
-            // sendTeleopCommand directly. Trade-off: silent auto-arm,
-            // which Mike previously flagged. Accepted because the
-            // alternative (button-required) doesn't work on Quest 3
-            // anyway. Future iteration could add `?autoStart=0` query
-            // param to opt back into button-only mode for testing.
-            const sess = sessionRef.current;
-            if (!sess?.sendCustomMessage) {
-              // eslint-disable-next-line no-console
-              console.warn(
-                "[simxr] SDK Session.sendCustomMessage unavailable — robot won't respond. Operator must use NVIDIA hosted client to bootstrap session, then switch to simxr.app.",
-              );
-              return;
-            }
-            try {
-              sess.sendCustomMessage({
-                type: "teleop_command",
-                message: { command: "start teleop" },
-              });
-              // eslint-disable-next-line no-console
-              console.log(
-                "[simxr] auto-sent 'start teleop' on stream start (overlay grant signal ignored — Quest 3 Browser unreliable).",
-              );
-            } catch (e) {
-              // eslint-disable-next-line no-console
-              console.warn(
-                "[simxr] auto-start sendCustomMessage threw:",
-                e,
-              );
-            }
+            // Now uses sendTeleopCommand which goes through the proper
+            // CloudXR.js 6.1 SDK path (availableMessageChannels with
+            // legacy sendServerMessage fallback). Overlay buttons still
+            // work as override on devices where the layer does render
+            // (e.g. desktop WebXR clients) — they call sendTeleopCommand
+            // directly with the same shared codepath.
+            sendTeleopCommand("start teleop");
           },
           onStreamStopped: (err) => {
             // 1. End the WebXR session so Quest exits immersive mode and
@@ -735,8 +958,15 @@ export function useCloudXRSession(
             //    this to setLocation("/recordings?fresh=" + taskId) so
             //    the post-VR redirect kicks in for both clean and dirty
             //    stops (server crash mid-recording still navigates per
-            //    the recordings-page brief).
-            optsRef.current.onSessionEnded?.(lastTaskIdRef.current);
+            //    the recordings-page brief). Guarded against double-fire
+            //    when WebXR 'end' event also runs (xrSession.end() inside
+            //    this same callback synchronously triggers the 'end'
+            //    listener installed in connect(), which calls the same
+            //    onSessionEnded path).
+            if (!sessionEndedFiredRef.current) {
+              sessionEndedFiredRef.current = true;
+              optsRef.current.onSessionEnded?.(lastTaskIdRef.current);
+            }
           },
           onMetrics: () => {
             /* SDK-side telemetry already handles bitrate/dropped-frames. No-op for now. */
@@ -828,48 +1058,6 @@ export function useCloudXRSession(
     }
     setState("idle");
   }, []);
-
-  // ─── sendTeleopCommand ──────────────────────────────────────────────
-  // Wired to Start / Recenter / Stop buttons in the in-VR DOM Overlay.
-  // Sends `{type:"teleop_command", message:{command}}` over the SDK's
-  // custom-message channel (WebRTC control_channel internally). The SDK
-  // queues the message until the channel is open, so calling immediately
-  // after `connect()` resolves is safe even if onStreamStarted hasn't
-  // fired yet. Server-side IsaacLab's session_lifecycle.py maps the
-  // command to ExecutionState transitions consumed by record_demos.py's
-  // teleop loop.
-  //
-  // Returns true on best-effort accept; false (and console.warn) if the
-  // SDK build doesn't expose sendCustomMessage. Reverse-engineered from
-  // NVIDIA IsaacTeleop bundle 2026-05-08 — public SDK API surface, not
-  // an internal-only method.
-  const sendTeleopCommand = useCallback(
-    (command: TeleopCommand): boolean => {
-      const sess = sessionRef.current;
-      if (!sess?.sendCustomMessage) {
-        // eslint-disable-next-line no-console
-        console.warn(
-          `[simxr] SDK Session.sendCustomMessage not available; cannot send "${command}". Fall back to NVIDIA hosted client for teleop control.`,
-        );
-        return false;
-      }
-      try {
-        sess.sendCustomMessage({
-          type: "teleop_command",
-          message: { command },
-        });
-        return true;
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.warn(
-          `[simxr] sendCustomMessage failed for "${command}":`,
-          e,
-        );
-        return false;
-      }
-    },
-    [],
-  );
 
   return { state, health, error, connect, disconnect, sendTeleopCommand };
 }
