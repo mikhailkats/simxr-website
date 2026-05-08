@@ -661,39 +661,30 @@ export function useCloudXRSession(
           onWebGLStateChangeEnd: () => {},
           onStreamStarted: () => {
             setState("streaming");
-            // Conditional auto-start. The intended UX is operator taps
-            // Start in the in-VR DOM Overlay; but Quest 3 Browser
-            // sometimes graceful-degrades the dom-overlay feature
-            // (overlay layer never composites) without telling the
-            // page in any other way. When that happens, the operator
-            // is in VR with no visible button and the server-side
-            // record_demos.py loop is stuck at running_recording_
-            // instance=False — robot doesn't respond, demo can't be
-            // captured, cold-Kit-through-simxr.app is broken.
+            // Always auto-arm teleop on stream start. We previously gated
+            // this on `overlayGrantedRef.current` (only auto-start when
+            // dom-overlay was rejected, otherwise wait for explicit user
+            // button tap), but Quest 3 Browser unreliably reports
+            // domOverlayState — it claims `type: 'screen'` (granted)
+            // while the compositor doesn't actually render the layer.
+            // Conditional check sees 'granted' and waits for a button
+            // that never gets tapped. Result: cold-start through simxr.app
+            // never fires the start command, server stays at
+            // running_recording_instance=False, robot doesn't respond.
             //
-            // Rule: if overlay was granted (`overlayGrantedRef`),
-            // wait for explicit user button tap — operator sees the
-            // panel and decides. If overlay was NOT granted, auto-
-            // send "start teleop" so the session is functional even
-            // without UI. Diagnostic console.log makes the decision
-            // visible in chrome://inspect for next-iteration debug.
-            //
-            // Trade-off honest: auto-start is "silent" (no visible
-            // confirmation) which Mike has flagged before. We accept
-            // it ONLY as fallback when there's literally no other way
-            // for the operator to start the session.
-            if (overlayGrantedRef.current) {
-              // eslint-disable-next-line no-console
-              console.log(
-                "[simxr] dom-overlay granted — waiting for user to tap Start in overlay panel.",
-              );
-              return;
-            }
+            // Drop the conditional. Always send 'start teleop'. Overlay
+            // buttons still work as override on devices where the layer
+            // does render (e.g. desktop WebXR clients) — they call
+            // sendTeleopCommand directly. Trade-off: silent auto-arm,
+            // which Mike previously flagged. Accepted because the
+            // alternative (button-required) doesn't work on Quest 3
+            // anyway. Future iteration could add `?autoStart=0` query
+            // param to opt back into button-only mode for testing.
             const sess = sessionRef.current;
             if (!sess?.sendCustomMessage) {
               // eslint-disable-next-line no-console
               console.warn(
-                "[simxr] dom-overlay NOT granted AND SDK Session.sendCustomMessage unavailable — robot won't respond. Operator must use NVIDIA hosted client to bootstrap session, then switch to simxr.app.",
+                "[simxr] SDK Session.sendCustomMessage unavailable — robot won't respond. Operator must use NVIDIA hosted client to bootstrap session, then switch to simxr.app.",
               );
               return;
             }
@@ -704,12 +695,12 @@ export function useCloudXRSession(
               });
               // eslint-disable-next-line no-console
               console.log(
-                "[simxr] dom-overlay NOT granted — auto-sent 'start teleop' as fallback so cold-start session functions without UI.",
+                "[simxr] auto-sent 'start teleop' on stream start (overlay grant signal ignored — Quest 3 Browser unreliable).",
               );
             } catch (e) {
               // eslint-disable-next-line no-console
               console.warn(
-                "[simxr] auto-start fallback failed — sendCustomMessage threw:",
+                "[simxr] auto-start sendCustomMessage threw:",
                 e,
               );
             }
