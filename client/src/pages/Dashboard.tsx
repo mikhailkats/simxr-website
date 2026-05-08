@@ -19,11 +19,17 @@ import { useLocation } from "wouter";
 import { computeCardState, fetchScenes, type Scene } from "@/lib/scenes";
 import { useCloudXRSession, type UiSessionState } from "@/lib/useCloudXRSession";
 import { SCENE_ASSETS, robotLabel, skillTag, type SceneAsset } from "@/lib/scene_assets";
+import {
+  fetchRecordings,
+  shouldHighlightFresh,
+  type Recording,
+  type RecordingsResponse,
+} from "@/lib/recordings";
 import "./Dashboard.css";
 
 // SCENE_ASSETS + SceneAsset + robotLabel + skillTag now live in
-// @/lib/scene_assets so /recordings (separate lazy chunk) can reuse the
-// same id → media mapping without forcing the Dashboard chunk to load.
+// @/lib/scene_assets so the Recordings view can reuse the same id → media
+// mapping without forcing a separate chunk.
 
 // Robot tag derived from scene id — used by filter chips and card tags.
 function robotTag(id: string): "GR1T2" | "G1" | "other" {
@@ -32,131 +38,41 @@ function robotTag(id: string): "GR1T2" | "G1" | "other" {
   return "other";
 }
 
-// ─── Recordings (sidebar section #2) ─────────────────────────────────────
-// Prototype with mock data — there's no real session-history backend yet.
-// Schema below matches what a real backend would shape (id / startedAt /
-// durationSec / sceneId / episodes / qualityScore / status). When backend
-// lands we just swap MOCK_RECORDINGS for a fetch.
-type RecordingStatus = "approved" | "pending" | "flagged";
-interface Recording {
-  id: string;
-  startedAt: string; // ISO 8601
-  durationSec: number;
-  sceneId: string;
-  episodes: number;
-  qualityScore: number; // 0-100
-  status: RecordingStatus;
+// ─── Recordings — formatting helpers ────────────────────────────────────
+// The sidebar's Recordings tab pulls live data from
+// `api.simxr.app/api/recordings.json` (see lib/recordings.ts). No
+// localStorage layer, no synthetic episodes/quality/status — server JSON
+// is the single source of truth. Formatting helpers below are shared
+// between the catalog view (for the Live banner) and the recordings list.
+
+function fmtSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
 
-// Real recordings are persisted to localStorage after every successful
-// Quest connect. Schema below is shared with mock data — storage just adds
-// a versioned wrapper so we can migrate cleanly later. Only shown if a
-// real entry exists; otherwise the mock fallback below renders so the page
-// isn't empty for first-time visitors.
-const RECORDINGS_STORAGE_KEY = "sim-xr-recordings-v1";
-const RECORDINGS_MAX = 100; // cap to prevent localStorage bloat
-
-function loadRealRecordings(): Recording[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(RECORDINGS_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    // Defensive — ensure each entry has the required fields.
-    return parsed.filter((r): r is Recording =>
-      r && typeof r === "object" &&
-      typeof r.id === "string" &&
-      typeof r.startedAt === "string" &&
-      typeof r.durationSec === "number" &&
-      typeof r.sceneId === "string"
-    );
-  } catch {
-    return [];
-  }
-}
-
-function saveRealRecording(entry: Recording): void {
-  if (typeof window === "undefined") return;
-  try {
-    const list = loadRealRecordings();
-    list.unshift(entry); // newest first
-    if (list.length > RECORDINGS_MAX) list.length = RECORDINGS_MAX;
-    window.localStorage.setItem(RECORDINGS_STORAGE_KEY, JSON.stringify(list));
-  } catch {
-    /* localStorage might be blocked / quota — silently skip */
-  }
-}
-
-// Plausible synthesis for fields we don't actually track yet (episodes,
-// quality, status). Real timestamps + scene + duration come from the live
-// hook. Synthesis goes away as backend wires real values in — schema stays.
-
-function synthesizeEpisodes(durationSec: number): number {
-  // ~1 episode per 90 sec real-operator pace, with small jitter, capped.
-  const base = Math.max(0, Math.floor(durationSec / 90));
-  const jitter = Math.floor(Math.random() * 3) - 1; // -1, 0, +1
-  return Math.max(0, Math.min(15, base + jitter));
-}
-
-function synthesizeQuality(): number {
-  // Plausible 85-97 range, leaning toward higher (operator-friendly).
-  return Math.round((85 + Math.random() * 12) * 10) / 10;
-}
-
-function synthesizeStatus(
-  durationSec: number,
-  hadError: boolean,
-): RecordingStatus {
-  if (hadError) return "flagged";
-  if (durationSec < 30) return "flagged"; // too-short sessions read as bad takes
-  const r = Math.random();
-  if (r < 0.8) return "approved";
-  if (r < 0.95) return "pending";
-  return "flagged";
-}
-
-// Mock data is generated relative to "now" so the "Today / Yesterday / N days
-// ago" formatting always feels fresh in the prototype. Spread covers the
-// last ~10 days, varied scenes, mostly approved with a few pending/flagged.
-// Shown only when no real recordings exist yet (replaced as Mike connects).
-function buildMockRecordings(): Recording[] {
-  const now = Date.now();
-  const min = 60 * 1000;
-  const hour = 60 * min;
-  const day = 24 * hour;
-  return [
-    { id: "r-12", startedAt: new Date(now - 35 * min).toISOString(), durationSec: 754, sceneId: "Isaac-PickPlace-Locomanipulation-G1-Abs-v0", episodes: 5, qualityScore: 96.2, status: "approved" },
-    { id: "r-11", startedAt: new Date(now - 3.2 * hour).toISOString(), durationSec: 542, sceneId: "Isaac-NutPour-GR1T2-Pink-IK-Abs-v0", episodes: 4, qualityScore: 94.8, status: "approved" },
-    { id: "r-10", startedAt: new Date(now - 6 * hour).toISOString(), durationSec: 218, sceneId: "Isaac-ExhaustPipe-GR1T2-Pink-IK-Abs-v0", episodes: 1, qualityScore: 71.3, status: "flagged" },
-    { id: "r-9", startedAt: new Date(now - 1 * day - 2 * hour).toISOString(), durationSec: 1102, sceneId: "Isaac-PickPlace-GR1T2-Abs-v0", episodes: 8, qualityScore: 98.1, status: "approved" },
-    { id: "r-8", startedAt: new Date(now - 1 * day - 5 * hour).toISOString(), durationSec: 487, sceneId: "Isaac-PickPlace-G1-InspireFTP-Abs-v0", episodes: 3, qualityScore: 89.4, status: "pending" },
-    { id: "r-7", startedAt: new Date(now - 2 * day).toISOString(), durationSec: 920, sceneId: "Isaac-PickPlace-Locomanipulation-G1-Abs-v0", episodes: 6, qualityScore: 95.5, status: "approved" },
-    { id: "r-6", startedAt: new Date(now - 3 * day - 1 * hour).toISOString(), durationSec: 670, sceneId: "Isaac-PickPlace-GR1T2-WaistEnabled-Abs-v0", episodes: 4, qualityScore: 92.0, status: "approved" },
-    { id: "r-5", startedAt: new Date(now - 4 * day).toISOString(), durationSec: 312, sceneId: "Isaac-NutPour-GR1T2-Pink-IK-Abs-v0", episodes: 2, qualityScore: 88.7, status: "pending" },
-    { id: "r-4", startedAt: new Date(now - 5 * day - 4 * hour).toISOString(), durationSec: 845, sceneId: "Isaac-ExhaustPipe-GR1T2-Pink-IK-Abs-v0", episodes: 5, qualityScore: 93.6, status: "approved" },
-    { id: "r-3", startedAt: new Date(now - 6 * day).toISOString(), durationSec: 1240, sceneId: "Isaac-PickPlace-GR1T2-Abs-v0", episodes: 9, qualityScore: 97.0, status: "approved" },
-    { id: "r-2", startedAt: new Date(now - 8 * day).toISOString(), durationSec: 401, sceneId: "Isaac-PickPlace-FixedBaseUpperBodyIK-G1-Abs-v0", episodes: 2, qualityScore: 84.1, status: "approved" },
-    { id: "r-1", startedAt: new Date(now - 11 * day).toISOString(), durationSec: 1480, sceneId: "Isaac-NutPour-GR1T2-Pink-IK-Abs-v0", episodes: 11, qualityScore: 95.9, status: "approved" },
-  ];
-}
-
-// Format helpers for recording rows.
 function fmtDuration(sec: number): string {
   const m = Math.floor(sec / 60);
-  const s = sec % 60;
+  const s = Math.floor(sec % 60);
   if (m < 60) return `${m}:${String(s).padStart(2, "0")}`;
   const h = Math.floor(m / 60);
   return `${h}:${String(m % 60).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-function fmtRecordingDate(iso: string): { primary: string; secondary: string } {
+function fmtRecordedAt(iso: string): { primary: string; secondary: string } {
   const d = new Date(iso);
   const now = new Date();
   const sameDay = d.toDateString() === now.toDateString();
-  const yest = new Date(now); yest.setDate(yest.getDate() - 1);
+  const yest = new Date(now);
+  yest.setDate(yest.getDate() - 1);
   const isYesterday = d.toDateString() === yest.toDateString();
-  const time = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+  const time = d.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+
   let primary: string;
   if (sameDay) primary = `Today · ${time}`;
   else if (isYesterday) primary = `Yesterday · ${time}`;
@@ -164,20 +80,27 @@ function fmtRecordingDate(iso: string): { primary: string; secondary: string } {
     const md = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
     primary = `${md} · ${time}`;
   }
-  const diffMs = now.getTime() - d.getTime();
-  const diffMin = Math.floor(diffMs / 60000);
+
+  const diffSec = Math.floor((now.getTime() - d.getTime()) / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
+
   let secondary: string;
-  if (diffMin < 60) secondary = `${diffMin} min ago`;
-  else if (diffMin < 1440) secondary = `${Math.floor(diffMin / 60)} h ago`;
-  else secondary = `${Math.floor(diffMin / 1440)} days ago`;
+  if (diffSec < 60) secondary = `${Math.max(0, diffSec)}s ago`;
+  else if (diffMin < 60) secondary = `${diffMin} min ago`;
+  else if (diffHour < 24) secondary = `${diffHour} h ago`;
+  else secondary = `${diffDay} day${diffDay === 1 ? "" : "s"} ago`;
+
   return { primary, secondary };
 }
 
-function fmtTotalTime(sec: number): string {
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  if (h === 0) return `${m}m`;
-  return `${h}h ${m}m`;
+function fmtTotalSize(recordings: Recording[]): string {
+  const total = recordings.reduce(
+    (sum, r) => sum + (r.file_size_bytes ?? 0),
+    0,
+  );
+  return fmtSize(total);
 }
 
 // CTA label mirrors SceneCard.tsx's ctaLabel — same in-flight phrasing
@@ -396,11 +319,79 @@ function DashboardInner() {
   const [robotFilter, setRobotFilter] = useState<"all" | "GR1T2" | "G1">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "available" | "broken">("all");
 
-  // Sidebar view switcher. Tasks (catalog + connect) is the live page;
-  // Recordings is the prototype session-history view (real entries from
-  // localStorage + mock fallback for first-time visitors). Other sidebar
-  // items remain disabled until backend lands.
-  const [view, setView] = useState<"tasks" | "recordings">("tasks");
+  // Sidebar view switcher. "tasks" = scene catalog + connect (live demo
+  // entry point). "recordings" = session history fetched live from
+  // api.simxr.app/api/recordings.json — same surface that VR exit's
+  // onSessionEnded auto-redirect lands on. Other sidebar items remain
+  // disabled until backend lands.
+  //
+  // Initial view is URL-driven so:
+  //   - simxr.app/recordings (or /recordings/) → boots straight into
+  //     the recordings tab; refreshing the page keeps you there.
+  //   - simxr.app/?fresh=<task_id> + sessionEnded redirect → also
+  //     lands on recordings with the badge highlighted.
+  //   - Anything else → tasks view.
+  // Sidebar nav clicks call setView() AND setLocation() so URL stays in
+  // sync with the visible tab; back/forward in browser history works.
+  const initialView: "tasks" | "recordings" = (() => {
+    if (typeof window === "undefined") return "tasks";
+    return window.location.pathname.replace(/\/$/, "") === "/recordings"
+      ? "recordings"
+      : "tasks";
+  })();
+  const [view, setView] = useState<"tasks" | "recordings">(initialView);
+
+  // Pull `?fresh=<task_id>` from the URL — set by useCloudXRSession's
+  // onSessionEnded auto-redirect after Quest exits VR. Used by
+  // RecordingsView to highlight the matching row + start a targeted
+  // poll until the .hdf5 surfaces in /api/recordings.json. Re-derived
+  // when `view` flips so navigating away then back doesn't carry stale
+  // ?fresh state from a previous session.
+  const fresh = useMemo<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    const params = new URLSearchParams(window.location.search);
+    return params.get("fresh");
+  }, [view]);
+
+  // Sidebar tab clicks: update both `view` state and the browser URL so
+  // the two stay coherent (refresh / share / back-button all work). When
+  // switching INTO recordings, bump the refresh key so the list re-fetches
+  // — gives the operator a fresh snapshot every time the tab is opened.
+  const [recordingsRefreshKey, setRecordingsRefreshKey] = useState(0);
+  const switchView = (next: "tasks" | "recordings") => {
+    if (next === view) return;
+    setView(next);
+    setLocation(next === "recordings" ? "/recordings" : "/");
+    if (next === "recordings") setRecordingsRefreshKey((k) => k + 1);
+  };
+
+  // Lifted recordings state — single fetch powers both the sidebar count
+  // badge (`{count}`) and the recordings tab content. The actual poll-on-
+  // ?fresh logic lives inside RecordingsView; this is just the baseline
+  // snapshot. Re-fetched whenever `recordingsRefreshKey` bumps (sidebar
+  // tab click into recordings, or the Refresh button inside the view).
+  const [recordingsResp, setRecordingsResp] =
+    useState<RecordingsResponse | null>(null);
+  const [recordingsError, setRecordingsError] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetchRecordings()
+      .then((r) => {
+        if (cancelled) return;
+        setRecordingsResp(r);
+        setRecordingsError(null);
+      })
+      .catch((e: Error) => {
+        if (cancelled) return;
+        setRecordingsError(e.message);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [recordingsRefreshKey]);
+  const refreshRecordings = () =>
+    setRecordingsRefreshKey((k) => k + 1);
+  const recordingsCount = recordingsResp?.recordings.length ?? null;
 
   // (overlayRef declared above next to the useCloudXRSession call; it
   // backs the WebXR DOM Overlay layer that Quest 3 Browser composites
@@ -408,60 +399,6 @@ function DashboardInner() {
   // Outer container always rendered; visible content is gated on
   // session.state so the operator only sees Start/Recenter/Stop while
   // a session is open.)
-
-  // Real recordings persist in localStorage; refreshed whenever a session
-  // ends. Mock entries stay below as "previous demo data" — real connections
-  // append on top, mocks remain as historical context.
-  const [realRecordings, setRealRecordings] = useState<Recording[]>(() =>
-    loadRealRecordings(),
-  );
-  const mockRecordings = useMemo(() => buildMockRecordings(), []);
-  // Real entries (newest first via unshift in saveRealRecording) → mocks
-  // (already sorted newest first in buildMockRecordings). No re-sort —
-  // we WANT mocks always at the bottom regardless of relative timestamps.
-  const recordings = useMemo(
-    () => [...realRecordings, ...mockRecordings],
-    [realRecordings, mockRecordings],
-  );
-
-  // Capture-on-disconnect: when the live session transitions out of an
-  // active state (connected or streaming) into idle/error, save a Recording
-  // with REAL startedAt + sceneId + duration + plausible synth for
-  // episodes / quality / status. The synth goes away as the backend wires
-  // real values in — schema stays the same.
-  const sessionStartRef = useRef<{ startedAt: number; sceneId: string | null } | null>(null);
-  useEffect(() => {
-    const isActive = session.state === "connected" || session.state === "streaming";
-    const isEnded = session.state === "idle" || session.state === "error";
-
-    if (isActive && !sessionStartRef.current) {
-      // Capture start at the moment we first reach connected/streaming.
-      sessionStartRef.current = {
-        startedAt: Date.now(),
-        sceneId: session.health?.live_scene ?? null,
-      };
-      return;
-    }
-
-    if (isEnded && sessionStartRef.current) {
-      const ref = sessionStartRef.current;
-      sessionStartRef.current = null;
-      const endedAt = Date.now();
-      const durationSec = Math.max(1, Math.round((endedAt - ref.startedAt) / 1000));
-      const hadError = session.state === "error";
-      const entry: Recording = {
-        id: `r-${endedAt}`,
-        startedAt: new Date(ref.startedAt).toISOString(),
-        durationSec,
-        sceneId: ref.sceneId ?? "unknown",
-        episodes: synthesizeEpisodes(durationSec),
-        qualityScore: synthesizeQuality(),
-        status: synthesizeStatus(durationSec, hadError),
-      };
-      saveRealRecording(entry);
-      setRealRecordings((prev) => [entry, ...prev].slice(0, RECORDINGS_MAX));
-    }
-  }, [session.state, session.health]);
 
   useEffect(() => {
     let cancelled = false;
@@ -540,7 +477,7 @@ function DashboardInner() {
             <div className="nav-section-label">Demo</div>
             <a
               className={`nav-item ${view === "tasks" ? "active" : ""}`}
-              onClick={() => setView("tasks")}
+              onClick={() => switchView("tasks")}
             >
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
                 <rect x="3" y="3" width="7" height="9" rx="1"/>
@@ -561,14 +498,16 @@ function DashboardInner() {
             </a>
             <a
               className={`nav-item ${view === "recordings" ? "active" : ""}`}
-              onClick={() => setView("recordings")}
+              onClick={() => switchView("recordings")}
             >
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
                 <rect x="3" y="5" width="18" height="14" rx="2"/>
                 <path d="M3 10h18"/>
               </svg>
               <span>Recordings</span>
-              <span className="badge">{recordings.length}</span>
+              <span className="badge">
+                {recordingsCount ?? "—"}
+              </span>
             </a>
             <a className="nav-item disabled">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
@@ -700,7 +639,13 @@ function DashboardInner() {
             <div className="wrap">
 
               {view === "recordings" ? (
-                <RecordingsView recordings={recordings} scenes={scenes} />
+                <RecordingsView
+                  resp={recordingsResp}
+                  error={recordingsError}
+                  fresh={fresh}
+                  scenes={scenes}
+                  onRefresh={refreshRecordings}
+                />
               ) : (
               <>
               <div className="page-header">
@@ -1094,174 +1039,366 @@ function LiveSceneBanner({ scene, asset, sessionState, sessionInFlight, onConnec
   );
 }
 
-// ─── RecordingsView — sidebar section #2 ────────────────────────────────
-// Prototype with mock data: dense list of past sessions with thumbnail
-// (reusing SCENE_ASSETS), date+relative ago, scene name + robot, duration,
-// episodes recorded, quality score, status badge. Stats summary + filter
-// chips on top mirror the Tasks-view chrome so the two pages feel coherent.
+// ─── RecordingsView — server-driven session history ─────────────────────
+// Renders the Recordings tab inside the Dashboard chrome. Source: live
+// `api.simxr.app/api/recordings.json` snapshot fetched at the Dashboard
+// level (parent passes `resp` + `error` + `onRefresh` here). Targeted
+// poll lives inside this component: when `?fresh=<task_id>` is set on the
+// URL but the matching entry isn't yet in `resp`, we poll
+// /api/recordings.json every POLL_INTERVAL_MS until the entry surfaces or
+// MAX_POLLS attempts are exhausted. Driven by the post-VR redirect from
+// useCloudXRSession's onSessionEnded callback.
+//
+// History note: this is the consolidated version. Pre-2026-05-08 there
+// were two separate surfaces — a Dashboard sidebar tab (mock data +
+// localStorage + synthetic episodes/quality/status) and a standalone
+// /recordings page (real server data). The standalone page was deleted;
+// /recordings now routes to Dashboard with view="recordings" preselected,
+// and this component is the single source of truth.
+
 interface RecordingsViewProps {
-  recordings: Recording[];
+  /** Initial snapshot fetched at the Dashboard level. May be null on first paint. */
+  resp: RecordingsResponse | null;
+  /** Fetch error from Dashboard's loader, if any. */
+  error: string | null;
+  /** ?fresh=<task_id> param from URL — set by VR-exit auto-redirect. */
+  fresh: string | null;
+  /** Scene metadata for friendly names + robot family. */
   scenes: Scene[] | null;
+  /** Bumps Dashboard's recordings refresh key — re-fetches the JSON. */
+  onRefresh: () => void;
 }
 
-function RecordingsView({ recordings, scenes }: RecordingsViewProps) {
-  const [statusFilter, setStatusFilter] = useState<"all" | RecordingStatus>("all");
-  const [rangeFilter, setRangeFilter] = useState<"7d" | "30d" | "all">("30d");
+const POLL_INTERVAL_MS = 4_000;
+const MAX_POLLS = 15;
+type PollState = "idle" | "polling" | "exhausted";
 
-  // Lookup map: scene id → Scene (for friendly name + robot family).
+function RecordingsView({
+  resp,
+  error,
+  fresh,
+  scenes,
+  onRefresh,
+}: RecordingsViewProps) {
+  // Local snapshot mirror — starts from the parent's `resp` and updates
+  // as the targeted poll receives newer responses (avoids racing parent
+  // re-fetches against the targeted poll). Refreshes when parent's
+  // baseline `resp` updates too.
+  const [localResp, setLocalResp] = useState<RecordingsResponse | null>(resp);
+  useEffect(() => {
+    if (resp) setLocalResp(resp);
+  }, [resp]);
+
+  const [pollState, setPollState] = useState<PollState>("idle");
+  const [pollAttempt, setPollAttempt] = useState(0);
+
+  // Targeted poll for ?fresh — kicks off when parent's resp lands without
+  // the entry, runs every POLL_INTERVAL_MS up to MAX_POLLS, ends when
+  // either the entry shows up or attempts are exhausted.
+  useEffect(() => {
+    if (!fresh) {
+      setPollState("idle");
+      setPollAttempt(0);
+      return;
+    }
+    if (!localResp) return;
+    const alreadyHere = localResp.recordings.some((rec) =>
+      shouldHighlightFresh(rec, fresh),
+    );
+    if (alreadyHere) {
+      setPollState("idle");
+      return;
+    }
+
+    setPollState("polling");
+    setPollAttempt(0);
+    let cancelled = false;
+    let attempts = 0;
+    let timer: number | null = null;
+
+    const tick = async () => {
+      if (cancelled) return;
+      if (attempts >= MAX_POLLS) {
+        setPollState("exhausted");
+        return;
+      }
+      attempts += 1;
+      setPollAttempt(attempts);
+      try {
+        const next = await fetchRecordings();
+        if (cancelled) return;
+        setLocalResp(next);
+        if (
+          next.recordings.some((rec) => shouldHighlightFresh(rec, fresh))
+        ) {
+          setPollState("idle");
+          return;
+        }
+      } catch {
+        /* soft-fail; next tick may succeed */
+      }
+      timer = window.setTimeout(tick, POLL_INTERVAL_MS);
+    };
+    timer = window.setTimeout(tick, POLL_INTERVAL_MS);
+
+    return () => {
+      cancelled = true;
+      if (timer != null) window.clearTimeout(timer);
+    };
+    // localResp intentionally read-but-not-tracked here — we re-evaluate
+    // on parent baseline updates, not on every targeted-poll tick (that
+    // would restart the poll on its own response).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fresh, resp]);
+
+  const recordings = localResp?.recordings ?? [];
+
   const sceneById = useMemo(() => {
     const m = new Map<string, Scene>();
     if (scenes) for (const s of scenes) m.set(s.id, s);
     return m;
   }, [scenes]);
 
-  // Apply filters.
-  const filtered = useMemo(() => {
-    const now = Date.now();
-    const cutoffMs =
-      rangeFilter === "7d" ? 7 * 24 * 3600 * 1000 :
-      rangeFilter === "30d" ? 30 * 24 * 3600 * 1000 :
-      Number.POSITIVE_INFINITY;
-    return recordings.filter((r) => {
-      if (statusFilter !== "all" && r.status !== statusFilter) return false;
-      if (now - new Date(r.startedAt).getTime() > cutoffMs) return false;
-      return true;
-    });
-  }, [recordings, statusFilter, rangeFilter]);
+  const lastUpdated = localResp?.ts
+    ? new Date(localResp.ts).toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      })
+    : null;
 
-  // Aggregate stats over filtered set.
-  const stats = useMemo(() => {
-    const total = filtered.length;
-    const totalEpisodes = filtered.reduce((sum, r) => sum + r.episodes, 0);
-    const totalSec = filtered.reduce((sum, r) => sum + r.durationSec, 0);
-    const approved = filtered.filter((r) => r.status === "approved");
-    const avgQuality = approved.length
-      ? approved.reduce((sum, r) => sum + r.qualityScore, 0) / approved.length
-      : 0;
-    const pending = filtered.filter((r) => r.status === "pending").length;
-    const flagged = filtered.filter((r) => r.status === "flagged").length;
-    return { total, totalEpisodes, totalSec, avgQuality, approved: approved.length, pending, flagged };
-  }, [filtered]);
+  // Loading state — parent hasn't returned a resp yet AND no error. After
+  // first response the list is sticky (we render last known data even if
+  // the next refresh is in flight) for a calmer feel.
+  const isLoading = localResp == null && !error;
 
   return (
     <>
       <div className="page-header">
         <div className="eyebrow">Demo · session history</div>
-        <h1>Sessions you've recorded.</h1>
+        <h1>Recordings.</h1>
       </div>
 
-      <div className="stats-row">
-        <div className="stat-card">
-          <div className="label">Sessions</div>
-          <div className="value tabular">{stats.total}</div>
-          <div className="meta">
-            <span style={{ color: "var(--success)" }}>{stats.approved} approved</span>
-            {stats.pending > 0 && <> · <span style={{ color: "var(--warn)" }}>{stats.pending} pending</span></>}
-            {stats.flagged > 0 && <> · <span style={{ color: "var(--danger)" }}>{stats.flagged} flagged</span></>}
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="label">Episodes recorded</div>
-          <div className="value tabular">{stats.totalEpisodes}</div>
-          <div className="meta">avg {stats.total ? (stats.totalEpisodes / stats.total).toFixed(1) : "—"} per session</div>
-        </div>
-        <div className="stat-card">
-          <div className="label">Time recorded</div>
-          <div className="value small">{stats.totalSec ? fmtTotalTime(stats.totalSec) : "—"}</div>
-          <div className="meta">avg {stats.total ? fmtDuration(Math.round(stats.totalSec / stats.total)) : "—"} per session</div>
-        </div>
-        <div className="stat-card">
-          <div className="label">Avg quality</div>
-          <div className="value tabular">{stats.avgQuality ? stats.avgQuality.toFixed(1) : "—"}</div>
-          <div className="meta">over approved sessions only</div>
-        </div>
-      </div>
-
-      <div className="catalog-header">
-        <div>
-          <h2>History</h2>
-          <div className="count" style={{ marginTop: 4 }}>
-            {filtered.length} session{filtered.length === 1 ? "" : "s"} · most recent first
-          </div>
-        </div>
-      </div>
-
-      <div className="chips">
-        <span className="label">Range</span>
-        {(["7d", "30d", "all"] as const).map((r) => (
-          <button
-            key={r}
-            className={`chip ${rangeFilter === r ? "active" : ""}`}
-            onClick={() => setRangeFilter(r)}
+      {error && (
+        <div className="error-banner">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#FF4A5C"
+            strokeWidth="1.8"
+            style={{ flexShrink: 0, marginTop: 1 }}
           >
-            {r === "7d" ? "Last 7 days" : r === "30d" ? "Last 30 days" : "All time"}
-          </button>
-        ))}
-        <span className="sep" />
-        <span className="label">Status</span>
-        {(["all", "approved", "pending", "flagged"] as const).map((s) => (
-          <button
-            key={s}
-            className={`chip ${statusFilter === s ? "active" : ""}`}
-            onClick={() => setStatusFilter(s)}
-          >
-            {s === "all" ? "All" : s === "approved" ? "Approved" : s === "pending" ? "Pending" : "Flagged"}
-          </button>
-        ))}
-      </div>
-
-      <div className="rec-list">
-        {filtered.map((r) => {
-          const scene = sceneById.get(r.sceneId);
-          const asset = SCENE_ASSETS[r.sceneId];
-          const date = fmtRecordingDate(r.startedAt);
-          return (
-            <div key={r.id} className="rec-row">
-              <div className="rec-thumb">
-                {asset?.type === "video" ? (
-                  <video src={asset.src} muted playsInline preload="metadata" />
-                ) : asset?.type === "image" ? (
-                  <img src={asset.src} alt="" />
-                ) : null}
-              </div>
-              <div className="rec-meta">
-                <h3 className="scene">{scene?.name ?? r.sceneId}</h3>
-                <div className="sub">
-                  <span>{robotLabel(r.sceneId)}</span>
-                  <span className="pipe">·</span>
-                  <span>{skillTag(r.sceneId)}</span>
-                </div>
-                <div className="when">
-                  {date.primary} <span style={{ opacity: 0.6 }}>· {date.secondary}</span>
-                </div>
-              </div>
-              <div className="rec-stats">
-                <div>
-                  <span className="v">{fmtDuration(r.durationSec)}</span>
-                  <span className="label">duration</span>
-                </div>
-                <div>
-                  <span className="v">{r.episodes}</span>
-                  <span className="label">episodes</span>
-                </div>
-                <div>
-                  <span className="v">{r.qualityScore.toFixed(1)}</span>
-                  <span className="label">quality</span>
-                </div>
-              </div>
-              <span className={`rec-status ${r.status}`}>
-                <span className="dot" />
-                {r.status.toUpperCase()}
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <div>
+            <div className="label">Couldn't load recordings</div>
+            <div className="text">
+              {error}
+              <br />
+              <span style={{ opacity: 0.8 }}>
+                Endpoint: api.simxr.app/api/recordings.json — the demo
+                server may be offline. Tap Refresh in a moment.
               </span>
             </div>
-          );
-        })}
-        {filtered.length === 0 && (
-          <div style={{ padding: "32px 16px", textAlign: "center", color: "var(--text-dim)", fontFamily: "'IBM Plex Mono', monospace", fontSize: 12 }}>
-            No sessions match the current filters.
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {isLoading && (
+        <div className="recordings-loading">
+          Fetching recordings<span className="dots" />
+        </div>
+      )}
+
+      {!isLoading && (
+        <>
+          <div className="stats-row">
+            <div className="stat-card">
+              <div className="label">Recordings</div>
+              <div className="value tabular">{recordings.length}</div>
+              <div className="meta">
+                newest first · server regen ~30s
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="label">Total size</div>
+              <div className="value small">
+                {recordings.length ? fmtTotalSize(recordings) : "—"}
+              </div>
+              <div className="meta">across all .hdf5 files on disk</div>
+            </div>
+            <div className="stat-card">
+              <div className="label">Latest</div>
+              <div className="value small">
+                {recordings[0]
+                  ? fmtRecordedAt(recordings[0].recorded_at).primary
+                  : "—"}
+              </div>
+              <div className="meta">
+                {recordings[0]
+                  ? fmtRecordedAt(recordings[0].recorded_at).secondary
+                  : ""}
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="label">Last sync</div>
+              <div className="value small">{lastUpdated ?? "—"}</div>
+              <div className="meta">tap Refresh below to re-pull</div>
+            </div>
+          </div>
+
+          <div className="catalog-header">
+            <div>
+              <h2>History</h2>
+              <div className="count" style={{ marginTop: 4 }}>
+                {recordings.length} recording
+                {recordings.length === 1 ? "" : "s"} · sorted by{" "}
+                <code>recorded_at</code> desc
+              </div>
+            </div>
+            <button
+              type="button"
+              className="recordings-refresh-btn"
+              onClick={onRefresh}
+              title="Re-fetch /api/recordings.json"
+            >
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <polyline points="23 4 23 10 17 10" />
+                <polyline points="1 20 1 14 7 14" />
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+              </svg>
+              Refresh
+            </button>
+          </div>
+
+          {pollState === "polling" && (
+            <div className="recordings-poll-banner">
+              <span className="dot" />
+              Waiting for the recording you just made…
+              <span className="poll-hint">
+                checks every {POLL_INTERVAL_MS / 1000}s · auto-stops at
+                ~{Math.round((POLL_INTERVAL_MS * MAX_POLLS) / 1000)}s
+                {pollAttempt > 0 ? ` · attempt ${pollAttempt}/${MAX_POLLS}` : ""}
+              </span>
+            </div>
+          )}
+          {pollState === "exhausted" && (
+            <div className="recordings-poll-banner exhausted">
+              <span className="dot warn" />
+              The recording hasn't surfaced yet. The server-side teleop
+              may still be running — once it's stopped the .hdf5 finalizes
+              and the next regen tick (~30s) will pick it up.
+              <span className="poll-hint">Try Refresh in a moment.</span>
+            </div>
+          )}
+
+          {recordings.length === 0 && pollState !== "polling" && (
+            <div className="recordings-empty">
+              <span className="title">No recordings yet.</span>
+              Connect to a scene from Tasks and record a demo. The list
+              updates within ~30 seconds of the .hdf5 landing on the
+              server.
+            </div>
+          )}
+
+          <div className="rec-list">
+            {recordings.map((r) => {
+              const isFresh = shouldHighlightFresh(r, fresh);
+              const scene = sceneById.get(r.task_id);
+              const asset = SCENE_ASSETS[r.task_id];
+              const date = fmtRecordedAt(r.recorded_at);
+              return (
+                <div
+                  key={r.id}
+                  className={`rec-row ${isFresh ? "fresh" : ""}`}
+                >
+                  <div className="rec-thumb">
+                    {asset?.type === "video" ? (
+                      <video
+                        src={asset.src}
+                        poster={asset.poster}
+                        muted
+                        playsInline
+                        preload="metadata"
+                      />
+                    ) : asset?.type === "image" ? (
+                      <img src={asset.src} alt="" />
+                    ) : (
+                      <div className="rec-thumb-fallback">.hdf5</div>
+                    )}
+                  </div>
+                  <div className="rec-meta">
+                    <h3 className="scene">{scene?.name ?? r.task_id}</h3>
+                    <div className="sub">
+                      <span>{robotLabel(r.task_id)}</span>
+                      <span className="pipe">·</span>
+                      <span>{skillTag(r.task_id)}</span>
+                    </div>
+                    <div className="when">
+                      {date.primary}{" "}
+                      <span style={{ opacity: 0.6 }}>
+                        · {date.secondary}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: "'IBM Plex Mono', monospace",
+                        fontSize: 10,
+                        color: "var(--text-dim)",
+                        marginTop: 4,
+                        wordBreak: "break-all",
+                      }}
+                      title={r.file_name}
+                    >
+                      {r.file_name}
+                    </div>
+                  </div>
+                  <div className="rec-stats">
+                    <div>
+                      <span className="v">{fmtSize(r.file_size_bytes)}</span>
+                      <span className="label">size</span>
+                    </div>
+                    {typeof r.duration_seconds === "number" && (
+                      <div>
+                        <span className="v">
+                          {fmtDuration(r.duration_seconds)}
+                        </span>
+                        <span className="label">duration</span>
+                      </div>
+                    )}
+                    {typeof r.num_demos === "number" && (
+                      <div>
+                        <span className="v">{r.num_demos}</span>
+                        <span className="label">
+                          demo{r.num_demos === 1 ? "" : "s"}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  {isFresh && (
+                    <span className="badge-fresh">
+                      <span className="dot" />
+                      Just recorded
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
     </>
   );
 }

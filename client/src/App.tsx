@@ -12,10 +12,17 @@ import Home from "./pages/Home";
 // bloated by the streaming SDK (~200–500 KB).
 //
 // Domain-based apex routing:
-//   simxr.app   apex (`/`)      → Dashboard (operator-facing VR demo)
-//   simxr.tech  apex (`/`)      → Home (marketing site)
-//   either domain `/connect`    → Dashboard (legacy direct path; v1 alias)
-//   either domain `/v2`         → Dashboard (versioned alias kept stable)
+//   simxr.app   apex (`/`)         → Dashboard, view=tasks (VR demo)
+//   simxr.tech  apex (`/`)         → Home (marketing site)
+//   either domain `/connect`       → Dashboard (legacy direct path; v1 alias)
+//   either domain `/v2`            → Dashboard (versioned alias kept stable)
+//   either domain `/recordings`    → Dashboard, view=recordings (session history)
+//
+// /recordings was previously a separate lazy chunk (Recordings.tsx) but was
+// consolidated into Dashboard 2026-05-08 — the standalone page duplicated
+// chrome and lived parallel to a stale mock-data tab inside the dashboard.
+// One surface, server JSON as the single source of truth, view selector
+// driven by URL pathname.
 //
 // The original simpler `Connect.tsx` page is preserved in src/pages/ for
 // reference and easy rollback (re-route here if the dashboard ever ships
@@ -23,7 +30,6 @@ import Home from "./pages/Home";
 // via Netlify proxy) still lives at `/connect-classic` as a static file
 // in client/public/connect-classic/.
 const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Recordings = lazy(() => import("./pages/Recordings"));
 
 function isAppDomain(): boolean {
   if (typeof window === "undefined") return false;
@@ -67,12 +73,12 @@ function Router() {
       </Route>
       <Route path={"/recordings"}>
         <Suspense fallback={null}>
-          <Recordings />
+          <Dashboard />
         </Suspense>
       </Route>
       <Route path={"/recordings/"}>
         <Suspense fallback={null}>
-          <Recordings />
+          <Dashboard />
         </Suspense>
       </Route>
       <Route path={"/404"} component={NotFound} />
