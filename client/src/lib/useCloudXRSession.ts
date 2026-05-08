@@ -910,23 +910,106 @@ export function useCloudXRSession(
           onWebGLStateChangeEnd: () => {},
           onStreamStarted: () => {
             setState("streaming");
-            // Always auto-arm teleop on stream start. We previously gated
-            // this on `overlayGrantedRef.current` (only auto-start when
-            // dom-overlay was rejected, otherwise wait for explicit user
-            // button tap), but Quest 3 Browser unreliably reports
-            // domOverlayState — it claims `type: 'screen'` (granted)
-            // while the compositor doesn't actually render the layer.
-            // The button never gets tapped; cold-start through simxr.app
-            // never fires the start command; server stays at
-            // running_recording_instance=False; robot doesn't respond.
+            // ──────────────────────────────────────────────────────────
+            // Auto-arm 'start teleop' with retry loop (added 2026-05-08).
+            // ──────────────────────────────────────────────────────────
             //
-            // Now uses sendTeleopCommand which goes through the proper
-            // CloudXR.js 6.1 SDK path (availableMessageChannels with
-            // legacy sendServerMessage fallback). Overlay buttons still
-            // work as override on devices where the layer does render
-            // (e.g. desktop WebXR clients) — they call sendTeleopCommand
-            // directly with the same shared codepath.
-            sendTeleopCommand("start teleop");
+            // Why retry: SDK populates `Session.availableMessageChannels`
+            // ASYNCHRONOUSLY after the stream starts. The cxr_server log
+            // emits `Client message channel is ready (code: 226)` ms-to-
+            // seconds AFTER `onStreamStarted` fires. A single send call
+            // here loses the race — channels array is still empty, no
+            // legacy fallback exists, command silently goes nowhere,
+            // server stays at running_recording_instance=False.
+            //
+            // Strategy: peek at session shape every 200ms; only invoke
+            // the actual send (sendTeleopCommand) once either path is
+            // detectably ready (channel found by UUID, or legacy method
+            // exists). Prevents 30 consecutive "channel not found" warns
+            // in chrome://inspect during the polling window. Bail on
+            // session teardown or after maxAttempts (~6s ceiling).
+            //
+            // Operator-facing fallback (overlay Start button) remains
+            // wired through the same sendTeleopCommand — works either
+            // way the device supports overlays, retry handles the
+            // headset-only path where overlay isn't usable.
+            let attempts = 0;
+            const maxAttempts = 30;       // 30 × 200ms = 6 s ceiling
+            const intervalMs = 200;
+
+            const tryStart = () => {
+              attempts += 1;
+              const sess = sessionRef.current;
+
+              // Bail if the session was torn down between retries
+              // (Quest exit gesture, server-side stop, error path).
+              if (!sess) {
+                // eslint-disable-next-line no-console
+                console.info(
+                  `[simxr] auto-arm aborted on attempt ${attempts} — session torn down during retry`,
+                );
+                return;
+              }
+
+              // First-attempt diagnostic — see what the SDK actually
+              // exposes at the moment onStreamStarted fires. If channels
+              // is undefined here AND legacy is undefined, it usually
+              // means we're in the async-population window; subsequent
+              // attempts should observe the channel appearing.
+              if (attempts === 1) {
+                // eslint-disable-next-line no-console
+                console.info(
+                  "[simxr] auto-arm attempt 1 — availableMessageChannels:",
+                  sess.availableMessageChannels?.length ?? "undefined",
+                  "· legacy sendServerMessage:",
+                  typeof sess.sendServerMessage,
+                );
+              }
+
+              // Peek: is anything send-capable yet? Probing here lets
+              // us retry SILENTLY (no log spam) until SDK plumbing is
+              // ready, then call sendTeleopCommand exactly once and
+              // get its full diagnostic info-log.
+              const channels = sess.availableMessageChannels;
+              const channelReady =
+                Array.isArray(channels) &&
+                !!findChannelByUuid(channels, TELEOP_CHANNEL_UUID);
+              const legacyReady =
+                typeof sess.sendServerMessage === "function";
+
+              if (channelReady || legacyReady) {
+                const ok = sendTeleopCommand("start teleop");
+                if (ok) {
+                  // eslint-disable-next-line no-console
+                  console.info(
+                    `[simxr] auto-arm 'start teleop' delivered on attempt ${attempts} ` +
+                      `(${(attempts - 1) * intervalMs}ms after onStreamStarted)`,
+                  );
+                  return;
+                }
+                // Send returned false even though peek said ready —
+                // means SDK accepted the call but reported failure.
+                // Don't retry forever in that case; treat it as the
+                // legitimate end state.
+                // eslint-disable-next-line no-console
+                console.error(
+                  `[simxr] auto-arm: send-capable but sendTeleopCommand returned false on attempt ${attempts}. Robot may not respond.`,
+                );
+                return;
+              }
+
+              if (attempts >= maxAttempts) {
+                // eslint-disable-next-line no-console
+                console.error(
+                  `[simxr] auto-arm failed after ${attempts} attempts (${attempts * intervalMs}ms). ` +
+                    `availableMessageChannels never populated AND no legacy sendServerMessage. ` +
+                    `Operator may need to use NVIDIA hosted client to bootstrap, then return to simxr.app.`,
+                );
+                return;
+              }
+              window.setTimeout(tryStart, intervalMs);
+            };
+            tryStart();
           },
           onStreamStopped: (err) => {
             // 1. End the WebXR session so Quest exits immersive mode and
