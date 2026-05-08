@@ -576,21 +576,25 @@ export function useCloudXRSession(
           deviceFrameRate: 90,
           // 30 Mbps (was 150 — runtime / CF tunnel may reject too-greedy
           // sessions; NVIDIA's UI defaults are in this range).
-          // 100 Mbps — closer to NVIDIA bundle default (1e5/1.5e5 Kbps i.e.
-          // 100/150 Mbps). 30 Mbps was the original conservative pick to
-          // limit Cloudflare-tunnel risk; empirically the tunnel handles
-          // 100 Mbps cleanly (CC's 2026-05-08 cxr_server timing report:
-          // PoseInterarrivalTime max stays under 30ms on Quest WiFi).
-          // If next iteration shows network jitter, can step down or move
-          // to 150 Mbps (NVIDIA top default) — gauged on per-frame timing.
-          maxStreamingBitrateKbps: 100_000,
-          // h265 (HEVC) — Quest 3 has full hardware HEVC decode. Was "h264"
-          // originally chosen for universal stability, but at our bitrate
-          // h264 was the quality floor vs NVIDIA hosted client. h265 gives
-          // ~30-50% better quality at same bitrate. The earlier "AV1
-          // unstable" memory note was specifically about AV1, not HEVC —
-          // Quest 3 hardware HEVC decode is mature and standard.
-          codec: "h265",
+          // 30 Mbps — reverted from 100 Mbps 2026-05-08 PT after CC's
+          // cxr_server log analysis on simxr.app apex showed disconnect
+          // loop: 216 cycles of NVST_R_BUSY + NVST_R_INVALID_OPERATION
+          // + "Video stream disconnected: packed" + RTSP teardown when
+          // running 100 Mbps + h265 together. The combination overwhelms
+          // the server-side NVENC encoder pipeline — NVIDIA hosted
+          // bundle's 100-150 Mbps default works because they pair it
+          // with h264 (lower per-frame encode cost). Step-up plan: keep
+          // 30 Mbps + h264 baseline, verify stability, then iterate
+          // ONE axis at a time: h264 → h265 at 30 Mbps (isolate codec
+          // cost), then if stable bump bitrate 30 → 50 → 100.
+          maxStreamingBitrateKbps: 30_000,
+          // h264 — reverted from h265 alongside the bitrate revert
+          // above; same disconnect-loop root cause. Quest 3 supports
+          // both decoders fine at the headset side; the issue is
+          // server-side NVENC encoder budget. Per CC's plan we'll
+          // re-attempt h265 at 30 Mbps as a SEPARATE iteration once
+          // the baseline is verified stable.
+          codec: "h264",
           // Reprojection grid — SDK validator allows undefined but the
           // server-side runtime appears to require these for session accept
           // (isaac log silence with undefined; CC's bundle.js shows :64).
