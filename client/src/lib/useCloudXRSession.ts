@@ -246,6 +246,17 @@ export function useCloudXRSession(
   // redirect. null when caller didn't supply a taskId.
   const lastTaskIdRef = useRef<string | null>(null);
 
+  // Whether the most-recent xr.requestSession() actually granted the
+  // `dom-overlay` feature. Set in connect() right after the session
+  // resolves. Used in the onStreamStarted callback to decide whether
+  // to auto-send "start teleop" as a fallback (when overlay isn't
+  // visible, operator has no way to tap Start manually) versus waiting
+  // for an explicit user gesture in the in-VR overlay's Start button.
+  // Honest, conditional: if overlay shows up, user controls the
+  // session start; if it doesn't, the system unblocks itself silently
+  // so cold-Kit-through-simxr.app produces a working teleop pipeline.
+  const overlayGrantedRef = useRef<boolean>(false);
+
   // Mirror `opts` so the SDK callbacks (registered once at createSession
   // time) always see the current onSessionEnded handler, even if the
   // consumer re-creates it on re-render. Without this, a navigate handler
@@ -502,6 +513,35 @@ export function useCloudXRSession(
       }
       xrSession = await xr.requestSession("immersive-vr", sessionInit);
       xrSessionRef.current = xrSession;
+
+      // Post-grant diagnostic — what features did Quest actually accept?
+      // `enabledFeatures` is a WebXR proposal exposed by Quest 3 Browser
+      // but not always typed in DOM lib; `domOverlayState` is part of
+      // the dom-overlay module (https://immersive-web.github.io/dom-overlays).
+      // Cast through `unknown` to a structural shape — avoids referencing
+      // `XRSession` (already missing from lib config; same family as the
+      // pre-existing 13 baseline tsc-errors that vite/esbuild strips).
+      type SessionStateExtras = {
+        enabledFeatures?: ReadonlyArray<string>;
+        domOverlayState?: {
+          type?: "screen" | "floating" | "head-locked" | "none";
+        };
+      };
+      const sessionExtras = xrSession as unknown as SessionStateExtras;
+      const enabledFeatures = sessionExtras.enabledFeatures ?? null;
+      const domOverlayType = sessionExtras.domOverlayState?.type ?? null;
+      const overlayGranted =
+        domOverlayType === "screen" ||
+        domOverlayType === "floating" ||
+        domOverlayType === "head-locked";
+      overlayGrantedRef.current = overlayGranted;
+      // eslint-disable-next-line no-console
+      console.log("[simxr] xrSession ready", {
+        enabledFeatures,
+        domOverlayType,
+        overlayGranted,
+        domOverlayRoot,
+      });
     } catch (e) {
       setError(
         `WebXR session request rejected: ${(e as Error).message}. Try tapping Connect again — the gesture must come directly from your tap.`,
@@ -619,14 +659,61 @@ export function useCloudXRSession(
           // any custom rendering on top of the CloudXR-driven frame.
           onWebGLStateChangeBegin: () => {},
           onWebGLStateChangeEnd: () => {},
-          // No auto-send of "start teleop" here — replaced by explicit
-          // operator gesture via the in-VR DOM Overlay's Start button.
-          // Operator: tap Connect on scene card → enter VR → see overlay →
-          // tap Start → robot becomes responsive. This matches NVIDIA
-          // hosted client's UX exactly and gives the operator visible
-          // control over when the recording starts (vs silently auto-
-          // arming on session connect).
-          onStreamStarted: () => setState("streaming"),
+          onStreamStarted: () => {
+            setState("streaming");
+            // Conditional auto-start. The intended UX is operator taps
+            // Start in the in-VR DOM Overlay; but Quest 3 Browser
+            // sometimes graceful-degrades the dom-overlay feature
+            // (overlay layer never composites) without telling the
+            // page in any other way. When that happens, the operator
+            // is in VR with no visible button and the server-side
+            // record_demos.py loop is stuck at running_recording_
+            // instance=False — robot doesn't respond, demo can't be
+            // captured, cold-Kit-through-simxr.app is broken.
+            //
+            // Rule: if overlay was granted (`overlayGrantedRef`),
+            // wait for explicit user button tap — operator sees the
+            // panel and decides. If overlay was NOT granted, auto-
+            // send "start teleop" so the session is functional even
+            // without UI. Diagnostic console.log makes the decision
+            // visible in chrome://inspect for next-iteration debug.
+            //
+            // Trade-off honest: auto-start is "silent" (no visible
+            // confirmation) which Mike has flagged before. We accept
+            // it ONLY as fallback when there's literally no other way
+            // for the operator to start the session.
+            if (overlayGrantedRef.current) {
+              // eslint-disable-next-line no-console
+              console.log(
+                "[simxr] dom-overlay granted — waiting for user to tap Start in overlay panel.",
+              );
+              return;
+            }
+            const sess = sessionRef.current;
+            if (!sess?.sendCustomMessage) {
+              // eslint-disable-next-line no-console
+              console.warn(
+                "[simxr] dom-overlay NOT granted AND SDK Session.sendCustomMessage unavailable — robot won't respond. Operator must use NVIDIA hosted client to bootstrap session, then switch to simxr.app.",
+              );
+              return;
+            }
+            try {
+              sess.sendCustomMessage({
+                type: "teleop_command",
+                message: { command: "start teleop" },
+              });
+              // eslint-disable-next-line no-console
+              console.log(
+                "[simxr] dom-overlay NOT granted — auto-sent 'start teleop' as fallback so cold-start session functions without UI.",
+              );
+            } catch (e) {
+              // eslint-disable-next-line no-console
+              console.warn(
+                "[simxr] auto-start fallback failed — sendCustomMessage threw:",
+                e,
+              );
+            }
+          },
           onStreamStopped: (err) => {
             // 1. End the WebXR session so Quest exits immersive mode and
             //    lands the user back on the browser tab. Without this, the
