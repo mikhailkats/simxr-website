@@ -1365,9 +1365,25 @@ function RecordingsView({
             </div>
           )}
 
+          {/* Find the index of the FIRST entry matching the ?fresh= task_id.
+              Recordings are sorted desc by recorded_at, so this is the newest
+              one — the one the operator just made. Highlight that row only,
+              and only while the polling state machine is still active
+              (polling/finalizing). Once finalized (pollState=idle) the
+              highlight drops cleanly. Avoids two failure modes: highlighting
+              ALL old recordings of the same task, AND fading the highlight
+              mid-finalization (Kit can hold .hdf5 lock past the old 60s
+              hardcoded window). */}
           <div className="rec-list">
-            {recordings.map((r) => {
-              const isFresh = shouldHighlightFresh(r, fresh);
+            {(() => {
+              const freshIdx =
+                pollState === "polling" || pollState === "finalizing"
+                  ? recordings.findIndex((r) =>
+                      shouldHighlightFresh(r, fresh),
+                    )
+                  : -1;
+              return recordings.map((r, i) => {
+              const isFresh = i === freshIdx;
               const scene = sceneById.get(r.task_id);
               const asset = SCENE_ASSETS[r.task_id];
               const date = fmtRecordedAt(r.recorded_at);
@@ -1472,7 +1488,8 @@ function RecordingsView({
                   )}
                 </div>
               );
-            })}
+            });
+            })()}
           </div>
         </>
       )}

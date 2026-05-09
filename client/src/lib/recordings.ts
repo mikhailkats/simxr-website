@@ -91,10 +91,13 @@ export function shouldHighlightFresh(
   rec: Recording,
   fresh: string | null,
 ): boolean {
-  if (!fresh || rec.task_id !== fresh) return false;
-  const dt = Date.now() - new Date(rec.recorded_at).getTime();
-  // Allow up to 5s of "future" timestamp tolerance + 60s freshness window.
-  return dt >= -5_000 && dt <= 60_000;
+  // Match by task_id only — no time window. Highlight lifetime is now
+  // controlled by the polling state in RecordingsView (visible while
+  // pollState !== "idle", drops once finalization completes). This
+  // avoids the bug where the 60s hardcoded window expired mid-polling
+  // (Kit can hold .hdf5 lock for several minutes; finalization may
+  // legitimately exceed 60s).
+  return fresh != null && rec.task_id === fresh;
 }
 
 // ─── Mock mode ──────────────────────────────────────────────────────────
