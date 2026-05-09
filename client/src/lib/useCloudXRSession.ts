@@ -998,6 +998,23 @@ export function useCloudXRSession(
                         `[simxr] auto-arm 'start teleop' delivered on attempt ${attempts} ` +
                           `(${(attempts - 1) * intervalMs}ms after onStreamStarted, channel.status=Ready)`,
                       );
+                      // Also send 'reset teleop' to re-anchor HMD pose to
+                      // scene XrCfg.anchor_pos. Without this, the camera
+                      // sits at whatever HMD pose was current at session
+                      // start, often a weird offset (operator below floor /
+                      // behind robot). NVIDIA hosted client sends both
+                      // start+reset on Start tap (verified in their
+                      // bundle.js — 3 distinct command call sites for
+                      // start/reset/stop). Small delay (50ms) to give the
+                      // server a beat to process start before reset, but
+                      // not strictly required since both go through the
+                      // same MessageChannel and arrive in order. Don't
+                      // care about success of this one — if it fails the
+                      // operator can manually recenter via overlay/menu;
+                      // the recording loop already armed.
+                      window.setTimeout(() => {
+                        sendTeleopCommand("reset teleop");
+                      }, 50);
                       return;
                     }
                     // Status was Ready but send returned false — this is
