@@ -863,20 +863,19 @@ export function useCloudXRSession(
           perEyeWidth: 2048,
           perEyeHeight: 1792,
           deviceFrameRate: 90,
-          // 100 Mbps — matches NVIDIA hosted bundle default
-          // (maxStreamingBitrateKbps: 1e5). Combined with h265 below
-          // for ~5× more bits-per-frame than the previous 30 Mbps + h264
-          // baseline. Reverted to NVIDIA defaults 2026-05-09 PT after
-          // confirming the 2026-05-08 disconnect-loop attribution
-          // (NVST_R_BUSY at 100 Mbps + h265) was actually caused by the
-          // unrelated React auto-arm retry storm spamming
-          // CONTROL_MESSAGE_OPEN — not by encoder budget. With that
-          // root cause fixed in commit bd2fe01 (probe channel.status
-          // === "Ready" before send, no spam), the encoder pipeline
-          // has headroom for NVIDIA-default bitrate + codec combo.
-          // If NVST issues recur on this combo: step DOWN one axis
-          // at a time (100 → 50 Mbps first, then h265 → h264).
-          maxStreamingBitrateKbps: 100_000,
+          // 50 Mbps — step-down from 100 Mbps after 100+h265 combo
+          // genuinely overloaded the L40S NVENC pipeline 2026-05-09 PT.
+          // Empirical metrics at 100 Mbps h265 (cxr_server [report]):
+          // GpuEndToEncodeEnd 18.9ms (vs 3.7ms at 30Mbps h264),
+          // 675 waitFrame timeouts in single session, 21 NVST_R_BUSY
+          // errors, NVIDIA hosted client also crashed at same params
+          // (eliminating "React did something" hypothesis — it's the
+          // L40S encoder budget). 50 Mbps + h265 picks the sweet
+          // spot: ~1.7× bits-per-frame vs the 30Mbps h264 baseline
+          // (50/30 × ~1.4 h265 efficiency factor) for noticeable
+          // quality bump while keeping encoder load near old budget.
+          // If 50Mbps still trips NVST: step further to 35-40Mbps h265.
+          maxStreamingBitrateKbps: 50_000,
           // h265 — Quest 3 has full HEVC hw decode (per Cowork's prior
           // research, h265 is safe; AV1 was the unstable one). 30-50%
           // efficiency gain vs h264 at the same bitrate.
