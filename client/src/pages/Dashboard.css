@@ -519,18 +519,93 @@
 }
 
 .dashboard-root .rec-stats {
-  display: flex; gap: 18px; align-items: center;
-  font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+  display: flex; gap: 22px; align-items: center;
+  font-family: 'IBM Plex Mono', monospace;
   color: var(--text-dim);
 }
-.dashboard-root .rec-stats .v {
-  color: var(--text); font-weight: 500;
+/* Secondary metadata cluster (size / duration) — small, dim, recedes
+   so the success-ratio block on the right reads as the visual anchor. */
+.dashboard-root .rec-stats-meta {
+  display: flex; gap: 18px; align-items: center;
+  font-size: 11px;
+  opacity: 0.78;
+}
+.dashboard-root .rec-stats-meta .v {
+  color: var(--text-dim); font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
-.dashboard-root .rec-stats .label {
-  font-size: 10px; color: var(--muted);
+.dashboard-root .rec-stats-meta .label {
+  font-size: 9px; color: var(--muted);
   letter-spacing: 0.1em; text-transform: uppercase;
   display: block; margin-top: 1px;
+}
+/* Hero stat: success ratio. Size/weight bumped so it reads as the
+   primary signal — '2/2 successful' is what tells the operator this
+   recording yielded usable training data. Color treatment is tier-
+   based: full success → success-tinted bg + green number; partial →
+   neutral; zero → muted. Restraint per accent-color rule (memory:
+   feedback_restrain_accent_color.md): we ONLY tint when the value is
+   100%, treating the green as a legit "money signal", not chrome. */
+.dashboard-root .rec-stats-hero {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center;
+  padding: 10px 14px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--stroke);
+  background: var(--surface);
+  min-width: 92px;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+.dashboard-root .rec-stats-hero .hero-number {
+  display: block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.0;
+  color: var(--text);
+}
+.dashboard-root .rec-stats-hero .hero-label {
+  display: block;
+  margin-top: 5px;
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+/* All demos succeeded — green-tinted hero. The only stat across the
+   whole row that earns accent treatment, so it actually pops. */
+.dashboard-root .rec-stats-hero.all-success {
+  border-color: rgba(78, 206, 140, 0.45);
+  background: rgba(78, 206, 140, 0.10);
+}
+.dashboard-root .rec-stats-hero.all-success .hero-number {
+  color: var(--success);
+}
+.dashboard-root .rec-stats-hero.all-success .hero-label {
+  color: rgba(78, 206, 140, 0.85);
+}
+/* Some succeeded, some didn't — neutral hero so it doesn't read as
+   "everything's fine". Number stays prominent (size + weight) but
+   color is the body text. */
+.dashboard-root .rec-stats-hero.partial-success .hero-number {
+  color: var(--text);
+}
+/* Zero successes — muted, signals "nothing usable here". Card stays
+   visible (operator may want to delete it) but the eye doesn't stop. */
+.dashboard-root .rec-stats-hero.no-success {
+  opacity: 0.55;
+}
+.dashboard-root .rec-stats-hero.no-success .hero-number {
+  color: var(--text-dim);
+}
+/* Server only sent num_demos (legacy / older recording with no per-demo
+   success metadata). Render as a count-only block, no success language
+   in the label. */
+.dashboard-root .rec-stats-hero.count-only .hero-number {
+  color: var(--text);
 }
 
 .dashboard-root .rec-status {

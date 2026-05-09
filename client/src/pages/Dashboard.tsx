@@ -1366,29 +1366,48 @@ function RecordingsView({
                     </div>
                   </div>
                   <div className="rec-stats">
-                    <div>
-                      <span className="v">{fmtSize(r.file_size_bytes)}</span>
-                      <span className="label">size</span>
-                    </div>
-                    {typeof r.duration_seconds === "number" && (
+                    <div className="rec-stats-meta">
                       <div>
-                        <span className="v">
-                          {fmtDuration(r.duration_seconds)}
-                        </span>
-                        <span className="label">duration</span>
+                        <span className="v">{fmtSize(r.file_size_bytes)}</span>
+                        <span className="label">size</span>
                       </div>
-                    )}
+                      {typeof r.duration_seconds === "number" && (
+                        <div>
+                          <span className="v">
+                            {fmtDuration(r.duration_seconds)}
+                          </span>
+                          <span className="label">duration</span>
+                        </div>
+                      )}
+                    </div>
                     {typeof r.num_demos === "number" && r.num_demos > 0 && (
-                      <div>
-                        <span className="v">
+                      <div
+                        className={`rec-stats-hero ${
+                          typeof r.successful_demos !== "number"
+                            ? "count-only"
+                            : r.successful_demos === r.num_demos
+                            ? "all-success"
+                            : r.successful_demos > 0
+                            ? "partial-success"
+                            : "no-success"
+                        }`}
+                        title={
+                          typeof r.successful_demos === "number"
+                            ? `${r.successful_demos} of ${r.num_demos} recorded demonstration${r.num_demos === 1 ? "" : "s"} reached the success state`
+                            : `${r.num_demos} recorded demonstration${r.num_demos === 1 ? "" : "s"}`
+                        }
+                      >
+                        <span className="hero-number">
                           {typeof r.successful_demos === "number"
                             ? `${r.successful_demos}/${r.num_demos}`
                             : r.num_demos}
                         </span>
-                        <span className="label">
+                        <span className="hero-label">
                           {typeof r.successful_demos === "number"
-                            ? "successful"
-                            : `demo${r.num_demos === 1 ? "" : "s"}`}
+                            ? r.num_demos === 1
+                              ? "successful demo"
+                              : "successful demos"
+                            : `demo${r.num_demos === 1 ? "" : "s"} recorded`}
                         </span>
                       </div>
                     )}
