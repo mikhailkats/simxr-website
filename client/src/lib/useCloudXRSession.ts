@@ -367,10 +367,10 @@ export function useCloudXRSession(
         try { xrSessionRef.current.cancelAnimationFrame(rafHandleRef.current); } catch { /* ignore */ }
       }
       rafHandleRef.current = 0;
-      void sessionRef.current?.disconnect().catch(() => {});
+      void sessionRef.current?.disconnect()?.catch(() => {});
       sessionRef.current?.dispose();
       sessionRef.current = null;
-      void xrSessionRef.current?.end().catch(() => {});
+      void xrSessionRef.current?.end()?.catch(() => {});
       xrSessionRef.current = null;
       // Detach the WebGL2 canvas we attached to body in step 3a.
       if (canvasRef.current) {
@@ -1018,7 +1018,7 @@ export function useCloudXRSession(
             //    user has to manually exit. Safe to call multiple times;
             //    the explicit disconnect() path also calls .end() and the
             //    SDK no-ops a second teardown.
-            void xrSessionRef.current?.end().catch(() => {});
+            void xrSessionRef.current?.end()?.catch(() => {});
             xrSessionRef.current = null;
             // 2. Cancel rAF — same reason as in disconnect(). The next
             //    requestAnimationFrame inside the frame() closure would
