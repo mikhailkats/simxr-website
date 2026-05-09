@@ -736,9 +736,17 @@ export function useCloudXRSession(
         }
         // 2. Tear down the CloudXR session if it's still around. SDK
         //    no-ops a second teardown so this is safe even when
-        //    onStreamStopped already ran.
+        //    onStreamStopped already ran. Defensive `?.catch` because
+        //    cloudxr-js disconnect() may return undefined instead of
+        //    a Promise — without `?.` the chained .catch() throws
+        //    TypeError, which silently kills this whole 'end' handler:
+        //    state never transitions to idle, overlay stays visible,
+        //    onSessionEnded never fires (no /recordings redirect).
+        //    Same pattern fix as commits 16d680c (cleanup useEffect)
+        //    and 952a77d — needed in EVERY place that chains .catch()
+        //    after disconnect()/end()/dispose() calls.
         if (sessionRef.current) {
-          void sessionRef.current.disconnect().catch(() => {});
+          void sessionRef.current.disconnect()?.catch(() => {});
           sessionRef.current.dispose?.();
           sessionRef.current = null;
         }
@@ -837,7 +845,7 @@ export function useCloudXRSession(
 
       xrBinding = new XRWebGLBinding(xrSession, gl);
     } catch (e) {
-      void xrSession.end().catch(() => {});
+      void xrSession.end()?.catch(() => {});
       xrSessionRef.current = null;
       setError(`XR/WebGL bridge setup failed: ${(e as Error).message}`);
       setState("error");
@@ -876,16 +884,19 @@ export function useCloudXRSession(
           // quality bump while keeping encoder load near old budget.
           // If 50Mbps still trips NVST: step further to 35-40Mbps h265.
           maxStreamingBitrateKbps: 50_000,
-          // h264 — switched back from h265 2026-05-09 PT after empirical
-          // measurement: at 50Mbps, h265 encode was 19ms (5× h264's 3.7ms)
-          // and bumped LayerCommitToGpuEnd from 48→93ms (encode steals GPU
-          // cycles from render). NVENC HEVC on L40S is genuinely heavier
-          // than H264, REGARDLESS of bitrate — codec choice dominates
-          // encoder cost. h264 + bumped 50Mbps gives quality lift over
-          // 30Mbps baseline (1.7× bits-per-frame) WITHOUT the latency
-          // hit. If on a future GPU upgrade (H100 / L40S w/ extra
-          // headroom) h265 encode budget becomes available, revisit.
-          codec: "h264",
+          // h265 — locked-in 2026-05-09 PT after apples-to-apples
+          // measurement at 50Mbps on same Kit: h265 encode 19ms vs
+          // h264 16.5ms (only +2.5ms, NOT 5× as a previous flawed
+          // comparison suggested — that comparison conflated bitrate
+          // and codec axes). LayerCommitToGpuEnd diff was tiny too
+          // (93 vs 87ms). h265 SHIPS noticeably better per-bit
+          // visual quality (HEVC is ~40-50% more efficient than
+          // h264 — same 50Mbps stream looks like h264 at ~75-80Mbps)
+          // AND fewer waitFrame timeouts (322 vs 1558 — h264 jitters
+          // more because more bytes per frame). Net: h265 wins on
+          // quality + smoothness for negligible latency cost. Quest 3
+          // has full HEVC hw decode (AV1 is the unstable one, not h265).
+          codec: "h265",
           // Reprojection grid — SDK validator allows undefined but the
           // server-side runtime appears to require these for session accept
           // (isaac log silence with undefined; CC's bundle.js shows :64).
@@ -1168,7 +1179,7 @@ export function useCloudXRSession(
       };
       rafHandleRef.current = xrSession.requestAnimationFrame(frame);
     } catch (e) {
-      void xrSession.end().catch(() => {});
+      void xrSession.end()?.catch(() => {});
       xrSessionRef.current = null;
       setError(`CloudXR connect failed: ${(e as Error).message}`);
       setState("error");
