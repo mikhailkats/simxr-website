@@ -884,19 +884,19 @@ export function useCloudXRSession(
           // quality bump while keeping encoder load near old budget.
           // If 50Mbps still trips NVST: step further to 35-40Mbps h265.
           maxStreamingBitrateKbps: 50_000,
-          // h265 — locked-in 2026-05-09 PT after apples-to-apples
-          // measurement at 50Mbps on same Kit: h265 encode 19ms vs
-          // h264 16.5ms (only +2.5ms, NOT 5× as a previous flawed
-          // comparison suggested — that comparison conflated bitrate
-          // and codec axes). LayerCommitToGpuEnd diff was tiny too
-          // (93 vs 87ms). h265 SHIPS noticeably better per-bit
-          // visual quality (HEVC is ~40-50% more efficient than
-          // h264 — same 50Mbps stream looks like h264 at ~75-80Mbps)
-          // AND fewer waitFrame timeouts (322 vs 1558 — h264 jitters
-          // more because more bytes per frame). Net: h265 wins on
-          // quality + smoothness for negligible latency cost. Quest 3
-          // has full HEVC hw decode (AV1 is the unstable one, not h265).
-          codec: "h265",
+          // av1 — experimental 2026-05-09 PT. Both ends have hw
+          // support (L40S Ada Lovelace 3 NVENC AV1 chips, Quest 3
+          // Snapdragon XR2 Gen 2 hw AV1 decoder). AV1 is ~40% more
+          // efficient than h265 → at 50Mbps, AV1 image quality looks
+          // like h265 at ~70Mbps OR we can drop to 30Mbps and match
+          // current quality. Stable frame times (community ALVR /
+          // Virtual Desktop benchmarks). Risk: CloudXR runtime 6.0.4
+          // may silently fallback to h265 if AV1 negotiation fails
+          // (no explicit AV1 in CloudXR.js release notes, only h265).
+          // Verify via cxr_server log post-connect: if codec downgraded
+          // → no harm, just no win → may need NVIDIA feature request.
+          // Easy revert (1-line) to h265 if connect crashes.
+          codec: "av1",
           // Reprojection grid — SDK validator allows undefined but the
           // server-side runtime appears to require these for session accept
           // (isaac log silence with undefined; CC's bundle.js shows :64).
