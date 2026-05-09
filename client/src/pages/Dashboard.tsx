@@ -1267,6 +1267,25 @@ function RecordingsView({
 
   const recordings = localResp?.recordings ?? [];
 
+  // Minimum display time for the virtual card's "finalizing" state.
+  // Without this, when the API entry is already populated at land time
+  // (common: scanner ran, h5py read the demo via the lock-bypass, num_demos
+  // already there), the success-ratio shows up INSTANTLY — operator never
+  // sees the in-progress feedback. Forcing 2.5s of placeholder gives the
+  // "data was being processed, now it's ready" UX feel even when the
+  // backend is fast. Resets per justFinishedSession (each new Quest exit
+  // restarts the timer).
+  const [virtualCardReady, setVirtualCardReady] = useState(false);
+  useEffect(() => {
+    if (!justFinishedSession) {
+      setVirtualCardReady(false);
+      return;
+    }
+    setVirtualCardReady(false);
+    const t = window.setTimeout(() => setVirtualCardReady(true), 2500);
+    return () => window.clearTimeout(t);
+  }, [justFinishedSession]);
+
   // Compute the just-finished session delta against current API state. We
   // subtract the pre-session snapshot from the live entry's counts —
   // remainder = demos recorded during this Quest session. Only render the
@@ -1493,7 +1512,11 @@ function RecordingsView({
                     no-success. While deltas haven't resolved yet (h5py
                     hasn't read fields), fall back to count-only with a
                     placeholder so the card has visible state. */}
-                {justFinishedDelta.deltaDemos != null && justFinishedDelta.deltaDemos > 0 ? (
+                {/* Force "finalizing" placeholder for ~2.5s after Quest
+                    exit even if backend already has the data — gives operator
+                    visual time to register that processing happened. After
+                    virtualCardReady flips, render the real ratio. */}
+                {virtualCardReady && justFinishedDelta.deltaDemos != null && justFinishedDelta.deltaDemos > 0 ? (
                   <div
                     className={`rec-stats-hero ${
                       justFinishedDelta.deltaSuccessful == null
