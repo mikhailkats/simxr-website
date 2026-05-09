@@ -987,15 +987,27 @@ export function useCloudXRSession(
                   );
                   return;
                 }
-                // Send returned false even though peek said ready —
-                // means SDK accepted the call but reported failure.
-                // Don't retry forever in that case; treat it as the
-                // legitimate end state.
+                // Send returned false despite the channel being present in
+                // availableMessageChannels — the channel exists but is still
+                // in MessageChannelStatus.NotInitialized state. cloudxr-js's
+                // sendServerMessage in that state calls open() (sends a
+                // CONTROL_MESSAGE_OPEN to the server) and returns false if
+                // open() fails — typically because the underlying transport
+                // hasn't completed the channel-open handshake yet (~100-500ms
+                // after onStreamStarted). Reverse-engineered from NVIDIA
+                // bundle.js MessageChannel.sendServerMessage state machine.
+                // The previous version of this branch returned here on first
+                // false, leaving cold-Kit + simxr.app sessions with the
+                // robot frozen because attempt 1 raced the channel-open
+                // handshake. Fall through to retry until either the open()
+                // succeeds or maxAttempts elapses. Only logs a one-time warn
+                // per false attempt — sendTeleopCommand itself produces the
+                // detailed per-call diagnostic.
                 // eslint-disable-next-line no-console
-                console.error(
-                  `[simxr] auto-arm: send-capable but sendTeleopCommand returned false on attempt ${attempts}. Robot may not respond.`,
+                console.warn(
+                  `[simxr] auto-arm attempt ${attempts}: send returned false (channel may be NotInitialized), retrying`,
                 );
-                return;
+                // fall through to the maxAttempts / setTimeout block below
               }
 
               if (attempts >= maxAttempts) {
