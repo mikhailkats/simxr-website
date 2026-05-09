@@ -368,7 +368,7 @@ export function useCloudXRSession(
       }
       rafHandleRef.current = 0;
       void sessionRef.current?.disconnect()?.catch(() => {});
-      sessionRef.current?.dispose();
+      sessionRef.current?.dispose?.();
       sessionRef.current = null;
       void xrSessionRef.current?.end()?.catch(() => {});
       xrSessionRef.current = null;
@@ -1126,7 +1126,7 @@ export function useCloudXRSession(
     } catch {
       /* ignore */
     }
-    sessionRef.current?.dispose();
+    sessionRef.current?.dispose?.();
     sessionRef.current = null;
     try {
       await xrSessionRef.current?.end();
