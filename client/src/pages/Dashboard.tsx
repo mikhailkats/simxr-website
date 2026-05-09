@@ -1378,11 +1378,17 @@ function RecordingsView({
                         <span className="label">duration</span>
                       </div>
                     )}
-                    {typeof r.num_demos === "number" && (
+                    {typeof r.num_demos === "number" && r.num_demos > 0 && (
                       <div>
-                        <span className="v">{r.num_demos}</span>
+                        <span className="v">
+                          {typeof r.successful_demos === "number"
+                            ? `${r.successful_demos}/${r.num_demos}`
+                            : r.num_demos}
+                        </span>
                         <span className="label">
-                          demo{r.num_demos === 1 ? "" : "s"}
+                          {typeof r.successful_demos === "number"
+                            ? "successful"
+                            : `demo${r.num_demos === 1 ? "" : "s"}`}
                         </span>
                       </div>
                     )}

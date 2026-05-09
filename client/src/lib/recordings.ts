@@ -29,8 +29,17 @@ export interface Recording {
    */
   download_path?: string;
 
-  // Optional sidecar fields (may or may not be set by the server).
+  // Optional sidecar fields populated by simxr-update-recordings-json's
+  // h5py inspection step (added 2026-05-09). Server peeks each .hdf5,
+  // counts top-level data/demo_* groups → num_demos, counts those with
+  // success=True → successful_demos, and sums per-demo step counts × dt
+  // → duration_seconds. Files where inspection fails (corrupt HDF5,
+  // missing schema) come back without these fields — frontend hides
+  // the pill rather than rendering '0/0' or 'undefined'. The legacy
+  // `success` boolean is kept for forward-compat sidecar JSON files;
+  // not currently emitted by the generator.
   num_demos?: number;
+  successful_demos?: number;
   duration_seconds?: number;
   success?: boolean;
 
