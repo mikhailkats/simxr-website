@@ -884,19 +884,14 @@ export function useCloudXRSession(
           // quality bump while keeping encoder load near old budget.
           // If 50Mbps still trips NVST: step further to 35-40Mbps h265.
           maxStreamingBitrateKbps: 50_000,
-          // av1 — experimental 2026-05-09 PT. Both ends have hw
-          // support (L40S Ada Lovelace 3 NVENC AV1 chips, Quest 3
-          // Snapdragon XR2 Gen 2 hw AV1 decoder). AV1 is ~40% more
-          // efficient than h265 → at 50Mbps, AV1 image quality looks
-          // like h265 at ~70Mbps OR we can drop to 30Mbps and match
-          // current quality. Stable frame times (community ALVR /
-          // Virtual Desktop benchmarks). Risk: CloudXR runtime 6.0.4
-          // may silently fallback to h265 if AV1 negotiation fails
-          // (no explicit AV1 in CloudXR.js release notes, only h265).
-          // Verify via cxr_server log post-connect: if codec downgraded
-          // → no harm, just no win → may need NVIDIA feature request.
-          // Easy revert (1-line) to h265 if connect crashes.
-          codec: "av1",
+          // h264 TEMPORARILY 2026-05-09 PT for AV1 confirmation test.
+          // Goal: measure encode time at h264 50Mbps. Compare to:
+          //   - AV1 50Mbps (just measured): 7.2ms encode
+          //   - h265 50Mbps (prior): 19ms encode
+          // If h264 measures ~16ms (per earlier 2026-05-09 measurement)
+          // → all three codecs honored, AV1 was real (not silent fallback).
+          // Then revert to "av1".
+          codec: "h264",
           // Reprojection grid — SDK validator allows undefined but the
           // server-side runtime appears to require these for session accept
           // (isaac log silence with undefined; CC's bundle.js shows :64).
