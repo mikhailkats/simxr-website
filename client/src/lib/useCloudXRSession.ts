@@ -966,55 +966,90 @@ export function useCloudXRSession(
                 );
               }
 
-              // Peek: is anything send-capable yet? Probing here lets
-              // us retry SILENTLY (no log spam) until SDK plumbing is
-              // ready, then call sendTeleopCommand exactly once and
-              // get its full diagnostic info-log.
+              // Probe channel.status === "Ready" BEFORE attempting send.
+              // The cloudxr-js MessageChannel state machine
+              // (NotInitialized → Ready → Closed) auto-opens on first
+              // sendServerMessage call when in NotInitialized — that
+              // open() sends a CONTROL_MESSAGE_OPEN to the server. If
+              // we keep retrying sends while status is still
+              // NotInitialized (channel exists in availableMessageChannels
+              // but transport handshake hasn't completed), every retry
+              // fires another CONTROL_MESSAGE_OPEN, flooding the signaling
+              // channel and starving the NVST encoder pipeline → encoder
+              // corruption (verified empirically 2026-05-09 cold-Kit
+              // simxr.app: 30 retries × 200ms of CONTROL_MESSAGE_OPEN
+              // spam produced unrecoverable NVST_R_BUSY corruption on
+              // first connect, GPU 92% / encoder 0% / 19GB / 305W).
+              //
+              // Status enum values are STRING literals "NotInitialized" /
+              // "Ready" / "Closed" (reverse-engineered from NVIDIA
+              // bundle.js: i.NotInitialized="NotInitialized",i.Ready=
+              // "Ready",i.Closed="Closed"). Probing is JS-only (no
+              // network traffic), so 200ms × 30 polling is cheap.
               const channels = sess.availableMessageChannels;
-              const channelReady =
-                Array.isArray(channels) &&
-                !!findChannelByUuid(channels, TELEOP_CHANNEL_UUID);
-              const legacyReady =
-                typeof sess.sendServerMessage === "function";
+              if (Array.isArray(channels)) {
+                const channel = findChannelByUuid(
+                  channels,
+                  TELEOP_CHANNEL_UUID,
+                );
+                if (channel) {
+                  const status = (channel as { status?: string }).status;
+                  if (status === "Ready") {
+                    const ok = sendTeleopCommand("start teleop");
+                    if (ok) {
+                      // eslint-disable-next-line no-console
+                      console.info(
+                        `[simxr] auto-arm 'start teleop' delivered on attempt ${attempts} ` +
+                          `(${(attempts - 1) * intervalMs}ms after onStreamStarted, channel.status=Ready)`,
+                      );
+                      return;
+                    }
+                    // Status was Ready but send returned false — this is
+                    // a transport-level failure, not a state-machine
+                    // race. Don't keep retrying; give up cleanly.
+                    // eslint-disable-next-line no-console
+                    console.error(
+                      `[simxr] auto-arm: channel.status===Ready but send returned false on attempt ${attempts}, giving up`,
+                    );
+                    return;
+                  }
+                  // status is NotInitialized (or undefined for SDK
+                  // builds that don't expose .status) — skip send,
+                  // just keep polling. The SDK's own internal open()
+                  // will eventually complete, flipping status to Ready.
+                }
+              }
 
-              if (channelReady || legacyReady) {
+              // Final attempt: try the legacy top-level sendServerMessage
+              // path ONCE if it exists. Legacy doesn't go through the
+              // MessageChannel state machine, so no CONTROL_MESSAGE_OPEN
+              // flood risk — but we still only invoke it on the LAST
+              // attempt as a last-ditch (avoids any other potential
+              // protocol overhead from repeated sends).
+              if (
+                attempts === maxAttempts &&
+                typeof sess.sendServerMessage === "function"
+              ) {
                 const ok = sendTeleopCommand("start teleop");
                 if (ok) {
                   // eslint-disable-next-line no-console
                   console.info(
-                    `[simxr] auto-arm 'start teleop' delivered on attempt ${attempts} ` +
-                      `(${(attempts - 1) * intervalMs}ms after onStreamStarted)`,
+                    `[simxr] auto-arm delivered via legacy fallback on final attempt ${attempts}`,
                   );
-                  return;
+                } else {
+                  // eslint-disable-next-line no-console
+                  console.error(
+                    `[simxr] auto-arm: both paths failed by attempt ${attempts}, robot will not respond`,
+                  );
                 }
-                // Send returned false despite the channel being present in
-                // availableMessageChannels — the channel exists but is still
-                // in MessageChannelStatus.NotInitialized state. cloudxr-js's
-                // sendServerMessage in that state calls open() (sends a
-                // CONTROL_MESSAGE_OPEN to the server) and returns false if
-                // open() fails — typically because the underlying transport
-                // hasn't completed the channel-open handshake yet (~100-500ms
-                // after onStreamStarted). Reverse-engineered from NVIDIA
-                // bundle.js MessageChannel.sendServerMessage state machine.
-                // The previous version of this branch returned here on first
-                // false, leaving cold-Kit + simxr.app sessions with the
-                // robot frozen because attempt 1 raced the channel-open
-                // handshake. Fall through to retry until either the open()
-                // succeeds or maxAttempts elapses. Only logs a one-time warn
-                // per false attempt — sendTeleopCommand itself produces the
-                // detailed per-call diagnostic.
-                // eslint-disable-next-line no-console
-                console.warn(
-                  `[simxr] auto-arm attempt ${attempts}: send returned false (channel may be NotInitialized), retrying`,
-                );
-                // fall through to the maxAttempts / setTimeout block below
+                return;
               }
 
               if (attempts >= maxAttempts) {
                 // eslint-disable-next-line no-console
                 console.error(
                   `[simxr] auto-arm failed after ${attempts} attempts (${attempts * intervalMs}ms). ` +
-                    `availableMessageChannels never populated AND no legacy sendServerMessage. ` +
+                    `Channel never reached status="Ready" AND no legacy sendServerMessage available. ` +
                     `Operator may need to use NVIDIA hosted client to bootstrap, then return to simxr.app.`,
                 );
                 return;
