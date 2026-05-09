@@ -328,11 +328,16 @@ function DashboardInner() {
       // Promote the pre-session snapshot to "just finished" — RecordingsView
       // computes the delta against the current API state to render the
       // virtual card.
+      // eslint-disable-next-line no-console
+      console.info("[simxr] onSessionEnded fired", { taskId, hasContext: !!sessionContextRef.current, ctx: sessionContextRef.current });
       if (sessionContextRef.current && (!taskId || sessionContextRef.current.taskId === taskId)) {
-        setJustFinishedSession({
-          ...sessionContextRef.current,
-          endedAt: Date.now(),
-        });
+        const ended = { ...sessionContextRef.current, endedAt: Date.now() };
+        setJustFinishedSession(ended);
+        // eslint-disable-next-line no-console
+        console.info("[simxr] setJustFinishedSession ->", ended);
+      } else {
+        // eslint-disable-next-line no-console
+        console.warn("[simxr] virtual card skipped — no sessionContext OR taskId mismatch");
       }
       sessionContextRef.current = null;
       const target = taskId
@@ -357,13 +362,17 @@ function DashboardInner() {
         preNumDemos: entry?.num_demos ?? 0,
         preNumSuccessful: entry?.successful_demos ?? 0,
       };
-    } catch {
+      // eslint-disable-next-line no-console
+      console.info("[simxr] handleConnect captured pre-session snapshot", sessionContextRef.current);
+    } catch (e) {
       sessionContextRef.current = {
         taskId,
         startedAt: Date.now(),
         preNumDemos: 0,
         preNumSuccessful: 0,
       };
+      // eslint-disable-next-line no-console
+      console.warn("[simxr] handleConnect snapshot fetch failed, using zero baseline", e);
     }
     void session.connect(taskId);
   };
