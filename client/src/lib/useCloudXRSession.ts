@@ -903,7 +903,16 @@ export function useCloudXRSession(
           reprojectionGridCols: 64,
           reprojectionGridRows: 64,
           enablePoseSmoothing: true,
-          posePredictionFactor: 1,
+          // 1.5 = SDK predicts pose ~1.5× further ahead so rendered frame
+          // matches HMD pose AT DISPLAY time (not at frame-start time).
+          // Masks ~15-30ms perceived motion-to-photon latency at the cost
+          // of mild swimming/wobble during very fast head turns. NVIDIA's
+          // hosted bundle exposes this as a tunable setting (no hardcoded
+          // default in their bundle — they let user pick). 1.5 is a common
+          // safe default for VR teleop where head motion is controlled
+          // (operator focused on robot, not whipping around). Bumped from
+          // 1.0 → 1.5 2026-05-09 PT.
+          posePredictionFactor: 1.5,
           enableTexSubImage2D: false,
           useQuestColorWorkaround: true, // we target Quest 3 — flip if color renders odd
           // GL/XR bridge (built in step 3c)

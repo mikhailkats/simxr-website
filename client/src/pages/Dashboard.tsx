@@ -1487,30 +1487,41 @@ function RecordingsView({
                     <span className="stat-label">demos</span>
                   </span>
                 </div>
-                <div className="rec-stats-hero">
-                  {justFinishedDelta.deltaSuccessful != null && justFinishedDelta.deltaDemos != null
-                    ? (justFinishedDelta.deltaSuccessful === justFinishedDelta.deltaDemos ? (
-                        <div className="success-block all-success">
-                          <div className="success-num">
-                            {justFinishedDelta.deltaSuccessful}/{justFinishedDelta.deltaDemos}
-                          </div>
-                          <div className="success-label">successful</div>
-                        </div>
-                      ) : (
-                        <div className="success-block partial">
-                          <div className="success-num">
-                            {justFinishedDelta.deltaSuccessful}/{justFinishedDelta.deltaDemos}
-                          </div>
-                          <div className="success-label">successful</div>
-                        </div>
-                      ))
-                    : (
-                      <div className="success-block waiting">
-                        <div className="success-num">…</div>
-                        <div className="success-label">finalizing</div>
-                      </div>
-                    )}
-                </div>
+                {/* Reuse Cowork's hero block from per-card design (commit
+                    f058dd7). Variant classes match the real-card render at
+                    line ~1612: count-only, all-success, partial-success,
+                    no-success. While deltas haven't resolved yet (h5py
+                    hasn't read fields), fall back to count-only with a
+                    placeholder so the card has visible state. */}
+                {justFinishedDelta.deltaDemos != null && justFinishedDelta.deltaDemos > 0 ? (
+                  <div
+                    className={`rec-stats-hero ${
+                      justFinishedDelta.deltaSuccessful == null
+                        ? "count-only"
+                        : justFinishedDelta.deltaSuccessful === justFinishedDelta.deltaDemos
+                        ? "all-success"
+                        : justFinishedDelta.deltaSuccessful > 0
+                        ? "partial-success"
+                        : "no-success"
+                    }`}
+                  >
+                    <span className="hero-number">
+                      {justFinishedDelta.deltaSuccessful != null
+                        ? `${justFinishedDelta.deltaSuccessful}/${justFinishedDelta.deltaDemos}`
+                        : justFinishedDelta.deltaDemos}
+                    </span>
+                    <span className="hero-label">
+                      {justFinishedDelta.deltaSuccessful != null
+                        ? justFinishedDelta.deltaDemos === 1 ? "successful demo" : "successful demos"
+                        : `demo${justFinishedDelta.deltaDemos === 1 ? "" : "s"} recorded`}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="rec-stats-hero count-only">
+                    <span className="hero-number">…</span>
+                    <span className="hero-label">finalizing</span>
+                  </div>
+                )}
               </div>
             </div>
           )}
