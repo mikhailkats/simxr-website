@@ -1070,8 +1070,25 @@ interface RecordingsViewProps {
 }
 
 const POLL_INTERVAL_MS = 4_000;
-const MAX_POLLS = 15;
-type PollState = "idle" | "polling" | "exhausted";
+const MAX_POLLS = 45;            // 45 × 4s = 3 min — covers Kit's hdf5 file
+                                 // lock window (Kit holds the .hdf5 open while
+                                 // record_demos.py is alive; h5py inspection
+                                 // can't read demo groups until release, which
+                                 // is after Kit shuts down OR uses SWMR mode)
+type PollState = "idle" | "polling" | "finalizing" | "exhausted";
+
+/**
+ * "Finalized" = entry present in API response AND has the h5py-derived
+ * demo metadata fields (num_demos + successful_demos). Both are populated
+ * by the server-side recordings scanner's h5py inspect_hdf5() — but only
+ * succeeds when Kit releases the .hdf5 file lock. While Kit holds the
+ * file, the entry exists with file_size_bytes/recorded_at but the
+ * demo-count fields are omitted (h5py.File raises OSError on the lock
+ * and the scanner silently skips inspection for that file).
+ */
+function isEntryFinalized(rec: Recording): boolean {
+  return rec.num_demos != null && rec.successful_demos != null;
+}
 
 function RecordingsView({
   resp,
@@ -1093,8 +1110,24 @@ function RecordingsView({
   const [pollAttempt, setPollAttempt] = useState(0);
 
   // Targeted poll for ?fresh — kicks off when parent's resp lands without
-  // the entry, runs every POLL_INTERVAL_MS up to MAX_POLLS, ends when
-  // either the entry shows up or attempts are exhausted.
+  // the entry, runs every POLL_INTERVAL_MS up to MAX_POLLS. Two phases:
+  //
+  //   1. "polling"     — entry not yet present. Banner: "Saving the
+  //                       recording you just made…". Stops when entry
+  //                       appears in /api/recordings.json (server's 30s
+  //                       regen tick picks up the new .hdf5).
+  //   2. "finalizing"  — entry IS present but missing num_demos /
+  //                       successful_demos (h5py inspection couldn't
+  //                       read the file because Kit still has the file
+  //                       lock). Banner: "Finalizing demo count…".
+  //                       Stops when either field appears OR maxAttempts.
+  //
+  // No manual Refresh tap needed across the whole flow — operator records
+  // demo, exits via Meta button, lands on /recordings?fresh=, and watches
+  // the card materialize then update with success-ratio without any
+  // additional clicks. 3-min total polling window covers Kit's typical
+  // file-lock duration (Kit holds the .hdf5 open until session next
+  // disconnects OR record_demos.py exits).
   useEffect(() => {
     if (!fresh) {
       setPollState("idle");
@@ -1102,15 +1135,17 @@ function RecordingsView({
       return;
     }
     if (!localResp) return;
-    const alreadyHere = localResp.recordings.some((rec) =>
+    const matching = localResp.recordings.find((rec) =>
       shouldHighlightFresh(rec, fresh),
     );
-    if (alreadyHere) {
+    if (matching && isEntryFinalized(matching)) {
+      // Entry present AND has demo metadata — fully done, stop polling.
       setPollState("idle");
       return;
     }
 
-    setPollState("polling");
+    // Either entry missing OR entry present-but-incomplete — start poll.
+    setPollState(matching ? "finalizing" : "polling");
     setPollAttempt(0);
     let cancelled = false;
     let attempts = 0;
@@ -1128,11 +1163,18 @@ function RecordingsView({
         const next = await fetchRecordings();
         if (cancelled) return;
         setLocalResp(next);
-        if (
-          next.recordings.some((rec) => shouldHighlightFresh(rec, fresh))
-        ) {
-          setPollState("idle");
-          return;
+        const hit = next.recordings.find((rec) =>
+          shouldHighlightFresh(rec, fresh),
+        );
+        if (hit) {
+          if (isEntryFinalized(hit)) {
+            // Got everything — stop.
+            setPollState("idle");
+            return;
+          }
+          // Entry visible but still being inspected server-side. Flip to
+          // finalizing phase so the banner copy updates, but keep polling.
+          setPollState("finalizing");
         }
       } catch {
         /* soft-fail; next tick may succeed */
@@ -1286,25 +1328,35 @@ function RecordingsView({
           {pollState === "polling" && (
             <div className="recordings-poll-banner">
               <span className="dot" />
-              Waiting for the recording you just made…
+              Saving the recording you just made…
               <span className="poll-hint">
-                checks every {POLL_INTERVAL_MS / 1000}s · auto-stops at
-                ~{Math.round((POLL_INTERVAL_MS * MAX_POLLS) / 1000)}s
-                {pollAttempt > 0 ? ` · attempt ${pollAttempt}/${MAX_POLLS}` : ""}
+                .hdf5 lands within ~30s of teleop disconnect · attempt{" "}
+                {pollAttempt}/{MAX_POLLS}
+              </span>
+            </div>
+          )}
+          {pollState === "finalizing" && (
+            <div className="recordings-poll-banner">
+              <span className="dot" />
+              Finalizing demo count… (waiting for Kit to release file lock)
+              <span className="poll-hint">
+                card visible above · success ratio appears once h5py reads
+                the .hdf5 · attempt {pollAttempt}/{MAX_POLLS}
               </span>
             </div>
           )}
           {pollState === "exhausted" && (
             <div className="recordings-poll-banner exhausted">
               <span className="dot warn" />
-              The recording hasn't surfaced yet. The server-side teleop
-              may still be running — once it's stopped the .hdf5 finalizes
-              and the next regen tick (~30s) will pick it up.
+              Demo count didn't finalize within{" "}
+              {Math.round((POLL_INTERVAL_MS * MAX_POLLS) / 1000)}s. Kit
+              may still be holding the .hdf5 file lock — count will
+              appear once Kit shuts down or the next demo lands.
               <span className="poll-hint">Try Refresh in a moment.</span>
             </div>
           )}
 
-          {recordings.length === 0 && pollState !== "polling" && (
+          {recordings.length === 0 && pollState === "idle" && (
             <div className="recordings-empty">
               <span className="title">No recordings yet.</span>
               Connect to a scene from Tasks and record a demo. The list
