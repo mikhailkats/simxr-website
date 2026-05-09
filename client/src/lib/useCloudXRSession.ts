@@ -876,10 +876,16 @@ export function useCloudXRSession(
           // quality bump while keeping encoder load near old budget.
           // If 50Mbps still trips NVST: step further to 35-40Mbps h265.
           maxStreamingBitrateKbps: 50_000,
-          // h265 — Quest 3 has full HEVC hw decode (per Cowork's prior
-          // research, h265 is safe; AV1 was the unstable one). 30-50%
-          // efficiency gain vs h264 at the same bitrate.
-          codec: "h265",
+          // h264 — switched back from h265 2026-05-09 PT after empirical
+          // measurement: at 50Mbps, h265 encode was 19ms (5× h264's 3.7ms)
+          // and bumped LayerCommitToGpuEnd from 48→93ms (encode steals GPU
+          // cycles from render). NVENC HEVC on L40S is genuinely heavier
+          // than H264, REGARDLESS of bitrate — codec choice dominates
+          // encoder cost. h264 + bumped 50Mbps gives quality lift over
+          // 30Mbps baseline (1.7× bits-per-frame) WITHOUT the latency
+          // hit. If on a future GPU upgrade (H100 / L40S w/ extra
+          // headroom) h265 encode budget becomes available, revisit.
+          codec: "h264",
           // Reprojection grid — SDK validator allows undefined but the
           // server-side runtime appears to require these for session accept
           // (isaac log silence with undefined; CC's bundle.js shows :64).
