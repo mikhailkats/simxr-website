@@ -863,27 +863,24 @@ export function useCloudXRSession(
           perEyeWidth: 2048,
           perEyeHeight: 1792,
           deviceFrameRate: 90,
-          // 30 Mbps (was 150 — runtime / CF tunnel may reject too-greedy
-          // sessions; NVIDIA's UI defaults are in this range).
-          // 30 Mbps — reverted from 100 Mbps 2026-05-08 PT after CC's
-          // cxr_server log analysis on simxr.app apex showed disconnect
-          // loop: 216 cycles of NVST_R_BUSY + NVST_R_INVALID_OPERATION
-          // + "Video stream disconnected: packed" + RTSP teardown when
-          // running 100 Mbps + h265 together. The combination overwhelms
-          // the server-side NVENC encoder pipeline — NVIDIA hosted
-          // bundle's 100-150 Mbps default works because they pair it
-          // with h264 (lower per-frame encode cost). Step-up plan: keep
-          // 30 Mbps + h264 baseline, verify stability, then iterate
-          // ONE axis at a time: h264 → h265 at 30 Mbps (isolate codec
-          // cost), then if stable bump bitrate 30 → 50 → 100.
-          maxStreamingBitrateKbps: 30_000,
-          // h264 — reverted from h265 alongside the bitrate revert
-          // above; same disconnect-loop root cause. Quest 3 supports
-          // both decoders fine at the headset side; the issue is
-          // server-side NVENC encoder budget. Per CC's plan we'll
-          // re-attempt h265 at 30 Mbps as a SEPARATE iteration once
-          // the baseline is verified stable.
-          codec: "h264",
+          // 100 Mbps — matches NVIDIA hosted bundle default
+          // (maxStreamingBitrateKbps: 1e5). Combined with h265 below
+          // for ~5× more bits-per-frame than the previous 30 Mbps + h264
+          // baseline. Reverted to NVIDIA defaults 2026-05-09 PT after
+          // confirming the 2026-05-08 disconnect-loop attribution
+          // (NVST_R_BUSY at 100 Mbps + h265) was actually caused by the
+          // unrelated React auto-arm retry storm spamming
+          // CONTROL_MESSAGE_OPEN — not by encoder budget. With that
+          // root cause fixed in commit bd2fe01 (probe channel.status
+          // === "Ready" before send, no spam), the encoder pipeline
+          // has headroom for NVIDIA-default bitrate + codec combo.
+          // If NVST issues recur on this combo: step DOWN one axis
+          // at a time (100 → 50 Mbps first, then h265 → h264).
+          maxStreamingBitrateKbps: 100_000,
+          // h265 — Quest 3 has full HEVC hw decode (per Cowork's prior
+          // research, h265 is safe; AV1 was the unstable one). 30-50%
+          // efficiency gain vs h264 at the same bitrate.
+          codec: "h265",
           // Reprojection grid — SDK validator allows undefined but the
           // server-side runtime appears to require these for session accept
           // (isaac log silence with undefined; CC's bundle.js shows :64).
