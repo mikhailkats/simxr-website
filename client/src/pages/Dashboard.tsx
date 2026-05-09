@@ -299,47 +299,8 @@ function DashboardInner() {
   // Connect, the <div ref={overlayRef}> has been mounted and ref is
   // populated. Hook reads this lazily when it needs to pass `domOverlay`
   // to xr.requestSession().
-  // Virtual "just-finished session" card state — Cowork backend keeps ONE
-  // .hdf5 per Kit lifetime and grows it across many Quest sessions, but UX
-  // wants to show "the session you just finished" as a separate card with
-  // its own demo count + success ratio. We compute that client-side: snapshot
-  // the API's num_demos/successful_demos for this task BEFORE Quest connect,
-  // store as sessionContextRef. After disconnect, the difference between
-  // current API state and the pre-session snapshot = demos recorded in just-
-  // finished Quest session. Render that as a virtual card on top of the real
-  // (growing-file) card. Lives in memory only — clears on page refresh /
-  // navigation away. Backend reality reasserts itself on next visit.
-  const sessionContextRef = useRef<{
-    taskId: string;
-    startedAt: number;          // Date.now() ms at Quest connect
-    preNumDemos: number;        // API num_demos for this task BEFORE this session
-    preNumSuccessful: number;   // ditto for successful_demos
-  } | null>(null);
-  const [justFinishedSession, setJustFinishedSession] = useState<{
-    taskId: string;
-    startedAt: number;
-    endedAt: number;
-    preNumDemos: number;
-    preNumSuccessful: number;
-  } | null>(null);
-
   const session = useCloudXRSession({
     onSessionEnded: (taskId) => {
-      // Promote the pre-session snapshot to "just finished" — RecordingsView
-      // computes the delta against the current API state to render the
-      // virtual card.
-      // eslint-disable-next-line no-console
-      console.info("[simxr] onSessionEnded fired", { taskId, hasContext: !!sessionContextRef.current, ctx: sessionContextRef.current });
-      if (sessionContextRef.current && (!taskId || sessionContextRef.current.taskId === taskId)) {
-        const ended = { ...sessionContextRef.current, endedAt: Date.now() };
-        setJustFinishedSession(ended);
-        // eslint-disable-next-line no-console
-        console.info("[simxr] setJustFinishedSession ->", ended);
-      } else {
-        // eslint-disable-next-line no-console
-        console.warn("[simxr] virtual card skipped — no sessionContext OR taskId mismatch");
-      }
-      sessionContextRef.current = null;
       const target = taskId
         ? `/recordings?fresh=${encodeURIComponent(taskId)}`
         : "/recordings";
@@ -347,35 +308,6 @@ function DashboardInner() {
     },
     getDomOverlayRoot: () => overlayRef.current,
   });
-
-  // Wrapped Connect — captures pre-session API snapshot for delta computation
-  // later. Falls back to a zero-baseline (whole growing-file count attributed
-  // to this session) if the API fetch fails — better to over-attribute than
-  // skip the card entirely.
-  const handleConnect = async (taskId: string) => {
-    try {
-      const snapshot = await fetchRecordings();
-      const entry = snapshot.recordings.find((r) => r.task_id === taskId);
-      sessionContextRef.current = {
-        taskId,
-        startedAt: Date.now(),
-        preNumDemos: entry?.num_demos ?? 0,
-        preNumSuccessful: entry?.successful_demos ?? 0,
-      };
-      // eslint-disable-next-line no-console
-      console.info("[simxr] handleConnect captured pre-session snapshot", sessionContextRef.current);
-    } catch (e) {
-      sessionContextRef.current = {
-        taskId,
-        startedAt: Date.now(),
-        preNumDemos: 0,
-        preNumSuccessful: 0,
-      };
-      // eslint-disable-next-line no-console
-      console.warn("[simxr] handleConnect snapshot fetch failed, using zero baseline", e);
-    }
-    void session.connect(taskId);
-  };
   const { latency, reachable, history: latencyHistory } = useLatencyPing(5000);
   const datetime = useLiveClock();
   const { theme, toggle } = useTheme();
@@ -713,7 +645,6 @@ function DashboardInner() {
                   fresh={fresh}
                   scenes={scenes}
                   onRefresh={refreshRecordings}
-                  justFinishedSession={justFinishedSession}
                 />
               ) : (
               <>
@@ -775,7 +706,7 @@ function DashboardInner() {
                   asset={SCENE_ASSETS[liveScene.id]}
                   sessionState={session.state}
                   sessionInFlight={sessionInFlight}
-                  onConnect={() => void handleConnect(liveScene.id)}
+                  onConnect={() => void session.connect(liveScene.id)}
                 />
               ) : (
                 <div className="live-banner no-live">
@@ -835,7 +766,7 @@ function DashboardInner() {
                     asset={SCENE_ASSETS[scene.id]}
                     sessionState={session.state}
                     sessionInFlight={sessionInFlight}
-                    onConnect={() => void handleConnect(scene.id)}
+                    onConnect={() => void session.connect(scene.id)}
                   />
                 ))}
               </div>
@@ -1136,17 +1067,6 @@ interface RecordingsViewProps {
   scenes: Scene[] | null;
   /** Bumps Dashboard's recordings refresh key — re-fetches the JSON. */
   onRefresh: () => void;
-  /** Pre-session API snapshot captured on Quest connect — used to compute the
-   *  delta of demos recorded during just-finished Quest session. Null if no
-   *  session was active in this browser tab.
-   */
-  justFinishedSession: {
-    taskId: string;
-    startedAt: number;
-    endedAt: number;
-    preNumDemos: number;
-    preNumSuccessful: number;
-  } | null;
 }
 
 const POLL_INTERVAL_MS = 4_000;
@@ -1176,7 +1096,6 @@ function RecordingsView({
   fresh,
   scenes,
   onRefresh,
-  justFinishedSession,
 }: RecordingsViewProps) {
   // Local snapshot mirror — starts from the parent's `resp` and updates
   // as the targeted poll receives newer responses (avoids racing parent
@@ -1276,56 +1195,38 @@ function RecordingsView({
 
   const recordings = localResp?.recordings ?? [];
 
-  // Minimum display time for the virtual card's "finalizing" state.
-  // Without this, when the API entry is already populated at land time
-  // (common: scanner ran, h5py read the demo via the lock-bypass, num_demos
-  // already there), the success-ratio shows up INSTANTLY — operator never
-  // sees the in-progress feedback. Forcing 2.5s of placeholder gives the
-  // "data was being processed, now it's ready" UX feel even when the
-  // backend is fast. Resets per justFinishedSession (each new Quest exit
-  // restarts the timer).
+  // Virtual "just-finished session" card driven entirely by URL state.
+  // When `?fresh=task_id` is in the URL (set by the VR-exit auto-redirect),
+  // and there's a matching entry in the API recordings, render a separate
+  // card on top showing that just-recorded session with its data.
+  //
+  // Simpler than the snapshot-based approach: no Quest connect tracking,
+  // no useRef capture, no delta computation. Trade-off: shows CUMULATIVE
+  // file counts (not delta from this Quest session). Acceptable today
+  // because Kit lifetime ≈ session in the common path (Kit gets restarted
+  // for each working session). For multi-session-per-Kit lifetimes, the
+  // virtual card over-attributes — but that's rare in practice.
+  //
+  // virtualFreshEntry = the matching entry (or null)
+  const virtualFreshEntry = useMemo(() => {
+    if (!fresh) return null;
+    return recordings.find((r) => r.task_id === fresh) ?? null;
+  }, [fresh, recordings]);
+
+  // Minimum 2.5s placeholder timer — gives operator visual time to register
+  // the "processing" → "ready" transition. Resets when `fresh` URL param
+  // changes (each new VR exit). Without this the card snaps to final state
+  // instantly when backend is fast and operator misses the feedback moment.
   const [virtualCardReady, setVirtualCardReady] = useState(false);
   useEffect(() => {
-    if (!justFinishedSession) {
+    if (!fresh) {
       setVirtualCardReady(false);
       return;
     }
     setVirtualCardReady(false);
     const t = window.setTimeout(() => setVirtualCardReady(true), 2500);
     return () => window.clearTimeout(t);
-  }, [justFinishedSession]);
-
-  // Compute the just-finished session delta against current API state. We
-  // subtract the pre-session snapshot from the live entry's counts —
-  // remainder = demos recorded during this Quest session. Only render the
-  // virtual card if the delta is positive (avoids zombie cards from sessions
-  // where no demo finished). Re-derived per render so the delta updates as
-  // the polling refreshes the API entry's num_demos/successful_demos.
-  const justFinishedDelta = useMemo(() => {
-    if (!justFinishedSession) return null;
-    const entry = recordings.find(
-      (r) => r.task_id === justFinishedSession.taskId,
-    );
-    const currentDemos = entry?.num_demos ?? null;
-    const currentSuccessful = entry?.successful_demos ?? null;
-    if (currentDemos == null) {
-      // No backend data yet — virtual card stays in "waiting for data" state.
-      return {
-        deltaDemos: null as number | null,
-        deltaSuccessful: null as number | null,
-      };
-    }
-    const deltaDemos = Math.max(0, currentDemos - justFinishedSession.preNumDemos);
-    if (deltaDemos === 0) {
-      // Quest session ended without recording any new demo — don't show card.
-      return null;
-    }
-    const deltaSuccessful =
-      currentSuccessful != null
-        ? Math.max(0, currentSuccessful - justFinishedSession.preNumSuccessful)
-        : null;
-    return { deltaDemos, deltaSuccessful };
-  }, [justFinishedSession, recordings]);
+  }, [fresh]);
 
   const sceneById = useMemo(() => {
     const m = new Map<string, Scene>();
@@ -1488,64 +1389,46 @@ function RecordingsView({
             </div>
           )}
 
-          {/* Virtual "just-finished session" card — client-side only.
-              Decomposes the growing per-Kit-lifetime hdf5 file into per-Quest-
-              session UX events. Stays in this browser tab only; on refresh
-              or revisit the backend reality (one big card) reasserts. */}
-          {justFinishedSession && justFinishedDelta && (
+          {/* Virtual "just-finished session" card — driven by URL ?fresh=
+              + matching API entry. No client-side snapshot tracking needed.
+              Trade-off: shows file's CUMULATIVE counts (not delta from this
+              Quest session). Acceptable today because Kit lifetime ≈ one
+              session in common path. */}
+          {fresh && virtualFreshEntry && (
             <div className="rec-row fresh" style={{ marginBottom: 8 }}>
               <div className="rec-thumb" />
               <div className="rec-meta">
-                <div className="rec-title">
-                  Quest session you just finished
-                </div>
+                <div className="rec-title">Quest session you just finished</div>
                 <div className="rec-sub">
-                  Started {fmtRecordedAt(new Date(justFinishedSession.startedAt).toISOString()).primary}
-                  {" → ended "}
-                  {fmtRecordedAt(new Date(justFinishedSession.endedAt).toISOString()).primary}
-                </div>
-                <div className="rec-sub" style={{ opacity: 0.7 }}>
-                  appended to {recordings.find((r) => r.task_id === justFinishedSession.taskId)?.file_name ?? "—"} · refresh to see backend view
+                  {fmtRecordedAt(virtualFreshEntry.recorded_at).primary}{" "}
+                  · {virtualFreshEntry.file_name}
                 </div>
               </div>
               <div className="rec-stats">
-                <div className="rec-stats-meta">
-                  <span className="stat-pair">
-                    <span className="stat-num">{justFinishedDelta.deltaDemos ?? "…"}</span>
-                    <span className="stat-label">demos</span>
-                  </span>
-                </div>
-                {/* Reuse Cowork's hero block from per-card design (commit
-                    f058dd7). Variant classes match the real-card render at
-                    line ~1612: count-only, all-success, partial-success,
-                    no-success. While deltas haven't resolved yet (h5py
-                    hasn't read fields), fall back to count-only with a
-                    placeholder so the card has visible state. */}
-                {/* Force "finalizing" placeholder for ~2.5s after Quest
-                    exit even if backend already has the data — gives operator
-                    visual time to register that processing happened. After
-                    virtualCardReady flips, render the real ratio. */}
-                {virtualCardReady && justFinishedDelta.deltaDemos != null && justFinishedDelta.deltaDemos > 0 ? (
+                {/* Force ~2.5s placeholder so operator visually registers
+                    the "processing" → "ready" transition even if backend
+                    is fast (h5py read via lock-bypass + scanner ran). */}
+                {virtualCardReady && typeof virtualFreshEntry.num_demos === "number" && virtualFreshEntry.num_demos > 0 ? (
                   <div
                     className={`rec-stats-hero ${
-                      justFinishedDelta.deltaSuccessful == null
+                      typeof virtualFreshEntry.successful_demos !== "number"
                         ? "count-only"
-                        : justFinishedDelta.deltaSuccessful === justFinishedDelta.deltaDemos
+                        : virtualFreshEntry.successful_demos === virtualFreshEntry.num_demos
                         ? "all-success"
-                        : justFinishedDelta.deltaSuccessful > 0
+                        : virtualFreshEntry.successful_demos > 0
                         ? "partial-success"
                         : "no-success"
                     }`}
                   >
                     <span className="hero-number">
-                      {justFinishedDelta.deltaSuccessful != null
-                        ? `${justFinishedDelta.deltaSuccessful}/${justFinishedDelta.deltaDemos}`
-                        : justFinishedDelta.deltaDemos}
+                      {typeof virtualFreshEntry.successful_demos === "number"
+                        ? `${virtualFreshEntry.successful_demos}/${virtualFreshEntry.num_demos}`
+                        : virtualFreshEntry.num_demos}
                     </span>
                     <span className="hero-label">
-                      {justFinishedDelta.deltaSuccessful != null
-                        ? justFinishedDelta.deltaDemos === 1 ? "successful demo" : "successful demos"
-                        : `demo${justFinishedDelta.deltaDemos === 1 ? "" : "s"} recorded`}
+                      {typeof virtualFreshEntry.successful_demos === "number"
+                        ? virtualFreshEntry.num_demos === 1 ? "successful demo" : "successful demos"
+                        : `demo${virtualFreshEntry.num_demos === 1 ? "" : "s"} recorded`}
                     </span>
                   </div>
                 ) : (
