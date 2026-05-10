@@ -87,6 +87,6 @@
   status: available
 
 - id: Isaac-NutPour-GR1T2-Pink-IK-3DGS-HaosSpace-CoffeeBowl-Abs-v0
-  name: "NutPour 3DGS — GR1T2 (M4 mini bolt)"
-  description: "Same HaosSpace 3DGS scene with the M16 nut swapped for a smaller M4 mini bolt — bean-shaped particle test for coffee-pour direction."
+  name: "NutPour 3DGS — GR1T2 (Beaker variant)"
+  description: "Same HaosSpace 3DGS scene with the yellow sorting bowl replaced by a 500ml glass beaker (rigid, open-top). Object swap workflow validation."
   status: available
