@@ -74,6 +74,12 @@ export const SCENE_ASSETS: Record<string, SceneAsset> = {
     type: "video",
     src: "/operator/videos/pickplace-g1-inspire.mp4",
   },
+  "Isaac-NutPour-GR1T2-Pink-IK-3DGS-HaosSpace-Abs-v0": {
+    // GR1T2 NutPour in the HaosSpace 3DGS environment. Custom preview
+    // clip uploaded by Mike 2026-05-10 (dreamina photoreal generation).
+    type: "video",
+    src: "/operator/videos/nutpour-haos-space.mp4",
+  },
 };
 
 // Robot family label for tags (more descriptive than the bare token).
