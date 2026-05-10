@@ -80,3 +80,8 @@
   name: "NutPour 3DGS — GR1T2 (Haos Space)"
   description: "Humanoid GR1T2 with Pink-IK arms pours nuts in the Haos Space 3DGS environment."
   status: available
+
+- id: Isaac-NutPour-GR1T2-Pink-IK-3DGS-HaosSpace-Mug-Abs-v0
+  name: "NutPour 3DGS — GR1T2 (Mug variant)"
+  description: "Same HaosSpace 3DGS scene, but the yellow sorting bowl is replaced with a standard Isaac Sim coffee mug. First object-swap test."
+  status: available
