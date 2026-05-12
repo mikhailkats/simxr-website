@@ -272,16 +272,17 @@ tailwind.config = {
         <!-- Try-it-now CTA — added 2026-05-12. Lets curious visitors
              (especially those with a Quest 3 to hand) bypass the waitlist
              form and try the live demo immediately. The /demo route lives
-             on simxr.app and accepts public visitors when a session is
-             live; otherwise shows a friendly empty-state. -->
-        <div class="flex items-center gap-2 px-3 py-2 rounded-md border border-volt/30 bg-volt/[0.04]">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0057FF" stroke-width="2.4" aria-hidden="true">
+             /demo is not operator-ready yet (~ first batch of operators
+             gets demo invite, see waitlist confirmation email). For now,
+             show a "coming soon" placeholder in muted style so we don't
+             promise something that isn't there. -->
+        <div class="flex items-center gap-2 px-3 py-2 rounded-md border border-charcoal/15 bg-charcoal/[0.03]">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8B93A1" stroke-width="2.4" aria-hidden="true">
             <circle cx="12" cy="12" r="9"/>
-            <polygon points="10,8 16,12 10,16" fill="#0057FF" stroke="none"/>
+            <polyline points="12,7 12,12 15,14"/>
           </svg>
-          <span class="text-[12.5px] text-charcoal">
-            Got a Quest 3 right now?
-            <a href="https://simxr.app/demo" class="text-volt font-medium hover:underline ml-1">Try the live demo &rarr;</a>
+          <span class="text-[12.5px] text-charcoal/60">
+            Live demo &mdash; coming soon
           </span>
         </div>
 
