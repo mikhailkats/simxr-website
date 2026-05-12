@@ -366,6 +366,61 @@ function HeroMedia({ sceneId }: { sceneId: string }) {
   return <img style={heroMedia} src={asset.src} alt="" loading="lazy" />;
 }
 
+// Live snapshot hero — rendered ONLY when another operator is currently
+// inside the session (`isBusy`). Pulls a JPEG from the operator-snapshot
+// endpoint with a minute-keyed cachebuster so the same /demo tab open all
+// day still gets a fresh frame on the minute boundary, but the server
+// isn't hammered. Pauses refresh while the tab is hidden (per
+// feedback_page_visibility_for_polling memory rule). If the endpoint
+// 404s — e.g. before Misha deploys the server-side snapshot script — we
+// fall back to the static SCENE_ASSETS preview so the page never breaks.
+//
+// Mirrors the same logic shipped on /operator/ in commit 535d5e0; both
+// surfaces should stay in sync if the endpoint contract changes.
+const SNAPSHOT_URL = "https://api.simxr.app/api/operator-snapshot.jpg";
+
+function currentMinute() {
+  return Math.floor(Date.now() / 60000);
+}
+
+function BusyHeroMedia({ sceneId }: { sceneId: string }) {
+  const [minute, setMinute] = useState(currentMinute);
+  const [errored, setErrored] = useState(false);
+
+  useEffect(() => {
+    function maybeRefresh() {
+      if (typeof document !== "undefined" && document.hidden) return;
+      const m = currentMinute();
+      setMinute((prev) => (prev === m ? prev : m));
+    }
+    // Check every 15s so we catch the next minute boundary fast without
+    // wasting cycles; the minute-keyed cachebuster makes most checks no-ops.
+    const interval = setInterval(maybeRefresh, 15_000);
+    document.addEventListener("visibilitychange", maybeRefresh);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", maybeRefresh);
+    };
+  }, []);
+
+  // If the snapshot endpoint errors (404 before snapshot script lands, or
+  // a transient hiccup), fall back to the static catalog preview so the
+  // visitor still sees scene context instead of a broken image icon.
+  if (errored) {
+    return <HeroMedia sceneId={sceneId} />;
+  }
+
+  return (
+    <img
+      style={heroMedia}
+      src={`${SNAPSHOT_URL}?t=${minute}`}
+      alt="Live frame from a SIM XR operator session in progress"
+      onError={() => setErrored(true)}
+      loading="lazy"
+    />
+  );
+}
+
 export default function Demo() {
   const [scenes, setScenes] = useState<Scene[] | null>(null);
   const [scenesError, setScenesError] = useState<string | null>(null);
@@ -473,11 +528,17 @@ export default function Demo() {
 
           {liveSceneId && displayTitle ? (
             <section style={heroCard}>
-              <HeroMedia sceneId={liveSceneId} />
+              {isBusy ? (
+                <BusyHeroMedia sceneId={liveSceneId} />
+              ) : (
+                <HeroMedia sceneId={liveSceneId} />
+              )}
               <div style={heroBody}>
                 <span style={liveTag}>
                   <span style={livePulse} aria-hidden="true" />
-                  {isBusy ? "In session" : "Live now"}
+                  {isBusy
+                    ? `Live now · ${session.health?.active_clients ?? 1} operator${(session.health?.active_clients ?? 1) === 1 ? "" : "s"} inside`
+                    : "Live now"}
                 </span>
                 <h1 style={heroTitle}>{displayTitle}</h1>
                 {displayDescription && (
