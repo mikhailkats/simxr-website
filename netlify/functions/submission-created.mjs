@@ -61,11 +61,10 @@ You're on the SIM XR operator waitlist. Thanks for signing up.
 
 Here's what happens next:
 
-— We're rolling out operator access in small batches. When your slot opens, you'll get one email with a calibration link and a short setup walkthrough.
+— Soon we'll invite you to try a live demo so you can see what an operator session looks like and tune your headset setup.
+— After that, we'll roll out operator access in small batches. When your slot opens, you'll get one email with a calibration link and a short walkthrough.
 — You don't need to do anything in the meantime. Keep your Quest 3 / Vision Pro / Pico headset charged and ready.
 — Sessions are paid, and you can pick when to run them.
-
-In the meantime, the live demo runs intermittently at simxr.app/demo — if you want to try the connect flow before your slot opens, point your headset's browser at that URL when a session is live.
 
 A note on what SIM XR does: humanoid robots need millions of human-recorded demonstrations to learn manipulation tasks. Today those demonstrations are collected in lab studios at high cost. We move that work to consumer VR headsets — you teleoperate a simulated humanoid robot from your couch, and your recorded sessions become training data for the next generation of robot policies. Your work, robot's learning.
 
@@ -99,11 +98,11 @@ Reply to this email if you have questions.
           <p style="margin:0 0 14px;">Hi ${escapeHtml(friendly)} — thanks for signing up.</p>
           <p style="margin:0 0 14px;">Here's what happens next:</p>
           <ul style="margin:0 0 14px;padding:0 0 0 18px;">
-            <li style="margin-bottom:8px;">We're rolling out operator access in small batches. When your slot opens, you'll get one email with a calibration link and a short setup walkthrough.</li>
+            <li style="margin-bottom:8px;">Soon we'll invite you to try a live demo so you can see what an operator session looks like and tune your headset setup.</li>
+            <li style="margin-bottom:8px;">After that, we'll roll out operator access in small batches. When your slot opens, you'll get one email with a calibration link and a short walkthrough.</li>
             <li style="margin-bottom:8px;">You don't need to do anything in the meantime. Keep your Quest 3 / Vision Pro / Pico headset charged and ready.</li>
             <li style="margin-bottom:8px;">Sessions are paid, and you can pick when to run them.</li>
           </ul>
-          <p style="margin:0 0 14px;">In the meantime, the live demo runs intermittently at <a href="https://simxr.app/demo" style="color:#0057FF;text-decoration:none;">simxr.app/demo</a> &mdash; if you want to try the connect flow before your slot opens, point your headset's browser at that URL when a session is live.</p>
           <p style="margin:0 0 14px;">A note on what SIM XR does: humanoid robots need millions of human-recorded demonstrations to learn manipulation tasks. Today those demonstrations are collected in lab studios at high cost. We move that work to consumer VR headsets &mdash; you teleoperate a simulated humanoid robot from your couch, and your recorded sessions become training data for the next generation of robot policies. Your work, robot's learning.</p>
           <p style="margin:0 0 22px;">Reply to this email if you have questions.</p>
           <p style="margin:0 0 8px;color:#111217;">&mdash; The SIM XR team</p>
