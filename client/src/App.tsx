@@ -31,6 +31,14 @@ import Home from "./pages/Home";
 // in client/public/connect-classic/.
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 
+// Demo — public-facing simplified operator page (added 2026-05-12). Lives
+// at /demo on both domains, alongside the operator-console Dashboard at
+// /connect. Single hero showing the currently-live scene + one Connect
+// button; no scene gallery, no recordings, no nav. Reuses
+// useCloudXRSession.ts unchanged. See `client/src/pages/Demo.tsx` for
+// design rationale and the linked CC handoff doc for the original TZ.
+const Demo = lazy(() => import("./pages/Demo"));
+
 function isAppDomain(): boolean {
   if (typeof window === "undefined") return false;
   const h = window.location.hostname;
@@ -79,6 +87,16 @@ function Router() {
       <Route path={"/recordings/"}>
         <Suspense fallback={null}>
           <Dashboard />
+        </Suspense>
+      </Route>
+      <Route path={"/demo"}>
+        <Suspense fallback={null}>
+          <Demo />
+        </Suspense>
+      </Route>
+      <Route path={"/demo/"}>
+        <Suspense fallback={null}>
+          <Demo />
         </Suspense>
       </Route>
       <Route path={"/404"} component={NotFound} />
