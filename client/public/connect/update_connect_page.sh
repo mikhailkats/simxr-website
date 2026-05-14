@@ -94,10 +94,14 @@ html_escape() {
   printf '%s' "$s"
 }
 
-# Read the live scene ID from /var/run/simxr/current-scene.txt, if it exists.
-LIVE_SCENE=""
-if [[ -f /var/run/simxr/current-scene.txt ]]; then
+# Read the live scene ID from SIMXR_LIVE_SCENE env var (override) or
+# /var/run/simxr/current-scene.txt (default — written by simxr-official-start).
+if [[ -n "${SIMXR_LIVE_SCENE:-}" ]]; then
+  LIVE_SCENE="$SIMXR_LIVE_SCENE"
+elif [[ -f /var/run/simxr/current-scene.txt ]]; then
   LIVE_SCENE="$(cat /var/run/simxr/current-scene.txt | tr -d '\n')"
+else
+  LIVE_SCENE=""
 fi
 
 # Parse scenes.yaml and build the HTML scene cards.
@@ -180,7 +184,7 @@ for scene in scenes:
   # Status line
   if is_live:
     # Live scene: show Connect button
-    connect_url = f'/client/?serverIP={wss_hostname}'
+    connect_url = f'/client/?serverIP={wss_hostname}&port=48322&mediaPort=47998'
     html += f'<a class="cta-connect" href="{connect_url}">Connect</a>'
   elif is_available:
     # Offline available scene
