@@ -8,14 +8,28 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+  // Seed localStorage with the values that the upstream IsaacTeleop client reads on mount
+  // but does NOT support via URL params. The /client/ path on this same origin is a Netlify
+  // proxy of nvidia.github.io/IsaacTeleop/client (configured in simxr-tech netlify.toml),
+  // so localStorage is shared across both pages.
+  // serverIP+port still go via URL params (the client reads those at boot).
+  try {
+    localStorage.setItem("mediaAddress", "3.21.93.10");
+    localStorage.setItem("immersiveMode", "vr");
+    localStorage.setItem("deviceProfile", "quest3");
+  } catch (e) { /* private browsing — fall back to manual fields */ }
+</script>
 <style>
   :root {
-    --bg: #0B0F1A;
+    --bg: #0B0F1A;        /* simxr.tech navy */
     --ink: #E6EAF0;
     --muted: #8B93A1;
     --line: rgba(255,255,255,0.08);
-    --accent: #0057FF;
+    --accent: #0057FF;     /* simxr.tech brand blue */
     --accent-light: #4D80FF;
+    --accent-ink: #FFFFFF;
+    --warning: #D97706;    /* amber for broken status */
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
@@ -25,9 +39,17 @@
     -webkit-font-smoothing: antialiased;
     display: flex;
     flex-direction: column;
-    padding: 24px 24px 20px;
+    align-items: stretch;
+    padding: 24px 16px 20px;
   }
-  header { display: flex; align-items: baseline; gap: 0.6rem; }
+
+  /* Top bar with wordmark */
+  header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-bottom: 32px;
+  }
   .wordmark {
     font-family: 'Space Grotesk', sans-serif;
     font-weight: 700;
@@ -43,19 +65,18 @@
     letter-spacing: 0.1em;
     color: var(--muted);
   }
+
+  /* Main content area */
   main {
     flex: 1;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
     gap: 24px;
-    text-align: center;
-    max-width: 540px;
-    width: 100%;
+    max-width: 600px;
     margin: 0 auto;
-    padding: 24px 0;
+    width: 100%;
   }
+
   .eyebrow {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.7rem;
@@ -63,32 +84,182 @@
     letter-spacing: 0.18em;
     color: var(--muted);
     text-transform: uppercase;
+    margin: 0;
   }
-  h1 {
+
+  /* Scene cards grid */
+  .scenes-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    width: 100%;
+  }
+
+  @media (min-width: 600px) {
+    .scenes-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .scene-card {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.02);
+    transition: all 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 200px;
+    position: relative;
+  }
+
+  .scene-card.live {
+    border-color: var(--accent);
+    background: rgba(0, 87, 255, 0.08);
+  }
+
+  .scene-card.offline {
+    opacity: 0.6;
+  }
+
+  .scene-card.broken {
+    border-color: var(--warning);
+    background: rgba(217, 119, 6, 0.06);
+    opacity: 0.8;
+  }
+
+  .scene-card.broken .scene-name {
+    text-decoration: line-through;
+    color: var(--warning);
+  }
+
+  .scene-badge {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    color: var(--accent-ink);
+    background: var(--accent);
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    width: fit-content;
+  }
+
+  .scene-name {
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 2rem;
+    font-size: 1.1rem;
     font-weight: 700;
     letter-spacing: -0.01em;
     margin: 0;
     color: var(--ink);
   }
-  p {
-    font-size: 0.95rem;
-    line-height: 1.55;
+
+  .scene-description {
+    font-size: 0.92rem;
+    line-height: 1.5;
     color: var(--muted);
     margin: 0;
-    max-width: 420px;
+    flex: 1;
   }
+
+  .scene-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .scene-status.offline {
+    color: var(--muted);
+  }
+
+  .scene-status.broken {
+    color: var(--warning);
+    font-weight: 500;
+  }
+
+  .scene-note {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--warning);
+    margin: 0;
+    padding-top: 8px;
+    border-top: 1px solid rgba(217, 119, 6, 0.3);
+  }
+
+  .cta-connect {
+    display: inline-block;
+    padding: 14px 28px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    border-radius: 8px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.05s ease;
+    align-self: flex-start;
+  }
+
+  .cta-connect:hover {
+    background: #1a6dff;
+  }
+
+  .cta-connect:active {
+    transform: translateY(1px);
+    background: #003ACC;
+  }
+
+  .cta-connect:disabled {
+    background: var(--muted);
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  /* Footer */
   footer {
     border-top: 1px solid var(--line);
     padding-top: 14px;
-    margin-top: 24px;
+    margin-top: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.65rem;
     color: var(--muted);
     letter-spacing: 0.05em;
     opacity: 0.75;
+  }
+
+  footer .ip-tag {
+    color: var(--ink);
+  }
+
+  /* Offline state */
+  .offline-notice {
     text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+  }
+
+  .offline-notice .eyebrow {
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .offline-notice p {
+    font-size: 0.95rem;
+    line-height: 1.55;
+    margin: 0;
   }
 </style>
 </head>
@@ -97,11 +268,16 @@
     <span class="wordmark">SIM <span class="accent">XR.</span></span>
     <span class="subtitle">/&nbsp;CONNECT</span>
   </header>
+
   <main>
-    <div class="eyebrow">Idle</div>
-    <h1>No active session.</h1>
-    <p>This page is updated automatically before a live VR demo. Come back when one's running.</p>
+    <div class="eyebrow">Live Sessions</div>
+    <div class="scenes-grid"><div class="scene-card offline"><h2 class="scene-name">NutPour — GR1T2</h2><p class="scene-description">Humanoid GR1T2 with Pink-IK arms pours nuts from a beaker into a target bowl.</p><p class="scene-status offline">Currently offline</p></div><div class="scene-card offline"><h2 class="scene-name">Pick & Place — GR1T2</h2><p class="scene-description">Vanilla bimanual pick-and-place with Fourier GR1T2 humanoid; no special IK.</p><p class="scene-status offline">Currently offline</p></div><div class="scene-card offline"><h2 class="scene-name">Pick & Place — Waist-Enabled</h2><p class="scene-description">Bimanual pick-and-place with full GR1T2 waist articulation enabled.</p><p class="scene-status offline">Currently offline</p></div><div class="scene-card offline"><h2 class="scene-name">Exhaust Pipe Assembly</h2><p class="scene-description">Industrial exhaust-pipe routing task with Pink-IK arms.</p><p class="scene-status offline">Currently offline</p></div><div class="scene-card offline"><h2 class="scene-name">Pick & Place — Unitree G1 + Inspire</h2><p class="scene-description">Pick-and-place with Unitree G1 humanoid wearing the Inspire dexterous hand.</p><p class="scene-status offline">Currently offline</p></div><div class="scene-card offline"><h2 class="scene-name">Locomanipulation Pick & Place — G1</h2><p class="scene-description">Mobile Unitree G1 walks and manipulates; mesh-only background.</p><p class="scene-status offline">Currently offline</p></div><div class="scene-card offline"><h2 class="scene-name">Fixed-Base Upper-Body IK — G1</h2><p class="scene-description">Unitree G1 with fixed base, upper-body IK only; mesh-only background.</p><p class="scene-status offline">Currently offline</p></div><div class="scene-card broken"><h2 class="scene-name">Locomanipulation 3DGS — G1</h2><p class="scene-description">Mobile Unitree G1 with NuRec/Gaussian Bali room background.</p><p class="scene-status broken">Unavailable</p><p class="scene-note">3DGS background renders incorrectly in Quest stereo (foreground/robot/hands/table fine). Tracking the 2026-05-01 NuRec stereo investigation; same fix unblocks both 3DGS variants.</p></div><div class="scene-card broken"><h2 class="scene-name">Fixed-Base Upper-Body IK 3DGS — G1</h2><p class="scene-description">Unitree G1 fixed-base with NuRec/Gaussian Bali room background.</p><p class="scene-status broken">Unavailable</p><p class="scene-note">Same 3DGS-stereo blocker as the locomanipulation 3DGS variant. Listed for completeness; will flip to available when the NuRec stereo fix lands.</p></div><div class="scene-card offline"><h2 class="scene-name">Bright Living Room 3DGS — G1</h2><p class="scene-description">Unitree G1 with pinned base + upper-body IK in a bright living room 3DGS background, imported from the old sim-xr-server.</p><p class="scene-status offline">Currently offline</p></div><div class="scene-card offline"><h2 class="scene-name">Bright Living Room 3DGS — G1 + Inspire (Hand Tracking)</h2><p class="scene-description">Unitree G1 + Inspire dexterous hands with WebXR hand-tracking (no controllers) in the bright living room 3DGS background.</p><p class="scene-status offline">Currently offline</p></div><div class="scene-card live"><div class="scene-badge">Live</div><h2 class="scene-name">NutPour 3DGS — GR1T2 (Haos Space)</h2><p class="scene-description">Humanoid GR1T2 with Pink-IK arms pours nuts in the Haos Space 3DGS environment.</p><a class="cta-connect" href="/client/?serverIP=3.21.93.10&port=48322&mediaPort=47998">Connect</a></div><div class="scene-card offline"><h2 class="scene-name">NutPour 3DGS — GR1T2 (Mug variant)</h2><p class="scene-description">Same HaosSpace 3DGS scene, but the yellow sorting bowl is replaced with a standard Isaac Sim coffee mug. First object-swap test.</p><p class="scene-status offline">Currently offline</p></div><div class="scene-card offline"><h2 class="scene-name">NutPour 3DGS — GR1T2 (Beaker variant)</h2><p class="scene-description">Same HaosSpace 3DGS scene with the yellow sorting bowl replaced by a 500ml glass beaker (rigid, open-top). Object swap workflow validation.</p><p class="scene-status offline">Currently offline</p></div><div class="scene-card offline"><h2 class="scene-name">Modern Kitchen — GR1T2 (Beaker + place-on-scale)</h2><p class="scene-description">Modern Office Kitchen 3DGS background, glass beaker bowl swap, and a one-step success condition: place the glass beaker on the scale.</p><p class="scene-status offline">Currently offline</p></div></div>
   </main>
-  <footer>SESSION OFFLINE</footer>
+
+  <footer>
+    <span>UPDATED 2026-05-02 01:10:09Z</span>
+    <span class="ip-tag">3.21.93.10</span>
+    <span style="flex: 1; text-align: right;">powered by NVIDIA CloudXR</span>
+  </footer>
 </body>
 </html>
