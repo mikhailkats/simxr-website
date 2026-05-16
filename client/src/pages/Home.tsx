@@ -18,7 +18,18 @@
 import { useEffect, useState } from "react";
 
 // Local image assets — moved off Manus CloudFront 2026-04-27.
-const VR_USER = "/images/vr_user.jpg";
+// HERO_IMAGE = the "Show. Don't tell." composition with operator + GR1T2
+// robot side-by-side. Replaced single-figure VR_USER on 2026-05-16 for
+// stronger narrative ("you teach, robot learns") and brand consistency
+// with /operator/ landing + LinkedIn hooks.
+const HERO_IMAGE = "/images/hero-operator-robot.png";
+// 3DGS scene preview used in the "Photoreal worlds" block — robot hands
+// holding a steering wheel on a real-world-captured wooden dining table.
+// Source: 02_deck/simxr_3dgs_scene_1.png.
+const SCENE_3DGS = "/images/3dgs-scene.png";
+// Hosted demo video — 50s full-pipeline cut, replaces the YouTube embed
+// 2026-05-16 (same file used on /operator/ hero).
+const DEMO_VIDEO = "/operator/videos/SIM_XR_demo_v7_office.mp4";
 const FOUNDER_PHOTO = "/images/founder_georgy.jpg";
 
 // ─── Netlify Forms helper ───────────────────────────────────────
@@ -325,7 +336,7 @@ export default function Home() {
             >
               Operators play in VR. Robots learn from human intelligence — at scale, with real-world physics.
             </p>
-            <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center" }}>
               <a
                 href="#contact"
                 style={{
@@ -336,6 +347,22 @@ export default function Home() {
                 }}
               >
                 Talk to us
+              </a>
+              {/* Secondary CTA — funnel general-public VR enthusiasts to the
+                  operator landing without competing with the primary "Talk to
+                  us" (which targets robotics customers / partners). Plain
+                  underline + arrow keeps it visually subordinate. */}
+              <a
+                href="/operator/"
+                style={{
+                  fontFamily: T.label, fontWeight: 600, fontSize: "0.88rem",
+                  color: C.navy, background: "transparent",
+                  padding: "0.7rem 1.1rem", borderRadius: "7px",
+                  textDecoration: "none", letterSpacing: "0.01em",
+                  border: `1px solid ${C.border}`,
+                }}
+              >
+                Got a VR headset? Become an operator &rarr;
               </a>
             </div>
           </div>
@@ -351,9 +378,9 @@ export default function Home() {
               }}
             >
               <img
-                src={VR_USER}
-                alt="VR operator"
-                style={{ width: "100%", height: "340px", objectFit: "contain", objectPosition: "center top" }}
+                src={HERO_IMAGE}
+                alt="A SIM XR operator wearing a Quest 3 headset stands next to a Fourier GR1T2 humanoid robot. The operator's hands mirror the robot's posture — 'Show, don't tell.'"
+                style={{ width: "100%", height: "340px", objectFit: "cover", objectPosition: "center" }}
               />
               <div style={{ padding: "1.5rem 1.75rem", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", borderTop: `1px solid ${C.border}` }}>
                 {[
@@ -396,16 +423,26 @@ export default function Home() {
               position: "relative",
             }}
           >
-            <iframe
-              src="https://www.youtube.com/embed/deZ62spXqnk?rel=0&modestbranding=1"
-              title="SIM XR Demo"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
+            {/* Hosted demo video — 50s full-pipeline cut. Replaced the
+                YouTube embed on 2026-05-16 to: (1) keep visitors on the
+                domain, (2) drop YouTube chrome/ads, (3) faster perceived
+                load via preload="metadata" + lazy autoplay-loop-muted
+                inline (mobile-safe). Same file plays on /operator/ hero. */}
+            <video
+              src={DEMO_VIDEO}
+              poster="/operator/images/operator-mirror.png"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              aria-label="SIM XR full-pipeline demo — a VR operator's hand motions drive a humanoid robot through a series of training tasks in a photoreal simulated environment"
               style={{
                 position: "absolute",
                 top: 0, left: 0,
                 width: "100%", height: "100%",
-                border: "none",
+                objectFit: "cover",
+                background: "#0B0F1A",
               }}
             />
           </div>
@@ -430,15 +467,15 @@ export default function Home() {
             {[
               {
                 title: "Consumer VR, not a lab",
-                body: "Operators use Quest, Vision Pro or Pico headsets they already own. No specialized rigs, no on-site setup, no flying people in.",
+                body: "Operators use Quest 3, Apple Vision Pro or Pico 4 headsets they already own. Streaming runs over native NVIDIA CloudXR — no specialized rigs, no on-site setup, no flying people in.",
               },
               {
                 title: "Physics-grounded data",
-                body: "Every session runs inside NVIDIA Isaac Lab. Trajectories transfer to real robots — no sim-to-real gap, no video-only ambiguity.",
+                body: "Every session runs inside NVIDIA Isaac Sim with Newton + PhysX. Trajectories transfer to real Fourier GR1T2 and Unitree G1 humanoids — no sim-to-real gap, no video-only ambiguity.",
               },
               {
-                title: "Gamified at scale",
-                body: "Workers play because the task is fun, not just for pay. Skin-agnostic recording: one session retargets to any environment, any robot.",
+                title: "Photoreal worlds, gamified",
+                body: "3D-Gaussian-Splat backgrounds put operators inside real kitchens, workshops and living rooms. The task feels like a game, not a chore — the recording is clean training data either way.",
               },
             ].map((card, i) => (
               <div
@@ -474,6 +511,44 @@ export default function Home() {
                 ✓ {badge}
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── PHOTOREAL 3DGS BLOCK — visual moat narrative ── */}
+      {/* Added 2026-05-16 to surface our 3D-Gaussian-Splat capture pipeline,
+          which is the technical differentiator vs pure-mesh simulators.
+          One image + tight copy; the rest of the page already shows robot
+          and operator separately, this is the "where the robot acts" piece. */}
+      <section id="photoreal" style={{ padding: "100px 0", background: C.white, borderTop: `1px solid ${C.border}` }}>
+        <div className="container" style={{ display: "grid", gridTemplateColumns: "1fr 1.1fr", gap: "4rem", alignItems: "center" }}>
+          <div
+            className="reveal"
+            style={{
+              borderRadius: "16px",
+              overflow: "hidden",
+              border: `1px solid ${C.border}`,
+              aspectRatio: "4 / 3",
+            }}
+          >
+            <img
+              src={SCENE_3DGS}
+              alt="A first-person view from inside a SIM XR session: humanoid robot hands hold a steering wheel above a wooden dining table. The kitchen, chairs and laptop in the background were captured from a real-world room using 3D-Gaussian-Splatting, then rendered around the simulated robot."
+              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            />
+          </div>
+          <div className="reveal" style={{ transitionDelay: "0.1s" }}>
+            <div className="label-tag" style={{ marginBottom: "0.75rem" }}>Photoreal Worlds</div>
+            <h2 style={{ fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)", color: C.navy, lineHeight: 1.15, marginBottom: "1.25rem" }}>
+              Real rooms.<br />
+              <span style={{ color: C.blue }}>Real physics.</span>
+            </h2>
+            <p style={{ color: C.gray, fontSize: "1rem", lineHeight: 1.7, marginBottom: "1.25rem" }}>
+              We capture real-world environments with 3D&#8209;Gaussian&#8209;Splatting and stream them around the robot at headset framerate. Operators see the actual kitchen, workshop or living room — not a stylized game level — while the simulation runs full Newton + PhysX underneath.
+            </p>
+            <p style={{ color: C.gray, fontSize: "1rem", lineHeight: 1.7, marginBottom: 0 }}>
+              Same robot, different worlds. Swap the background, swap the objects, keep the trajectory — one operator session generates training data across many scene variants.
+            </p>
           </div>
         </div>
       </section>
@@ -570,8 +645,8 @@ export default function Home() {
               {[
                 {
                   tag: "XR NATIVE — SCALE OPERATOR",
-                  title: "10+ Years. 50+ Festivals. Tens of Thousands of VR Device Interactions.",
-                  desc: "Produced and curated XR events across Europe and CIS. Managed synchronized multi-headset deployments (up to 65 devices) for audiences of 500,000+ people. Founder of Film XR (Estonia/France).",
+                  title: "10+ Years. 50+ Festivals. Hundreds of Thousands of VR Device Interactions.",
+                  desc: "Produced and curated XR experiences across Europe and CIS. Director of JMJ OXYMORE (400K+ visits) and producer on Notre&#8209;Dame VR (75M+ viewers). Founder of Film XR (Estonia/France).",
                   color: C.blue,
                 },
                 {
