@@ -893,7 +893,7 @@ export function useCloudXRSession(
           // AND AV1 is ~40% more bit-efficient than H.265 (so 50Mbps AV1
           // visual quality ≈ h265 at 70Mbps OR h264 at 90Mbps). Hardware
           // decode on Quest 3 Snapdragon XR2 Gen 2 confirmed working.
-          codec: "av1",
+          codec: "h265",  // 2026-05-16 A/B TEST per Cowork hypothesis #5 — revert to "av1" if no improvement
           // Reprojection grid — SDK validator allows undefined but the
           // server-side runtime appears to require these for session accept
           // (isaac log silence with undefined; CC's bundle.js shows :64).
