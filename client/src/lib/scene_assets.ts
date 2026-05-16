@@ -80,6 +80,13 @@ export const SCENE_ASSETS: Record<string, SceneAsset> = {
     type: "video",
     src: "/operator/videos/nutpour-haos-space.mp4",
   },
+  "Isaac-NutPour-GR1T2-Pink-IK-3DGS-CoworkingMorning-Abs-v0": {
+    // GR1T2 NutPour in the CoworkingMorning Modern Kitchen 3DGS env
+    // with default NutPour assets (no object swap). Preview clip
+    // uploaded by Mike 2026-05-16 (dreamina photoreal generation).
+    type: "video",
+    src: "/operator/videos/nutpour-coworking-morning.mp4",
+  },
 };
 
 // Robot family label for tags (more descriptive than the bare token).
