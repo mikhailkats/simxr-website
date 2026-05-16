@@ -868,13 +868,7 @@ export function useCloudXRSession(
           mediaAddress,
           mediaPort,
           // Render. Per-eye sizes must be multiples of (16w, 64h) and ≥256.
-          // 2026-05-14 DIAGNOSTIC: server logs `expected 1024x1792 per eye` →
-          // packed 2048x1792. Default 2048x1792 produced packed 2048x4032 which
-          // server logs as `Client requested an unknown streaming format ...
-          // Results may be unpredictable.` and falls back to 4 FPS safe-mode.
-          // Halving perEyeWidth to match server's expected per-eye format.
-          // Visual quality drops but tests if format mismatch is the gate.
-          perEyeWidth: 1024,
+          perEyeWidth: 2048,
           perEyeHeight: 1792,
           deviceFrameRate: 90,
           // 50 Mbps — step-down from 100 Mbps after 100+h265 combo
@@ -899,12 +893,7 @@ export function useCloudXRSession(
           // AND AV1 is ~40% more bit-efficient than H.265 (so 50Mbps AV1
           // visual quality ≈ h265 at 70Mbps OR h264 at 90Mbps). Hardware
           // decode on Quest 3 Snapdragon XR2 Gen 2 confirmed working.
-          // 2026-05-13: temporarily switched av1 → h265 while debugging
-          // Crusoe Houston L40S — AV1 caused 4 FPS (encoder P4 fallback
-          // instead of LOW_LATENCY_HP, possibly gdrdrv version mismatch).
-          // h265 is verified canonical on AWS. Revert to "av1" once root
-          // cause on Crusoe identified.
-          codec: "h265",
+          codec: "av1",
           // Reprojection grid — SDK validator allows undefined but the
           // server-side runtime appears to require these for session accept
           // (isaac log silence with undefined; CC's bundle.js shows :64).
