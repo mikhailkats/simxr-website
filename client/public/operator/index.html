@@ -239,8 +239,8 @@ tailwind.config = {
              the video starts. Muted+inline so mobile autoplays without
              interrupting anything else on the page. -->
         <div class="aspect-[16/9] bg-charcoal/5 rounded-lg overflow-hidden relative border border-charcoal/10">
-          <video src="videos/SIM_XR_demo_v6_office.mp4"
-                 poster="images/operator-mirror.png"
+          <video src="/operator/videos/SIM_XR_demo_v6_office.mp4"
+                 poster="/operator/images/operator-mirror.png"
                  autoplay muted loop playsinline preload="metadata"
                  aria-label="A SIM XR operator session — humanoid robot performing manipulation tasks in a 3D-reconstructed office scene, controlled in real time via Quest 3 with hand tracking"
                  class="absolute inset-0 w-full h-full object-cover"></video>
@@ -316,7 +316,7 @@ tailwind.config = {
         <!-- 01 · Devices -->
         <div class="border border-charcoal/10 bg-paper rounded-xl overflow-hidden card-lift flex h-44">
           <div class="aspect-square h-full bg-charcoal/5 relative shrink-0">
-            <img src="images/headset.png"
+            <img src="/operator/images/headset.png"
                  alt="A premium VR headset (Meta Quest 3 / Apple Vision Pro) — Sim XR works on any consumer headset or PC VR rig"
                  class="absolute inset-0 w-full h-full object-cover">
           </div>
@@ -330,7 +330,7 @@ tailwind.config = {
         <!-- 02 · Physics -->
         <div class="border border-charcoal/10 bg-paper rounded-xl overflow-hidden card-lift flex h-44">
           <div class="aspect-square h-full bg-charcoal/5 relative shrink-0">
-            <img src="images/physics-moment.png"
+            <img src="/operator/images/physics-moment.png"
                  alt="Cinematic moment of water being poured into a glass beaker, splashing mid-air — physical realism inside the simulation"
                  class="absolute inset-0 w-full h-full object-cover">
           </div>
@@ -350,7 +350,7 @@ tailwind.config = {
         <!-- 03 · Robots -->
         <div class="border border-charcoal/10 bg-paper rounded-xl overflow-hidden card-lift flex h-44">
           <div class="aspect-square h-full bg-charcoal/5 relative shrink-0">
-            <img src="images/robot-gr1t2.png"
+            <img src="/operator/images/robot-gr1t2.png"
                  alt="Fourier GR1T2 humanoid robot — one of the digital-twin platforms operator data trains"
                  class="absolute inset-0 w-full h-full object-cover">
           </div>
@@ -447,8 +447,8 @@ tailwind.config = {
       <!-- Featured mission preview -->
       <div class="mt-12 rounded-2xl overflow-hidden border border-charcoal/10 bg-ink relative aspect-[16/8]">
         <video id="mission-pour-video"
-               src="videos/mission-pour.mp4"
-               poster="images/mission-pour.png"
+               src="/operator/videos/mission-pour.mp4"
+               poster="/operator/images/mission-pour.png"
                muted
                playsinline
                preload="metadata"

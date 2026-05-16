@@ -45,6 +45,21 @@
   status = 301
   force = true
 
+# Trailing-slash canonicalization for /operator (canonical is /operator/).
+# Defensive: even though all asset URLs in operator/index.html are now
+# absolute (start with /operator/...), this redirect catches visitors
+# who hit /operator without slash and ensures the URL bar canonicalizes,
+# so any future relative-path asset slipping through still resolves
+# correctly. Without this, /operator (no slash) rendered the page but
+# any relative asset URLs resolved against root — Netlify SPA fallback
+# returned 200 + index.html instead of the expected image/video, so
+# browsers showed broken-icon for every image and silent-fail for video.
+# Incident 2026-05-16. See feedback_relative_asset_paths_trailing_slash.
+[[redirects]]
+  from = "/operator"
+  to = "/operator/"
+  status = 301
+
 # Apex routing for simxr.app is handled in React (App.tsx isAppDomain check) —
 # `simxr.app/` renders the Connect component directly, no redirect needed.
 # `simxr.tech/` continues to render Home.
