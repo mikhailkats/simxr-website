@@ -69,10 +69,11 @@ export const SCENE_ASSETS: Record<string, SceneAsset> = {
   },
   "Isaac-PickPlace-G1-InspireFTP-3DGS-BrightLivingRoom-Abs-v0": {
     // Hand-tracking variant of the bright living room scene — pairs G1 +
-    // Inspire dexterous hands with WebXR HandsSource (no controllers). Reuses
-    // the G1+Inspire kitchen-arena-style preview until a custom clip lands.
+    // Inspire dexterous hands with WebXR HandsSource (no controllers).
+    // Reuses locomanip-g1.mp4 per Mike 2026-05-16 (visually closer than
+    // the G1+Inspire kitchen-arena clip — both show G1 + 3DGS room).
     type: "video",
-    src: "/operator/videos/pickplace-g1-inspire.mp4",
+    src: "/operator/videos/locomanip-g1.mp4",
   },
   "Isaac-NutPour-GR1T2-Pink-IK-3DGS-HaosSpace-Abs-v0": {
     // GR1T2 NutPour in the HaosSpace 3DGS environment. Custom preview
