@@ -91,6 +91,11 @@
   description: "Same HaosSpace 3DGS scene with the yellow sorting bowl replaced by a 500ml glass beaker (rigid, open-top). Object swap workflow validation."
   status: available
 
+- id: Isaac-NutPour-GR1T2-Pink-IK-3DGS-CoworkingMorning-Abs-v0
+  name: "Modern Kitchen — GR1T2 (NutPour)"
+  description: "Humanoid GR1T2 with Pink-IK arms pours nuts in the Modern Office Kitchen 3DGS environment. Invisible table colliders aligned with the rendered tabletop."
+  status: available
+
 - id: Isaac-NutPour-GR1T2-Pink-IK-3DGS-CoworkingMorning-CoffeeBowl-Abs-v0
   name: "Modern Kitchen — GR1T2 (Beaker + place-on-scale)"
   description: "Modern Office Kitchen 3DGS background, glass beaker bowl swap, and a one-step success condition: place the glass beaker on the scale."
