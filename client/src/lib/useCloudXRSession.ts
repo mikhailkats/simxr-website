@@ -883,7 +883,7 @@ export function useCloudXRSession(
           // (50/30 × ~1.4 h265 efficiency factor) for noticeable
           // quality bump while keeping encoder load near old budget.
           // If 50Mbps still trips NVST: step further to 35-40Mbps h265.
-          maxStreamingBitrateKbps: 50_000,
+          maxStreamingBitrateKbps: 35_000,  // 2026-05-16 A/B: 50→35 Mbps for smaller frames → faster Quest decode
           // av1 — CONFIRMED working 2026-05-09 PT via comparison test:
           //   - AV1   50Mbps:  7.2 ms encode (this codec)
           //   - h264  50Mbps: 16.4 ms encode
@@ -899,7 +899,7 @@ export function useCloudXRSession(
           // (isaac log silence with undefined; CC's bundle.js shows :64).
           reprojectionGridCols: 64,
           reprojectionGridRows: 64,
-          enablePoseSmoothing: true,
+          enablePoseSmoothing: false,  // 2026-05-16 A/B: true→false to remove 1-2 frame buffer (11-22ms latency win)
           // 1.5 = SDK predicts pose ~1.5× further ahead so rendered frame
           // matches HMD pose AT DISPLAY time (not at frame-start time).
           // Masks ~15-30ms perceived motion-to-photon latency at the cost
