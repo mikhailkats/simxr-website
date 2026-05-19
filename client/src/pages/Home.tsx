@@ -365,6 +365,17 @@ export default function Home() {
                 Got a VR headset? Become an operator &rarr;
               </a>
             </div>
+
+            {/* Partner credibility badges — NVIDIA Inception + AWS Activate.
+                Source: 07_content/brand_badges/. Re-render via Playwright + re-copy
+                to /public/images/ when artwork updates. */}
+            <div style={{ marginTop: "1.75rem" }}>
+              <img
+                src="/images/partner-badges-white.png"
+                alt="NVIDIA Inception Member · Powered by AWS Activate Member"
+                style={{ height: "44px", width: "auto", display: "block" }}
+              />
+            </div>
           </div>
 
           {/* Hero visual — VR operator + 3 stats card */}
