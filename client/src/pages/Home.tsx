@@ -373,7 +373,7 @@ export default function Home() {
               <img
                 src="/images/partner-badges-white.png"
                 alt="NVIDIA Inception Member · Powered by AWS Activate Member"
-                style={{ height: "44px", width: "auto", display: "block" }}
+                style={{ height: "64px", width: "auto", display: "block" }}
               />
             </div>
           </div>
