@@ -31,8 +31,11 @@ const hits = [];
 for (const f of files) {
   const p = join(ASSETS_DIR, f);
   const src = readFileSync(p, "utf8");
-  // Markers from the vendored @nvidia/cloudxr 6.1.0 bundle.
-  if (src.includes("createSession") && /cloudxr|CloudXR|NvCxr/i.test(src)) {
+  // SDK-internal validator string unique to the vendored @nvidia/cloudxr
+  // 6.1.0 bundle — app code merely CALLING createSession (or logging
+  // "CloudXR" strings) can't satisfy this, so a large app chunk can't
+  // false-positive the guard (Codex review 2026-07-03).
+  if (src.includes("perEyeWidth must be a positive")) {
     hits.push({ file: f, bytes: statSync(p).size });
   }
 }

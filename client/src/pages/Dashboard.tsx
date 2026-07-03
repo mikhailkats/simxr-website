@@ -15,7 +15,7 @@
 //   5. NVIDIA Inception + CloudXR marks in the footer
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { computeCardState, fetchScenes, type CardState, type Scene } from "@/lib/scenes";
 import {
   apiBaseOf,
@@ -155,9 +155,15 @@ function useFleet(intervalMs = 5000): {
     let timer: number | null = null;
     let cancelled = false;
 
+    // Generation guard: browser timer throttling / visibility resume can
+    // leave an older fetchFleet() in flight while a newer one starts; a
+    // stale resolution must never overwrite a newer snapshot (it would
+    // briefly resurrect an offline server or hide a freshly-started one).
+    let generation = 0;
     const tick = async () => {
+      const gen = ++generation;
       const snaps = await fetchFleet();
-      if (cancelled) return;
+      if (cancelled || gen !== generation) return;
       setSnapshots(snaps);
       setLatencyHistory((prev) => {
         const next = { ...prev };
@@ -391,21 +397,22 @@ function DashboardInner() {
   // poll until the .hdf5 surfaces in /api/recordings.json. Re-derived
   // when `view` flips so navigating away then back doesn't carry stale
   // ?fresh state from a previous session.
+  // wouter's useSearch keeps these in sync with the CURRENT query string —
+  // including back/forward and query-only navigations that don't flip
+  // `view` (Codex finding 2026-07-03: the old `[view]` memo dep kept
+  // polling a stale fresh/srv pair after such navigations).
+  const searchString = useSearch();
   const fresh = useMemo<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    const params = new URLSearchParams(window.location.search);
-    return params.get("fresh");
-  }, [view]);
+    return new URLSearchParams(searchString).get("fresh");
+  }, [searchString]);
 
   // `?srv=<server-id>` — which fleet server's recordings.json to read. Set
   // by the post-VR redirect (onSessionEnded above) so history comes from
   // the box that recorded the session. Defaults to the first registry
   // entry for direct /recordings visits.
   const recordingsServer = useMemo<SimxrServer>(() => {
-    if (typeof window === "undefined") return SERVERS[0];
-    const params = new URLSearchParams(window.location.search);
-    return serverById(params.get("srv")) ?? SERVERS[0];
-  }, [view]);
+    return serverById(new URLSearchParams(searchString).get("srv")) ?? SERVERS[0];
+  }, [searchString]);
 
   // Sidebar tab clicks: update both `view` state and the browser URL so
   // the two stay coherent (refresh / share / back-button all work). When
