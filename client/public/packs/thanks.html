@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SIM XR — Catalog request received</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="icon" type="image/svg+xml" href="/favicon-tech.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --blue: #0057FF;
+      --navy: #0B0F1A;
+      --gray: #6B7280;
+      --border: #E5E7EB;
+      --white: #FFFFFF;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; }
+    body {
+      background: var(--white); color: var(--navy);
+      font-family: 'DM Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      display: flex; flex-direction: column; min-height: 100vh;
+    }
+    header { padding: 0 2.5rem; height: 60px; display: flex; align-items: center; border-bottom: 1px solid var(--border); }
+    .wordmark {
+      font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.15rem;
+      color: var(--navy); letter-spacing: -0.02em; text-decoration: none;
+    }
+    .wordmark span { color: var(--blue); }
+    main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 48px 24px; }
+    .card { max-width: 540px; }
+    .eyebrow {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--blue);
+      letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1rem;
+    }
+    h1 { font-size: clamp(2rem, 4vw, 2.75rem); font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 1rem; }
+    p { font-size: 1rem; color: var(--gray); line-height: 1.7; margin: 0 0 0.9rem; max-width: 50ch; }
+    .back {
+      margin-top: 1.5rem; display: inline-block;
+      font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 0.95rem;
+      padding: 0.8rem 1.7rem; background: var(--blue); color: white;
+      border-radius: 8px; text-decoration: none;
+    }
+    .back:hover { background: #003ACC; }
+    footer {
+      padding: 16px 2.5rem; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+      color: var(--gray); border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/" class="wordmark">SIM <span>XR.</span></a>
+  </header>
+  <main>
+    <div class="card">
+      <div class="eyebrow">Request received</div>
+      <h1>The catalog is on its way.</h1>
+      <p>Thanks — someone from the team will reply with the current pack catalog: item lists, twin specs, and availability. If you asked about custom packs, we'll cover that in the same reply.</p>
+      <p>Wrong email? Just submit the form again with the right one.</p>
+      <a href="/packs/" class="back">Back to Training Asset Packs</a>
+    </div>
+  </main>
+  <footer>
+    <span>© 2026 SIM XR — The Training Layer for Physical AI</span>
+    <span>California · Paris · Tel Aviv</span>
+  </footer>
+</body>
+</html>

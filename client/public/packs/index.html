@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Training Asset Packs — SIM XR | Physical objects + digital twins for robot training</title>
+  <meta name="description" content="Themed sets of real physical objects shipped together with scan-accurate digital twins — SimReady USD, validated in Isaac Sim. Train, evaluate, and deploy on the exact same objects. Request the catalog." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://simxr.tech/packs/" />
+  <meta property="og:title" content="Training Asset Packs — SIM XR" />
+  <meta property="og:description" content="Real objects on your bench. Their exact digital twins in your simulator. Themed packs for robot manipulation training — SimReady USD, validated in Isaac Sim." />
+  <meta property="og:url" content="https://simxr.tech/packs/" />
+  <meta property="og:type" content="website" />
+  <link rel="icon" type="image/svg+xml" href="/favicon-tech.svg" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --blue: #0057FF;
+      --navy: #0B0F1A;
+      --gray: #6B7280;
+      --gray-light: #F5F6F8;
+      --border: #E5E7EB;
+      --white: #FFFFFF;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      color: var(--navy);
+      background: var(--white);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.6;
+    }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+    .label-tag {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gray);
+      padding: 0.35rem 0.7rem;
+      background: var(--gray-light);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+
+    /* ── NAV ── */
+    nav.topnav {
+      position: sticky; top: 0; z-index: 50;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0 2.5rem; height: 60px;
+      background: rgba(255,255,255,0.96);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+    }
+    .wordmark {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700; font-size: 1.15rem;
+      color: var(--navy); letter-spacing: -0.02em;
+      text-decoration: none;
+    }
+    .wordmark span { color: var(--blue); }
+    nav.topnav .links { display: flex; gap: 2rem; }
+    nav.topnav .links a {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.82rem; font-weight: 500;
+      color: var(--gray); text-decoration: none;
+      letter-spacing: 0.01em;
+    }
+    nav.topnav .links a:hover { color: var(--navy); }
+    nav.topnav .cta {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600; font-size: 0.82rem;
+      color: var(--white); background: var(--navy);
+      padding: 0.45rem 1.1rem; border-radius: 6px;
+      text-decoration: none; letter-spacing: 0.02em;
+    }
+    nav.topnav .cta:hover { text-decoration: none; opacity: 0.9; }
+    @media (max-width: 640px) { nav.topnav .links { display: none; } }
+
+    /* ── SECTIONS ── */
+    section { padding: 80px 0; border-top: 1px solid var(--border); }
+    section:first-of-type { border-top: none; padding-top: 60px; }
+    h1 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 1.1; margin: 0.75rem 0 1.25rem;
+      color: var(--navy); font-weight: 700;
+      letter-spacing: -0.02em;
+      max-width: 800px;
+    }
+    h1 .accent { color: var(--blue); }
+    h2 {
+      font-size: clamp(1.5rem, 3vw, 2.2rem);
+      line-height: 1.15; margin: 0.75rem 0 1.25rem;
+      color: var(--navy); font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.78rem; font-weight: 600;
+      color: var(--blue); letter-spacing: 0.1em;
+      text-transform: uppercase; margin: 0 0 0.6rem;
+    }
+    p { color: var(--gray); font-size: 1rem; line-height: 1.7; margin: 0 0 1rem; max-width: 720px; }
+    p strong { color: var(--navy); font-weight: 600; }
+
+    .btn-primary {
+      display: inline-block;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600; font-size: 0.95rem;
+      color: var(--white); background: var(--blue);
+      padding: 0.8rem 1.7rem; border-radius: 8px;
+      text-decoration: none; letter-spacing: 0.01em;
+      border: none; cursor: pointer;
+      transition: background .15s ease, transform .05s ease;
+    }
+    .btn-primary:hover { background: #1a6dff; text-decoration: none; }
+    .btn-primary:active { background: #003ACC; transform: translateY(1px); }
+
+    /* ── HERO pairing visual ── */
+    .pair-visual {
+      margin-top: 3rem;
+      display: grid; grid-template-columns: 1fr auto 1fr; gap: 0;
+      align-items: stretch;
+      max-width: 860px;
+      border: 1px solid var(--border); border-radius: 14px;
+      overflow: hidden;
+      background: var(--white);
+    }
+    @media (max-width: 720px) {
+      .pair-visual { grid-template-columns: 1fr; }
+      .pair-link { flex-direction: row !important; padding: 0.6rem 1.25rem !important; border-left: none !important; border-right: none !important; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+      .pair-link .vline { display: none; }
+    }
+    .pair-side { padding: 1.75rem; }
+    .pair-side.digital { background: var(--navy); }
+    .pair-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--gray); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;
+    }
+    .pair-tag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--blue); display: inline-block; }
+    .pair-side.digital .pair-tag { color: rgba(255,255,255,0.55); }
+    .pair-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.15rem; color: var(--navy); margin-bottom: 0.75rem; }
+    .pair-side.digital .pair-title { color: var(--white); }
+    .pair-list { list-style: none; margin: 0; padding: 0; }
+    .pair-list li {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+      color: var(--gray); padding: 0.42rem 0;
+      border-top: 1px dashed var(--border);
+      display: flex; justify-content: space-between; gap: 1rem;
+    }
+    .pair-side.digital .pair-list li { color: rgba(255,255,255,0.65); border-top-color: rgba(255,255,255,0.12); }
+    .pair-list li span:last-child { color: var(--navy); font-weight: 500; text-align: right; }
+    .pair-side.digital .pair-list li span:last-child { color: rgba(255,255,255,0.9); }
+    .pair-link {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 1rem 0.9rem; gap: 0.5rem;
+      border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+      background: var(--gray-light);
+    }
+    .pair-link .vline { flex: 1; width: 1px; background: var(--border); }
+    .pair-link .badge11 {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 500;
+      color: var(--blue); border: 1px solid var(--blue); border-radius: 999px;
+      padding: 0.25rem 0.6rem; white-space: nowrap;
+      background: var(--white);
+    }
+    .pair-caption {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--gray);
+      margin-top: 0.75rem; letter-spacing: 0.04em;
+    }
+
+    /* ── PAIN CARDS ── */
+    .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 2rem; }
+    @media (max-width: 768px) { .card-grid { grid-template-columns: 1fr; } }
+    .pain-card {
+      padding: 1.75rem;
+      background: var(--gray-light);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .pain-card h3 { color: var(--navy); font-size: 0.7rem; }
+    .pain-card .big { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.05rem; color: var(--navy); margin-bottom: 0.4rem; line-height: 1.3; }
+    .pain-card p { font-size: 0.9rem; margin-bottom: 0; }
+
+    /* ── WHAT YOU GET ── */
+    .get-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 2rem; }
+    @media (max-width: 768px) { .get-grid { grid-template-columns: 1fr; } }
+    .get-card {
+      padding: 2rem;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--white);
+    }
+    .get-card.tinted { background: var(--gray-light); }
+    .get-card .num {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+      color: var(--blue); letter-spacing: 0.12em; margin-bottom: 0.75rem;
+    }
+    .get-card .title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.25rem; color: var(--navy); margin-bottom: 0.75rem; }
+    .get-card p { font-size: 0.92rem; }
+    .get-card ul { list-style: none; padding: 0; margin: 1rem 0 0; }
+    .get-card ul li {
+      font-size: 0.88rem; color: var(--gray); padding: 0.45rem 0 0.45rem 1.4rem;
+      border-top: 1px solid var(--border); position: relative; line-height: 1.55;
+    }
+    .get-card ul li::before {
+      content: ''; position: absolute; left: 0; top: 0.95rem;
+      width: 12px; height: 12px;
+      background: no-repeat center / contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230057FF' stroke-width='3'%3E%3Cpath d='M20 6L9 17l-5-5'/%3E%3C/svg%3E");
+    }
+    .get-card ul li strong { color: var(--navy); font-weight: 600; }
+
+    /* ── PIPELINE ── */
+    .pipe-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-top: 2rem; }
+    @media (max-width: 900px) { .pipe-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px) { .pipe-grid { grid-template-columns: 1fr; } }
+    .pipe-card {
+      padding: 1.5rem;
+      border: 1px solid var(--border); border-radius: 10px;
+      background: var(--white);
+    }
+    .pipe-card .step {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--navy); color: var(--white);
+      font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1rem;
+    }
+    .pipe-card:last-child .step { background: var(--blue); }
+    .pipe-card .title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1rem; color: var(--navy); margin-bottom: 0.5rem; }
+    .pipe-card p { font-size: 0.86rem; margin: 0; }
+
+    /* ── PACKS ── */
+    .packs-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-top: 2rem; }
+    @media (max-width: 768px) { .packs-grid { grid-template-columns: 1fr; } }
+    .pack-card {
+      padding: 1.9rem;
+      border: 1px solid var(--border); border-radius: 12px;
+      background: var(--white);
+      transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+    }
+    .pack-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 40px -20px rgba(0,87,255,0.25);
+      border-color: rgba(0,87,255,0.35);
+    }
+    .pack-card .pack-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-bottom: 0.6rem; }
+    .pack-card .title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.2rem; color: var(--navy); }
+    .pack-card .count {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--gray);
+      white-space: nowrap;
+    }
+    .pack-card p { font-size: 0.9rem; margin-bottom: 1rem; }
+    .pack-card .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .pack-card .chip {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; letter-spacing: 0.03em;
+      color: var(--gray); background: var(--gray-light);
+      border: 1px solid var(--border); border-radius: 4px;
+      padding: 0.22rem 0.55rem;
+    }
+    .pack-card.custom { border-style: dashed; }
+    .catalog-note {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--blue);
+      margin-bottom: 0.5rem;
+    }
+    .catalog-note::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--blue); }
+
+    /* ── WHO ── */
+    .who-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 2rem; }
+    @media (max-width: 768px) { .who-grid { grid-template-columns: 1fr; } }
+    .who-card { padding: 1.5rem; border: 1px solid var(--border); border-radius: 10px; background: var(--gray-light); }
+    .who-card .title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1rem; color: var(--navy); margin-bottom: 0.4rem; }
+    .who-card p { font-size: 0.88rem; margin: 0; }
+
+    /* ── FORM ── */
+    .inquiry-wrap { display: grid; grid-template-columns: 1fr 1.1fr; gap: 3.5rem; margin-top: 2rem; align-items: start; }
+    @media (max-width: 820px) { .inquiry-wrap { grid-template-columns: 1fr; gap: 2rem; } }
+    form.inquiry { display: flex; flex-direction: column; gap: 1.1rem; }
+    .field label {
+      display: block;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray);
+      margin-bottom: 0.5rem;
+    }
+    .field label .opt { text-transform: none; letter-spacing: normal; color: #9CA3AF; }
+    .field input, .field textarea {
+      width: 100%;
+      font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: var(--navy);
+      padding: 0.7rem 0.9rem;
+      background: var(--white);
+      border: 1px solid var(--border); border-radius: 8px;
+      transition: border-color .15s ease;
+    }
+    .field textarea { resize: vertical; min-height: 76px; }
+    .field input:focus, .field textarea:focus { outline: none; border-color: var(--blue); }
+    .form-note { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--gray); letter-spacing: 0.03em; }
+    .partners-strip { margin-top: 2rem; }
+    .partners-strip img { height: 56px; width: auto; display: block; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--navy); color: rgba(255,255,255,0.7);
+      padding: 50px 0 30px; margin-top: 60px;
+    }
+    footer .container { padding: 0 2rem; }
+    footer .row {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1rem;
+    }
+    footer .wordmark-w {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700; font-size: 1.05rem;
+      color: rgba(255,255,255,0.95); letter-spacing: -0.02em;
+      text-decoration: none;
+    }
+    footer .wordmark-w span { color: var(--blue); }
+    footer .links a { color: rgba(255,255,255,0.7); margin-left: 1.5rem; font-size: 0.88rem; }
+    footer .bottom { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.78rem; color: rgba(255,255,255,0.45); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+  </style>
+</head>
+<body>
+
+  <nav class="topnav">
+    <a href="/" class="wordmark">SIM <span>XR.</span></a>
+    <div class="links">
+      <a href="/#how-it-works">How It Works</a>
+      <a href="/about">About</a>
+      <a href="/operator/">For Operators</a>
+    </div>
+    <a href="#inquiry" class="cta">Request catalog</a>
+  </nav>
+
+  <main>
+
+    <!-- ============ HERO ============ -->
+    <section>
+      <div class="container">
+        <span class="label-tag">Training Asset Packs</span>
+        <h1>Train on the <span class="accent">exact objects</span> your robot will touch.</h1>
+        <p>
+          Each pack is a themed set of 10&ndash;20 real, physical items &mdash; shipped to your lab &mdash;
+          together with their scan-accurate digital twins: SimReady USD assets, scanned by us and
+          validated in Isaac&nbsp;Sim. Train the policy in simulation, evaluate and deploy on the
+          same objects sitting on your bench. No lookalikes, no object gap.
+        </p>
+        <a href="#inquiry" class="btn-primary">Request the catalog</a>
+
+        <div class="pair-visual" role="img" aria-label="A sample catalog entry: the same object exists as a physical item in your lab and as a digital twin in your simulator, matched one to one.">
+          <div class="pair-side">
+            <div class="pair-tag">Physical &middot; on your bench</div>
+            <div class="pair-title">Kitchen Pack &middot; item 04</div>
+            <ul class="pair-list">
+              <li><span>object</span><span>ceramic mug</span></li>
+              <li><span>arrives as</span><span>real item, in the box</span></li>
+              <li><span>use for</span><span>real-world eval &amp; deploy</span></li>
+            </ul>
+          </div>
+          <div class="pair-link" aria-hidden="true">
+            <div class="vline"></div>
+            <div class="badge11">1 : 1</div>
+            <div class="vline"></div>
+          </div>
+          <div class="pair-side digital">
+            <div class="pair-tag">Digital twin &middot; in your simulator</div>
+            <div class="pair-title" style="color:#fff;">kitchen_pack/item_04.usd</div>
+            <ul class="pair-list">
+              <li><span>format</span><span>SimReady USD</span></li>
+              <li><span>scanned via</span><span>3DGS + photogrammetry</span></li>
+              <li><span>validated in</span><span>Isaac Sim</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="pair-caption">Illustrative catalog entry &mdash; every physical item in a pack ships with its matched twin.</div>
+      </div>
+    </section>
+
+    <!-- ============ PROBLEM ============ -->
+    <section>
+      <div class="container">
+        <span class="label-tag">The problem</span>
+        <h2>Lookalike assets break policies.</h2>
+        <p>
+          Manipulation policies are trained in simulation on one set of objects and deployed
+          against another. A generic CAD mug is not your mug &mdash; the geometry, mass, and
+          surface differ just enough that grasps trained in sim slip in the real world. The
+          research community has leaned on matched physical&ndash;digital object sets for a
+          decade, because they work &mdash; but the established benchmark sets are fixed,
+          aging catalogs, not the objects your deployment actually needs.
+        </p>
+        <div class="card-grid">
+          <div class="pain-card">
+            <h3>Object gap</h3>
+            <div class="big">Sim objects &ne; real objects</div>
+            <p>Policies overfit to the assets they were trained on. When the real object differs from its sim stand-in, success rates drop at exactly the moment they're measured.</p>
+          </div>
+          <div class="pain-card">
+            <h3>Prep overhead</h3>
+            <div class="big">Asset work isn't robotics work</div>
+            <p>Sourcing objects, scanning them, converting to sim formats, tuning collision meshes and physics &mdash; weeks of effort that robotics teams shouldn't be spending off-profile.</p>
+          </div>
+          <div class="pain-card">
+            <h3>Unfair eval</h3>
+            <div class="big">You can't trust the numbers</div>
+            <p>If eval objects don't match training objects, you're measuring the object gap &mdash; not the policy. Matched sets make sim results meaningful in the real world.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ WHAT YOU GET ============ -->
+    <section>
+      <div class="container">
+        <span class="label-tag">What you get</span>
+        <h2>One pack. Two copies of every object.</h2>
+        <div class="get-grid">
+          <div class="get-card tinted">
+            <div class="num">01 / PHYSICAL</div>
+            <div class="title">The physical set</div>
+            <p>10&ndash;20 real items per pack, curated around a theme and shipped to your lab.</p>
+            <ul>
+              <li><strong>Curated for manipulation</strong> &mdash; graspable sizes, varied geometry, rigid and semi-rigid items.</li>
+              <li><strong>The same units we scanned</strong> &mdash; catalog items are sourced and scanned per batch, so the twin matches what's in the box.</li>
+              <li><strong>Ready for real-world eval</strong> &mdash; run your sim-trained policy against the physical objects it was actually trained on.</li>
+            </ul>
+          </div>
+          <div class="get-card">
+            <div class="num">02 / DIGITAL</div>
+            <div class="title">The digital twins</div>
+            <p>A matched SimReady USD asset for every physical item in the pack.</p>
+            <ul>
+              <li><strong>SimReady USD</strong> &mdash; collision meshes, rigid-body parameters, materials; drag-and-drop into Isaac&nbsp;Sim and Isaac&nbsp;Lab.</li>
+              <li><strong>Scan-accurate</strong> &mdash; built from 3D Gaussian Splatting and photogrammetry captures of the actual items, not stock models.</li>
+              <li><strong>Validated in Isaac Sim</strong> &mdash; every asset is loaded and tested in scenes before it ships. USD is an open format; using a different simulator? Ask us.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ HOW IT'S MADE ============ -->
+    <section>
+      <div class="container">
+        <span class="label-tag">How it's made</span>
+        <h2>From shelf to simulator.</h2>
+        <p>
+          Asset capture and reconstruction is the same pipeline that powers SIM XR's
+          scene work &mdash; applied at object level, with a validation pass in Isaac&nbsp;Sim
+          before anything ships.
+        </p>
+        <div class="pipe-grid">
+          <div class="pipe-card">
+            <div class="step">01</div>
+            <div class="title">Source &amp; curate</div>
+            <p>We select real items around a theme &mdash; sizes, shapes, and materials chosen for manipulation training.</p>
+          </div>
+          <div class="pipe-card">
+            <div class="step">02</div>
+            <div class="title">Scan</div>
+            <p>Each item is captured with 3D Gaussian Splatting and photogrammetry &mdash; geometry and appearance from the physical unit itself.</p>
+          </div>
+          <div class="pipe-card">
+            <div class="step">03</div>
+            <div class="title">Convert to SimReady</div>
+            <p>Scans become SimReady USD: watertight collision meshes, rigid-body parameters, physical materials.</p>
+          </div>
+          <div class="pipe-card">
+            <div class="step">04</div>
+            <div class="title">Validate in Isaac Sim</div>
+            <p>Every asset is loaded into Isaac Sim scenes and checked before the pack ships &mdash; twins that work, not just files that open.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PACKS ============ -->
+    <section>
+      <div class="container">
+        <span class="label-tag">The packs</span>
+        <div class="catalog-note">Initial catalog &middot; more themes on request</div>
+        <h2>Themed sets, built for training tasks.</h2>
+        <div class="packs-grid">
+          <div class="pack-card">
+            <div class="pack-head">
+              <div class="title">Kitchen Pack</div>
+              <div class="count">~10 items</div>
+            </div>
+            <p>Tabletop manipulation staples: mugs, bowls, containers, utensils. The classic pick-and-place, pouring, and sorting territory.</p>
+            <div class="chips">
+              <span class="chip">pick &amp; place</span>
+              <span class="chip">pouring</span>
+              <span class="chip">sorting</span>
+            </div>
+          </div>
+          <div class="pack-card">
+            <div class="pack-head">
+              <div class="title">Warehouse Pack</div>
+              <div class="count">~10 items</div>
+            </div>
+            <p>Boxes, bins, packaged goods, and handling items for logistics-flavored tasks: picking, stacking, bin-to-bin transfer.</p>
+            <div class="chips">
+              <span class="chip">bin picking</span>
+              <span class="chip">stacking</span>
+              <span class="chip">transfer</span>
+            </div>
+          </div>
+          <div class="pack-card">
+            <div class="pack-head">
+              <div class="title">Office Pack</div>
+              <div class="count">~10 items</div>
+            </div>
+            <p>Desk-scale objects: stationery, small electronics, everyday clutter. Fine-grasp and tidy-up tasks in office scenes.</p>
+            <div class="chips">
+              <span class="chip">fine grasping</span>
+              <span class="chip">tidy-up</span>
+              <span class="chip">desk tasks</span>
+            </div>
+          </div>
+          <div class="pack-card custom">
+            <div class="pack-head">
+              <div class="title">Custom Pack</div>
+              <div class="count">your spec</div>
+            </div>
+            <p>Your deployment objects, twinned. Ship us the items &mdash; or send a spec and we source them &mdash; and we return the physical set plus validated SimReady twins.</p>
+            <div class="chips">
+              <span class="chip">your objects</span>
+              <span class="chip">your tasks</span>
+            </div>
+          </div>
+        </div>
+        <p style="margin-top: 2rem;">
+          Pack contents are finalized per batch. <a href="#inquiry">Request the catalog</a> for
+          current item lists.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ WHO IT'S FOR ============ -->
+    <section>
+      <div class="container">
+        <span class="label-tag">Who it's for</span>
+        <h2>Teams closing the sim-to-real loop.</h2>
+        <div class="who-grid">
+          <div class="who-card">
+            <div class="title">Robotics teams</div>
+            <p>Training manipulation policies &mdash; VLA fine-tuning, behavior cloning, RL &mdash; who need training and eval objects that actually match.</p>
+          </div>
+          <div class="who-card">
+            <div class="title">Research labs</div>
+            <p>Benchmarking sim-to-real transfer with a modern, scan-accurate object set instead of aging benchmark catalogs.</p>
+          </div>
+          <div class="who-card">
+            <div class="title">Integrators</div>
+            <p>Validating robot deployments against customer-representative objects before hardware ever reaches the site.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ INQUIRY FORM ============ -->
+    <section id="inquiry">
+      <div class="container">
+        <span class="label-tag">Request the catalog</span>
+        <h2>Tell us what you're training.</h2>
+        <div class="inquiry-wrap">
+          <div>
+            <p>
+              We'll send the current pack catalog with item lists, twin specs, and
+              availability &mdash; and follow up on custom packs if your objects aren't
+              in it yet.
+            </p>
+            <p class="form-note">One reply from the team. No mailing list.</p>
+            <div class="partners-strip">
+              <img src="/images/partner-badges-white.png" alt="NVIDIA Inception Member · Powered by AWS Activate Member" />
+            </div>
+          </div>
+          <form class="inquiry" name="asset-packs-inquiry" method="POST" action="/packs/thanks" data-netlify="true" data-netlify-honeypot="bot-field">
+            <input type="hidden" name="form-name" value="asset-packs-inquiry" />
+            <p style="display:none;"><label>Don't fill this out: <input name="bot-field" /></label></p>
+            <div class="field">
+              <label for="f-name">Name</label>
+              <input id="f-name" name="name" required autocomplete="name" placeholder="Your name" />
+            </div>
+            <div class="field">
+              <label for="f-email">Work email</label>
+              <input id="f-email" name="email" type="email" required autocomplete="email" placeholder="you@lab.example" />
+            </div>
+            <div class="field">
+              <label for="f-company">Company / lab</label>
+              <input id="f-company" name="company" required autocomplete="organization" placeholder="Team or organization" />
+            </div>
+            <div class="field">
+              <label for="f-training">What are you training? <span class="opt">(robot, task, stack)</span></label>
+              <textarea id="f-training" name="training" placeholder="e.g. G1 tabletop pick-and-place, GR00T fine-tune in Isaac Lab"></textarea>
+            </div>
+            <div class="field">
+              <label for="f-objects">Which objects do you need? <span class="opt">(themes or specific items)</span></label>
+              <textarea id="f-objects" name="objects" placeholder="e.g. kitchen items; or your own deployment objects"></textarea>
+            </div>
+            <button type="submit" class="btn-primary">Request catalog</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="row">
+        <a href="/" class="wordmark-w">SIM <span>XR.</span></a>
+        <div class="links">
+          <a href="/">Home</a>
+          <a href="/about">About</a>
+          <a href="/operator/">Operators</a>
+          <a href="https://simxr.app">simxr.app</a>
+        </div>
+      </div>
+      <div class="bottom">
+        <span>© 2026 SIM XR. The training layer for Physical AI.</span>
+        <span>California · Paris · Tel Aviv</span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
