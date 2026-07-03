@@ -16,7 +16,16 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
-import { computeCardState, fetchScenes, type Scene } from "@/lib/scenes";
+import { computeCardState, fetchScenes, type CardState, type Scene } from "@/lib/scenes";
+import {
+  apiBaseOf,
+  fetchFleet,
+  fetchServerScenes,
+  serverById,
+  SERVERS,
+  type ServerSnapshot,
+  type SimxrServer,
+} from "@/lib/servers";
 import { useCloudXRSession, type UiSessionState } from "@/lib/useCloudXRSession";
 import { SCENE_ASSETS, robotLabel, skillTag, type SceneAsset } from "@/lib/scene_assets";
 import {
@@ -117,52 +126,70 @@ function ctaLabel(state: UiSessionState): string {
   }
 }
 
-// ─── Header pills — independent latency tracker ──────────────────────────
-// useCloudXRSession polls /healthz internally but doesn't expose round-trip
-// latency. We do a lightweight parallel poll here just to populate the
-// "Latency" pill. Same Page-Visibility-aware pattern as the preview HTML.
+// ─── Fleet poll — live state of every registered server ─────────────────
+// Replaces both the hook-internal single-server healthz poll and the old
+// standalone latency ping. Every tick polls each SERVERS entry's
+// /api/healthz concurrently (per-server timeout inside fetchFleet); a
+// server that doesn't answer shows up as offline and its live scene
+// disappears from the catalog — no redeploy, no manual action. Same
+// Page-Visibility-aware pattern as the old latency ping.
 const LATENCY_HISTORY_LEN = 20;
 
-function useLatencyPing(intervalMs = 5000): {
-  latency: number | null;
-  reachable: boolean;
-  history: (number | null)[];
+function useFleet(intervalMs = 5000): {
+  /** null until the first poll completes (loading state). */
+  snapshots: ServerSnapshot[] | null;
+  /** Per-server scenes.json, filled lazily for servers seen online. */
+  scenesByServer: Record<string, Scene[]>;
+  /** Per-server rolling latency history for the topbar sparklines. */
+  latencyHistory: Record<string, (number | null)[]>;
 } {
-  const [latency, setLatency] = useState<number | null>(null);
-  const [reachable, setReachable] = useState<boolean>(true);
-  const [history, setHistory] = useState<(number | null)[]>([]);
+  const [snapshots, setSnapshots] = useState<ServerSnapshot[] | null>(null);
+  const [scenesByServer, setScenesByServer] = useState<Record<string, Scene[]>>({});
+  const [latencyHistory, setLatencyHistory] = useState<Record<string, (number | null)[]>>({});
+  // Ref mirror so the polling closure can check "already fetched scenes for
+  // this server" without re-arming the effect on every scenes update.
+  const scenesRef = useRef<Record<string, Scene[]>>({});
 
   useEffect(() => {
     if (intervalMs <= 0) return;
     let timer: number | null = null;
     let cancelled = false;
 
-    const ping = async () => {
-      const t0 = performance.now();
-      try {
-        const r = await fetch("https://api.simxr.app/api/healthz", {
-          cache: "no-store",
-          mode: "cors",
-        });
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        if (cancelled) return;
-        const ms = Math.round(performance.now() - t0);
-        setLatency(ms);
-        setReachable(true);
-        setHistory((h) => [...h.slice(-(LATENCY_HISTORY_LEN - 1)), ms]);
-      } catch {
-        if (cancelled) return;
-        setLatency(null);
-        setReachable(false);
-        // Push null to leave a gap in the sparkline (visualises the offline window).
-        setHistory((h) => [...h.slice(-(LATENCY_HISTORY_LEN - 1)), null]);
+    const tick = async () => {
+      const snaps = await fetchFleet();
+      if (cancelled) return;
+      setSnapshots(snaps);
+      setLatencyHistory((prev) => {
+        const next = { ...prev };
+        for (const s of snaps) {
+          const h = next[s.server.id] ?? [];
+          next[s.server.id] = [...h.slice(-(LATENCY_HISTORY_LEN - 1)), s.latencyMs];
+        }
+        return next;
+      });
+      // Lazily pull scenes.json for servers we can reach (once per page
+      // lifetime — fetchServerScenes caches, and the ref guards re-entry).
+      for (const s of snaps) {
+        if (s.health && !scenesRef.current[s.server.id]) {
+          fetchServerScenes(s.server)
+            .then((scenes) => {
+              if (cancelled) return;
+              scenesRef.current[s.server.id] = scenes;
+              setScenesByServer((prev) =>
+                prev[s.server.id] ? prev : { ...prev, [s.server.id]: scenes },
+              );
+            })
+            .catch(() => {
+              /* per-server scenes fetch is best-effort; base catalog covers naming */
+            });
+        }
       }
     };
 
     const start = () => {
       if (timer != null) return;
-      ping();
-      timer = window.setInterval(ping, intervalMs);
+      void tick();
+      timer = window.setInterval(() => void tick(), intervalMs);
     };
     const stop = () => {
       if (timer == null) return;
@@ -181,7 +208,7 @@ function useLatencyPing(intervalMs = 5000): {
     };
   }, [intervalMs]);
 
-  return { latency, reachable, history };
+  return { snapshots, scenesByServer, latencyHistory };
 }
 
 // ─── Latency sparkline ──────────────────────────────────────────────────
@@ -299,16 +326,33 @@ function DashboardInner() {
   // Connect, the <div ref={overlayRef}> has been mounted and ref is
   // populated. Hook reads this lazily when it needs to pass `domOverlay`
   // to xr.requestSession().
+  // The fleet server the operator last clicked Connect on — threaded into
+  // the post-VR /recordings redirect (`&srv=`) so the recordings tab pulls
+  // history from the box that actually recorded the session.
+  const lastServerRef = useRef<SimxrServer | null>(null);
+
   const session = useCloudXRSession({
+    // Fleet poll below covers live-state; disable the hook's own
+    // single-server healthz poll so we don't double-poll api.simxr.app.
+    healthPollMs: 0,
     onSessionEnded: (taskId) => {
-      const target = taskId
-        ? `/recordings?fresh=${encodeURIComponent(taskId)}`
-        : "/recordings";
-      setLocation(target);
+      const params = new URLSearchParams();
+      if (taskId) params.set("fresh", taskId);
+      if (lastServerRef.current) params.set("srv", lastServerRef.current.id);
+      const qs = params.toString();
+      setLocation(qs ? `/recordings?${qs}` : "/recordings");
     },
     getDomOverlayRoot: () => overlayRef.current,
   });
-  const { latency, reachable, history: latencyHistory } = useLatencyPing(5000);
+  const { snapshots, scenesByServer, latencyHistory } = useFleet(5000);
+
+  // Fleet-derived aggregates. `reachable` keeps its old meaning for the
+  // topbar pill: at least one server answered the last poll.
+  const onlineSnaps = useMemo(
+    () => (snapshots ?? []).filter((s) => s.health != null),
+    [snapshots],
+  );
+  const reachable = snapshots == null ? true : onlineSnaps.length > 0;
   const datetime = useLiveClock();
   const { theme, toggle } = useTheme();
 
@@ -353,6 +397,16 @@ function DashboardInner() {
     return params.get("fresh");
   }, [view]);
 
+  // `?srv=<server-id>` — which fleet server's recordings.json to read. Set
+  // by the post-VR redirect (onSessionEnded above) so history comes from
+  // the box that recorded the session. Defaults to the first registry
+  // entry for direct /recordings visits.
+  const recordingsServer = useMemo<SimxrServer>(() => {
+    if (typeof window === "undefined") return SERVERS[0];
+    const params = new URLSearchParams(window.location.search);
+    return serverById(params.get("srv")) ?? SERVERS[0];
+  }, [view]);
+
   // Sidebar tab clicks: update both `view` state and the browser URL so
   // the two stay coherent (refresh / share / back-button all work). When
   // switching INTO recordings, bump the refresh key so the list re-fetches
@@ -375,7 +429,7 @@ function DashboardInner() {
   const [recordingsError, setRecordingsError] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
-    fetchRecordings()
+    fetchRecordings(apiBaseOf(recordingsServer))
       .then((r) => {
         if (cancelled) return;
         setRecordingsResp(r);
@@ -388,7 +442,7 @@ function DashboardInner() {
     return () => {
       cancelled = true;
     };
-  }, [recordingsRefreshKey]);
+  }, [recordingsRefreshKey, recordingsServer]);
   const refreshRecordings = () =>
     setRecordingsRefreshKey((k) => k + 1);
   const recordingsCount = recordingsResp?.recordings.length ?? null;
@@ -408,52 +462,113 @@ function DashboardInner() {
     return () => { cancelled = true; };
   }, []);
 
-  const liveSceneId = session.health?.live_scene ?? null;
+  // ─── Live entries — one per online server with a loaded scene ─────────
+  // This is the heart of the multi-server catalog: both servers up → both
+  // live scenes visible; one up → one; a stopped server's scene disappears
+  // on the next fleet poll (≤5s + per-server timeout).
+  interface LiveEntry {
+    server: SimxrServer;
+    snap: ServerSnapshot;
+    scene: Scene;
+    state: ReturnType<typeof computeCardState>;
+  }
+  const liveEntries = useMemo<LiveEntry[]>(() => {
+    const out: LiveEntry[] = [];
+    for (const snap of onlineSnaps) {
+      const id = snap.health?.live_scene;
+      if (!id) continue;
+      // Name/description lookup: that server's own scenes.json first, base
+      // catalog second, bare-id stub last (uncurated-scene pattern).
+      const scene =
+        scenesByServer[snap.server.id]?.find((s) => s.id === id) ??
+        scenes?.find((s) => s.id === id) ??
+        ({ id, name: id, status: "available" } as Scene);
+      out.push({
+        server: snap.server,
+        snap,
+        scene,
+        state: computeCardState(scene, snap.health),
+      });
+    }
+    return out;
+  }, [onlineSnaps, scenesByServer, scenes]);
 
+  // Card list: live cards first (one per live server), then the rest of the
+  // base catalog as offline/broken. A scene live on some server is dropped
+  // from the offline tail so it doesn't render twice.
   const decorated = useMemo(() => {
-    if (!scenes) return [];
-    return scenes.map((s) => ({
-      scene: s,
-      state: computeCardState(s, session.health),
+    type Card = { scene: Scene; state: CardState; server?: SimxrServer };
+    const liveIds = new Set(liveEntries.map((e) => e.scene.id));
+    const liveCards: Card[] = liveEntries.map((e) => ({
+      scene: e.scene,
+      state: e.state,
+      server: e.server,
     }));
-  }, [scenes, session.health]);
+    const restCards: Card[] = (scenes ?? [])
+      .filter((s) => !liveIds.has(s.id))
+      .map((s) => ({ scene: s, state: computeCardState(s, null) }));
+    return [...liveCards, ...restCards];
+  }, [liveEntries, scenes]);
 
-  // Sort: live-ready → live-busy → offline → broken
-  const sortedScenes = useMemo(() => {
-    const order: Record<string, number> = {
-      "live-ready": 0, "live-busy": 1, offline: 2, broken: 3,
-    };
-    return [...decorated].sort(
-      (a, b) => (order[a.state] ?? 99) - (order[b.state] ?? 99),
-    );
-  }, [decorated]);
-
-  // Filter chips applied AFTER sort.
+  // Filter chips applied AFTER the live-first ordering.
   const visibleScenes = useMemo(() => {
-    return sortedScenes.filter(({ scene, state }) => {
+    return decorated.filter(({ scene, state }) => {
       if (robotFilter !== "all" && robotTag(scene.id) !== robotFilter) return false;
       if (statusFilter === "available" && state !== "live-ready" && state !== "offline") return false;
       if (statusFilter === "broken" && state !== "broken") return false;
       return true;
     });
-  }, [sortedScenes, robotFilter, statusFilter]);
+  }, [decorated, robotFilter, statusFilter]);
 
-  const liveScene = scenes?.find((s) => s.id === liveSceneId) ?? null;
   const sessionInFlight = session.state !== "idle" && session.state !== "error";
 
-  // Stats values — all derived from real session.health
-  const liveSceneShortName = liveScene?.name ?? "None";
-  const sessionStateLabel = session.health?.session_state ?? "—";
-  const sessionStateMeta = session.health
-    ? `${session.health.active_clients} active client${session.health.active_clients === 1 ? "" : "s"}`
-    : "no server contact";
+  // Connect binding shared by banner + cards — records which fleet server
+  // the operator is entering so the post-VR redirect and the in-VR overlay
+  // stats point at the right box.
+  const connectTo = (scene: Scene, server: SimxrServer) => {
+    lastServerRef.current = server;
+    void session.connect(scene.id, server);
+  };
+
+  // Snapshot backing the in-VR overlay stats — the server we're connected
+  // to when a session is active, else the first online server.
+  const activeSnap =
+    (lastServerRef.current &&
+      onlineSnaps.find((s) => s.server.id === lastServerRef.current?.id)) ||
+    onlineSnaps[0] ||
+    null;
+
+  // Stats values — all derived from the fleet poll
+  const liveSceneShortName =
+    liveEntries.length === 0
+      ? "None"
+      : liveEntries.length === 1
+        ? liveEntries[0].scene.name
+        : `${liveEntries.length} scenes live`;
+  const sessionStateLabel =
+    onlineSnaps.length === 0
+      ? "—"
+      : onlineSnaps
+          .map((s) => `${s.server.id.toUpperCase()} ${s.health?.session_state}`)
+          .join(" · ");
+  const totalClients = onlineSnaps.reduce(
+    (sum, s) => sum + (s.health?.active_clients ?? 0),
+    0,
+  );
+  const sessionStateMeta =
+    onlineSnaps.length > 0
+      ? `${totalClients} active client${totalClients === 1 ? "" : "s"}`
+      : "no server contact";
   const scenesCount = scenes?.length ?? 0;
   const scenesMeta = scenes
     ? `${scenes.filter((s) => s.status === "available").length} ready · ${scenes.filter((s) => s.status === "broken").length} in repair`
     : "—";
 
   const lastPollHHMMSS = (() => {
-    const ts = session.health?.ts;
+    const ts = onlineSnaps
+      .map((s) => s.health?.ts ?? "")
+      .sort()
+      .pop();
     if (!ts) return null;
     const m = ts.match(/T(\d{2}:\d{2}:\d{2})/);
     return m ? `${m[1]}Z` : null;
@@ -570,29 +685,35 @@ function DashboardInner() {
               {reachable ? (
                 <span className="status-pill">
                   <span className="dot pulse-success" />
-                  Server live
+                  {onlineSnaps.length}/{SERVERS.length} servers live
                 </span>
               ) : (
                 <span className="status-pill offline">
                   <span className="dot pulse-danger" />
-                  Server offline
+                  Servers offline
                 </span>
               )}
 
-              <span className={`h-pill ${reachable ? "" : "dim"}`} title="Round-trip latency · last 20 samples">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-                </svg>
-                Latency{" "}
-                <span className={
-                  !reachable || latency == null ? "" :
-                  latency > 500 ? "accent-warn" :
-                  latency > 200 ? "accent-warn" : "accent-success"
-                }>
-                  {reachable && latency != null ? `~${latency}ms` : "—"}
+              {(snapshots ?? []).map((snap) => (
+                <span
+                  key={snap.server.id}
+                  className={`h-pill ${snap.health ? "" : "dim"}`}
+                  title={`${snap.server.label} · round-trip latency · last 20 samples`}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                  </svg>
+                  {snap.server.id.toUpperCase()}{" "}
+                  <span className={
+                    snap.latencyMs == null ? "" :
+                    snap.latencyMs > 500 ? "accent-warn" :
+                    snap.latencyMs > 200 ? "accent-warn" : "accent-success"
+                  }>
+                    {snap.latencyMs != null ? `~${snap.latencyMs}ms` : "offline"}
+                  </span>
+                  <LatencySparkline history={latencyHistory[snap.server.id] ?? []} />
                 </span>
-                <LatencySparkline history={latencyHistory} />
-              </span>
+              ))}
 
               <span className={`h-pill ${reachable ? "" : "dim"}`} title="Server timestamp of last successful poll">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -643,13 +764,19 @@ function DashboardInner() {
                   resp={recordingsResp}
                   error={recordingsError}
                   fresh={fresh}
+                  server={recordingsServer}
                   scenes={scenes}
                   onRefresh={refreshRecordings}
                 />
               ) : (
               <>
               <div className="page-header">
-                <div className="eyebrow">Live demo · sim-xr-dev-test · eu-north-1</div>
+                <div className="eyebrow">
+                  Live demo ·{" "}
+                  {onlineSnaps.length > 0
+                    ? onlineSnaps.map((s) => s.server.label).join(" + ")
+                    : "no servers online"}
+                </div>
                 <h1>Choose a scene to step into.</h1>
               </div>
 
@@ -674,11 +801,15 @@ function DashboardInner() {
                   <div className={`value small ${liveSceneShortName === "None" ? "muted" : ""}`}>
                     {liveSceneShortName}
                   </div>
-                  <div className={`meta ${liveSceneId ? "success" : ""}`}>
-                    {liveSceneId
-                      ? session.health?.session_state === "ready"
-                        ? "Ready · tap to enter"
-                        : `In session · ${session.health?.active_clients ?? 0} client${(session.health?.active_clients ?? 0) === 1 ? "" : "s"}`
+                  <div className={`meta ${liveEntries.length > 0 ? "success" : ""}`}>
+                    {liveEntries.length > 0
+                      ? liveEntries
+                          .map((e) =>
+                            e.state === "live-ready"
+                              ? `${e.server.id.toUpperCase()} ready`
+                              : `${e.server.id.toUpperCase()} in session`,
+                          )
+                          .join(" · ")
                       : "No scene currently loaded"}
                   </div>
                 </div>
@@ -693,30 +824,42 @@ function DashboardInner() {
                   <div className="meta">{scenesMeta}</div>
                 </div>
                 <div className="stat-card">
-                  <div className="label">Server</div>
-                  <div className="value small">eu-north-1</div>
-                  <div className="meta">UDP {session.health?.media_port ?? "—"} · WSS 443</div>
+                  <div className="label">Servers</div>
+                  <div className="value small">{`${onlineSnaps.length}/${SERVERS.length} online`}</div>
+                  <div className="meta">
+                    {onlineSnaps.length > 0
+                      ? onlineSnaps.map((s) => s.server.region).join(" · ")
+                      : "all offline"}
+                  </div>
                 </div>
               </div>
 
-              {/* LIVE SCENE BANNER — real or placeholder */}
-              {liveScene ? (
-                <LiveSceneBanner
-                  scene={liveScene}
-                  asset={SCENE_ASSETS[liveScene.id]}
-                  sessionState={session.state}
-                  sessionInFlight={sessionInFlight}
-                  onConnect={() => void session.connect(liveScene.id)}
-                />
+              {/* LIVE SCENE BANNERS — one per online server with a loaded
+                  scene (both servers live → both banners), placeholder when
+                  no server has a scene up. */}
+              {liveEntries.length > 0 ? (
+                liveEntries.map((entry) => (
+                  <LiveSceneBanner
+                    key={entry.server.id}
+                    scene={entry.scene}
+                    serverLabel={entry.server.label}
+                    asset={SCENE_ASSETS[entry.scene.id]}
+                    sessionState={session.state}
+                    sessionInFlight={sessionInFlight}
+                    onConnect={() => connectTo(entry.scene, entry.server)}
+                  />
+                ))
               ) : (
                 <div className="live-banner no-live">
                   <div className="image" style={{ display: "flex", alignItems: "center", justifyContent: "center", color: "#6B7280", fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase" }}>
                     No live scene
                   </div>
                   <div className="body">
-                    <div className="eyebrow">Server idle</div>
+                    <div className="eyebrow">
+                      {onlineSnaps.length > 0 ? "Servers idle" : "Servers offline"}
+                    </div>
                     <h2>No scene currently loaded.</h2>
-                    <p>{scenesError ? `Server unreachable: ${scenesError}` : "When the operator launches a scene from the simulator, it will appear here ready to enter."}</p>
+                    <p>{scenesError ? `Server unreachable: ${scenesError}` : "When an operator launches a scene on any fleet server, it will appear here ready to enter."}</p>
                   </div>
                 </div>
               )}
@@ -756,17 +899,21 @@ function DashboardInner() {
                 ))}
               </div>
 
-              {/* SCENE GRID */}
+              {/* SCENE GRID — live cards carry a per-server key because the
+                  same scene id can be live on two servers at once. */}
               <div className="scene-grid">
-                {visibleScenes.map(({ scene, state }) => (
+                {visibleScenes.map(({ scene, state, server }) => (
                   <SceneCardDb
-                    key={scene.id}
+                    key={server ? `${server.id}:${scene.id}` : scene.id}
                     scene={scene}
                     state={state}
+                    serverLabel={server?.label}
                     asset={SCENE_ASSETS[scene.id]}
                     sessionState={session.state}
                     sessionInFlight={sessionInFlight}
-                    onConnect={() => void session.connect(scene.id)}
+                    onConnect={() => {
+                      if (server) connectTo(scene, server);
+                    }}
                   />
                 ))}
               </div>
@@ -837,7 +984,11 @@ function DashboardInner() {
               SIM <span className="accent">XR.</span>
             </span>
             <span className="xr-overlay-scene">
-              {liveScene?.name ?? "—"}
+              {(lastServerRef.current &&
+                liveEntries.find((e) => e.server.id === lastServerRef.current?.id)
+                  ?.scene.name) ??
+                liveEntries[0]?.scene.name ??
+                "—"}
             </span>
           </div>
           <div className="xr-overlay-stats">
@@ -845,22 +996,22 @@ function DashboardInner() {
               <span className="stat-label">Latency</span>
               <span
                 className={`stat-value ${
-                  !reachable || latency == null
+                  activeSnap?.latencyMs == null
                     ? ""
-                    : latency > 500
+                    : activeSnap.latencyMs > 500
                     ? "warn"
-                    : latency > 200
+                    : activeSnap.latencyMs > 200
                     ? "warn"
                     : "success"
                 }`}
               >
-                {reachable && latency != null ? `~${latency}ms` : "—"}
+                {activeSnap?.latencyMs != null ? `~${activeSnap.latencyMs}ms` : "—"}
               </span>
             </div>
             <div className="stat">
               <span className="stat-label">Session</span>
               <span className="stat-value">
-                {session.health?.session_state ?? "—"}
+                {activeSnap?.health?.session_state ?? "—"}
               </span>
             </div>
           </div>
@@ -928,13 +1079,15 @@ function Fonts() {
 interface SceneCardDbProps {
   scene: Scene;
   state: ReturnType<typeof computeCardState>;
+  /** Fleet server label for live cards (e.g. "US · Oregon"); absent on offline cards. */
+  serverLabel?: string;
   asset?: SceneAsset;
   sessionState: UiSessionState;
   sessionInFlight: boolean;
   onConnect: () => void;
 }
 
-function SceneCardDb({ scene, state, asset, sessionState, sessionInFlight, onConnect }: SceneCardDbProps) {
+function SceneCardDb({ scene, state, serverLabel, asset, sessionState, sessionInFlight, onConnect }: SceneCardDbProps) {
   const cls = `scene-card ${state === "live-ready" ? "live" : state === "live-busy" ? "live" : state === "broken" ? "broken" : "offline"}`;
   return (
     <div className={cls}>
@@ -949,10 +1102,10 @@ function SceneCardDb({ scene, state, asset, sessionState, sessionInFlight, onCon
           <img src={asset.src} alt="" />
         ) : null}
         {state === "live-ready" && (
-          <span className="badge live"><span className="dot" /> LIVE</span>
+          <span className="badge live"><span className="dot" /> LIVE{serverLabel ? ` · ${serverLabel}` : ""}</span>
         )}
         {state === "live-busy" && (
-          <span className="badge live"><span className="dot" /> IN SESSION</span>
+          <span className="badge live"><span className="dot" /> IN SESSION{serverLabel ? ` · ${serverLabel}` : ""}</span>
         )}
         {state === "broken" && <span className="badge broken">⚠ IN REPAIR</span>}
       </div>
@@ -1005,13 +1158,15 @@ function SceneCardDb({ scene, state, asset, sessionState, sessionInFlight, onCon
 
 interface LiveSceneBannerProps {
   scene: Scene;
+  /** Fleet server label, e.g. "US · Oregon". */
+  serverLabel?: string;
   asset?: SceneAsset;
   sessionState: UiSessionState;
   sessionInFlight: boolean;
   onConnect: () => void;
 }
 
-function LiveSceneBanner({ scene, asset, sessionState, sessionInFlight, onConnect }: LiveSceneBannerProps) {
+function LiveSceneBanner({ scene, serverLabel, asset, sessionState, sessionInFlight, onConnect }: LiveSceneBannerProps) {
   return (
     <div className="live-banner">
       <div className="image">
@@ -1020,10 +1175,12 @@ function LiveSceneBanner({ scene, asset, sessionState, sessionInFlight, onConnec
         ) : asset?.type === "image" ? (
           <img src={asset.src} alt={scene.name} />
         ) : null}
-        <span className="live-badge"><span className="dot" /> LIVE</span>
+        <span className="live-badge"><span className="dot" /> LIVE{serverLabel ? ` · ${serverLabel}` : ""}</span>
       </div>
       <div className="body">
-        <div className="eyebrow">In session · ready to enter</div>
+        <div className="eyebrow">
+          {serverLabel ? `${serverLabel} · ready to enter` : "In session · ready to enter"}
+        </div>
         <h2>{scene.name}</h2>
         {scene.description && <p>{scene.description}</p>}
       </div>
@@ -1063,6 +1220,8 @@ interface RecordingsViewProps {
   error: string | null;
   /** ?fresh=<task_id> param from URL — set by VR-exit auto-redirect. */
   fresh: string | null;
+  /** Fleet server whose recordings.json this view reads (?srv= param). */
+  server: SimxrServer;
   /** Scene metadata for friendly names + robot family. */
   scenes: Scene[] | null;
   /** Bumps Dashboard's recordings refresh key — re-fetches the JSON. */
@@ -1094,6 +1253,7 @@ function RecordingsView({
   resp,
   error,
   fresh,
+  server,
   scenes,
   onRefresh,
 }: RecordingsViewProps) {
@@ -1160,7 +1320,7 @@ function RecordingsView({
       attempts += 1;
       setPollAttempt(attempts);
       try {
-        const next = await fetchRecordings();
+        const next = await fetchRecordings(apiBaseOf(server));
         if (cancelled) return;
         setLocalResp(next);
         const hit = next.recordings.find((rec) =>
@@ -1191,7 +1351,7 @@ function RecordingsView({
     // on parent baseline updates, not on every targeted-poll tick (that
     // would restart the poll on its own response).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fresh, resp]);
+  }, [fresh, resp, server]);
 
   const recordings = localResp?.recordings ?? [];
 
@@ -1276,7 +1436,7 @@ function RecordingsView({
               {error}
               <br />
               <span style={{ opacity: 0.8 }}>
-                Endpoint: api.simxr.app/api/recordings.json — the demo
+                Endpoint: {server.host}/api/recordings.json — the demo
                 server may be offline. Tap Refresh in a moment.
               </span>
             </div>

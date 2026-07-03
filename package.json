@@ -11,7 +11,9 @@
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "vitest run",
-    "db:push": "drizzle-kit generate && drizzle-kit migrate"
+    "db:push": "drizzle-kit generate && drizzle-kit migrate",
+    "verify:cloudxr": "node scripts/verify-cloudxr-chunk.mjs",
+    "build:web": "pnpm run build:scenes-fallback && vite build && pnpm run verify:cloudxr"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.693.0",

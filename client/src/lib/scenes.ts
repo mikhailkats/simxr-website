@@ -214,10 +214,14 @@ function buildMockHealth(): Healthz {
 const MOCK_DELAY_MS = 200;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
+async function fetchJson<T>(
+  path: string,
+  init?: RequestInit,
+  apiBase: string = API_BASE,
+): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(`${API_BASE}${path}`, {
+    response = await fetch(`${apiBase}${path}`, {
       ...init,
       cache: "no-store",
     });
@@ -228,6 +232,63 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
     throw new ServerOfflineError(`${path} returned HTTP ${response.status}`);
   }
   return response.json() as Promise<T>;
+}
+
+// ─── Per-server variants (multi-server fleet; see lib/servers.ts) ────────
+// The single-server functions below delegate here with the legacy default
+// base so existing callers (Demo.tsx, mock mode) keep working unchanged.
+
+export async function fetchScenesFrom(apiBase: string): Promise<Scene[]> {
+  if (isMockMode()) {
+    await sleep(MOCK_DELAY_MS);
+    if (mockUrlParam("error") === "scenes") {
+      throw new ServerOfflineError("(mock) /scenes.json simulated failure");
+    }
+    return MOCK_SCENES;
+  }
+  const data = await fetchJson<{ scenes: Scene[]; ts: string }>(
+    "/scenes.json",
+    undefined,
+    apiBase,
+  );
+  return data.scenes;
+}
+
+export async function fetchHealthFrom(
+  apiBase: string,
+  signal?: AbortSignal,
+): Promise<Healthz> {
+  if (isMockMode()) {
+    await sleep(MOCK_DELAY_MS);
+    return buildMockHealth();
+  }
+  return fetchJson<Healthz>("/healthz", { signal }, apiBase);
+}
+
+export async function fetchMediaIpFrom(apiBase: string): Promise<string> {
+  if (isMockMode()) {
+    await sleep(MOCK_DELAY_MS);
+    if (mockUrlParam("error") === "ip") {
+      throw new ServerOfflineError("(mock) /ip.json simulated failure");
+    }
+    return "192.0.2.42"; // RFC 5737 documentation IP
+  }
+  // Server returns { ip: string | null, ts: string } per locked contract.
+  // null means teleop launcher hasn't run since the last server start.
+  const data = await fetchJson<{ ip: string | null; ts: string }>(
+    "/ip.json",
+    undefined,
+    apiBase,
+  );
+  if (data.ip === null) {
+    throw new ServerOfflineError(
+      "Server reports no current IP — teleop launcher hasn't been started yet for this session.",
+    );
+  }
+  if (!/^[0-9]{1,3}(?:\.[0-9]{1,3}){3}$/.test(data.ip)) {
+    throw new Error(`Server returned non-IPv4 mediaAddress: ${data.ip}`);
+  }
+  return data.ip;
 }
 
 export async function fetchScenes(): Promise<Scene[]> {
@@ -264,31 +325,9 @@ export async function fetchScenes(): Promise<Scene[]> {
 }
 
 export async function fetchHealth(): Promise<Healthz> {
-  if (isMockMode()) {
-    await sleep(MOCK_DELAY_MS);
-    return buildMockHealth();
-  }
-  return fetchJson<Healthz>("/healthz");
+  return fetchHealthFrom(API_BASE);
 }
 
 export async function fetchMediaIp(): Promise<string> {
-  if (isMockMode()) {
-    await sleep(MOCK_DELAY_MS);
-    if (mockUrlParam("error") === "ip") {
-      throw new ServerOfflineError("(mock) /ip.json simulated failure");
-    }
-    return "192.0.2.42";  // RFC 5737 documentation IP
-  }
-  // Server returns { ip: string | null, ts: string } per locked contract.
-  // null means teleop launcher hasn't run since the last brev start.
-  const data = await fetchJson<{ ip: string | null; ts: string }>("/ip.json");
-  if (data.ip === null) {
-    throw new ServerOfflineError(
-      "Server reports no current IP — teleop launcher hasn't been started yet for this session.",
-    );
-  }
-  if (!/^[0-9]{1,3}(?:\.[0-9]{1,3}){3}$/.test(data.ip)) {
-    throw new Error(`Server returned non-IPv4 mediaAddress: ${data.ip}`);
-  }
-  return data.ip;
+  return fetchMediaIpFrom(API_BASE);
 }

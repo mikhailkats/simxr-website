@@ -62,13 +62,20 @@ export class RecordingsFetchError extends Error {
   }
 }
 
-export async function fetchRecordings(): Promise<RecordingsResponse> {
+/**
+ * Fetch session history. `apiBase` selects which fleet server to query
+ * (see lib/servers.ts `apiBaseOf`); defaults to the legacy single-server
+ * endpoint so existing callers keep working.
+ */
+export async function fetchRecordings(
+  apiBase: string = API_BASE,
+): Promise<RecordingsResponse> {
   if (isMockMode()) {
     return buildMockRecordingsResponse();
   }
   let response: Response;
   try {
-    response = await fetch(`${API_BASE}/recordings.json`, { cache: "no-store" });
+    response = await fetch(`${apiBase}/recordings.json`, { cache: "no-store" });
   } catch (e) {
     throw new RecordingsFetchError("Failed to reach /api/recordings.json", e);
   }

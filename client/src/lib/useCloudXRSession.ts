@@ -13,7 +13,15 @@
 // does NOT handle the gesture for you — the developer owns that call.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { fetchMediaIp, fetchHealth, isMockMode, type Healthz } from "./scenes";
+import {
+  fetchHealth,
+  fetchHealthFrom,
+  fetchMediaIp,
+  fetchMediaIpFrom,
+  isMockMode,
+  type Healthz,
+} from "./scenes";
+import { apiBaseOf, type SimxrServer } from "./servers";
 
 // UUID v5 of the string "teleop_command" with namespace DNS.
 //
@@ -183,7 +191,15 @@ declare global {
 // Package name is `@nvidia/cloudxr` (the library is *called* CloudXR.js but
 // the npm package itself doesn't carry the `-js` suffix).
 async function loadSdk(): Promise<typeof CloudXR> {
-  const mod = (await import("@nvidia/cloudxr" as string)) as unknown as {
+  // Plain string literal (NOT `as string`-cast) — the cast made the import
+  // opaque to Vite's static dependency analysis, so CI builds tree-shook the
+  // whole SDK chunk out of the bundle while local builds kept it. That was
+  // the root cause of the "cloudxr chunk missing from Netlify deploys"
+  // incident (memory: feedback_netlify_ci_strips_cloudxr_chunk). The literal
+  // lets Rollup pre-bundle the vendored tarball into a deterministic chunk
+  // in every build environment. Guarded post-build by
+  // scripts/verify-cloudxr-chunk.mjs.
+  const mod = (await import("@nvidia/cloudxr")) as unknown as {
     default?: typeof CloudXR;
   } & typeof CloudXR;
   return mod.default ?? mod;
@@ -228,7 +244,7 @@ export interface UseCloudXRSessionResult {
    * the redirect just won't include a `?fresh=` param and the recordings
    * page won't highlight a specific entry.
    */
-  connect: (taskId?: string) => Promise<void>;
+  connect: (taskId?: string, server?: SimxrServer) => Promise<void>;
   disconnect: () => Promise<void>;
   /**
    * Send a teleop control command to the server. Returns true if either
@@ -516,9 +532,15 @@ export function useCloudXRSession(
     [],
   );
 
-  const connect = useCallback(async (taskId?: string) => {
+  const connect = useCallback(async (taskId?: string, server?: SimxrServer) => {
     if (state !== "idle" && state !== "error") return;
     setError(null);
+    // Multi-server fleet: when the caller passes a `server` (Dashboard's
+    // per-card connect), signaling host + preflight endpoints come from that
+    // server's registry entry. Without it, the legacy single-server opts
+    // (host/port + api.simxr.app fetchers) apply — Demo.tsx path unchanged.
+    const effHost = server?.host ?? host;
+    const effPort = server?.port ?? port;
     // Capture the scene the user clicked Connect on; consumed by
     // onStreamStopped → onSessionEnded for the post-VR redirect.
     lastTaskIdRef.current = taskId ?? null;
@@ -594,7 +616,10 @@ export function useCloudXRSession(
     let mediaAddress: string;
     let mediaPort: number;
     try {
-      const [ip, healthz] = await Promise.all([fetchMediaIp(), fetchHealth()]);
+      const [ip, healthz] = await Promise.all([
+        server ? fetchMediaIpFrom(apiBaseOf(server)) : fetchMediaIp(),
+        server ? fetchHealthFrom(apiBaseOf(server)) : fetchHealth(),
+      ]);
       mediaAddress = ip;
       // healthz.media_port is required per the locked schema — but defend
       // against an older server that hasn't shipped the field yet.
@@ -859,10 +884,11 @@ export function useCloudXRSession(
       const sdk = await loadSdk();
       const cxr = sdk.createSession(
         {
-          // Server signaling
-          serverAddress: host,
-          serverPort: port,
-          useSecureConnection: port === 443,
+          // Server signaling — per-fleet-server when connect() got a
+          // `server` argument, legacy hook opts otherwise.
+          serverAddress: effHost,
+          serverPort: effPort,
+          useSecureConnection: effPort === 443,
           signalingResourcePath: "/",
           // UDP media (host:port for signaling, mediaAddress:mediaPort for video)
           mediaAddress,

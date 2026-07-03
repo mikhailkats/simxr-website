@@ -8,7 +8,7 @@
 # Output goes to dist/public/, which is the Vite default for this project.
 
 [build]
-  command = "pnpm run build:scenes-fallback && pnpm vite build"
+  command = "pnpm run build:scenes-fallback && pnpm vite build && pnpm run verify:cloudxr"
   publish = "dist/public"
 
 [build.environment]
