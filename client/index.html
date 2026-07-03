@@ -50,6 +50,29 @@
     <script type="module" src="/src/main.tsx"></script>
 
     <!--
+      Crawler / no-JS fallback — non-rendering bots (program verifiers, search
+      indexers, social previews that don't execute JS) get a concrete summary
+      of the company plus a link to /about (a fully static HTML page with the
+      business model, the founder, and partner programs).
+
+      Why this exists: 2026-05-29 — Google for Startups rejection #2 cited
+      inability to validate "a public website that clearly showcases a digital-
+      native business model" from simxr.tech. Root cause was the React SPA
+      shell rendering an empty <div id="root"></div> in raw HTML. The about.html
+      static page is the real fix; this noscript block plus the JS-hydrated React
+      app ensure the homepage itself is also non-empty in raw HTML.
+    -->
+    <noscript>
+      <main style="font-family:system-ui,sans-serif;max-width:720px;margin:60px auto;padding:0 1.5rem;color:#0B0F1A;line-height:1.7">
+        <h1 style="font-size:2rem;margin:0 0 1rem">SIM XR — The Training Layer for Physical AI</h1>
+        <p>SIM XR builds the data infrastructure for humanoid robotics. We turn consumer VR headsets into the operator network that generates teleoperation demonstration data for training Vision-Language-Action policies. NVIDIA Inception Member. AWS Activate Member.</p>
+        <p><strong>Business model:</strong> per-episode pricing on customer-shaped demonstration datasets. Operators at home wear their own headsets and teleoperate simulated humanoid robots inside photoreal 3D-Gaussian-Splat reconstructions of the customer's real environment.</p>
+        <p><strong>What's live today:</strong> simxr.app — one-click in-browser WebXR connect to live VR scenes on any headset.</p>
+        <p>Read more on the <a href="/about">about page</a>, or contact <a href="mailto:gm@simxr.tech">gm@simxr.tech</a>.</p>
+      </main>
+    </noscript>
+
+    <!--
       Hidden static forms — required for Netlify Forms to detect them at build time.
       Netlify's HTML parser scans the deployed index.html for <form name="..." netlify>
       tags; the React-rendered runtime forms then submit to "/" using the matching

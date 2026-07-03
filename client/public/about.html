@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About — SIM XR | The Training Layer for Physical AI</title>
+  <meta name="description" content="SIM XR builds the data infrastructure for Physical AI. Consumer VR headsets become the operator network that generates teleoperation demonstration data for humanoid robot policy training. NVIDIA Inception Member. AWS Activate Member." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://simxr.tech/about" />
+  <meta property="og:title" content="About — SIM XR" />
+  <meta property="og:description" content="The training layer for Physical AI. Consumer VR turned into the operator network for humanoid robot data. NVIDIA Inception · AWS Activate." />
+  <meta property="og:url" content="https://simxr.tech/about" />
+  <meta property="og:type" content="website" />
+  <link rel="icon" type="image/svg+xml" href="/favicon-tech.svg" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --blue: #0057FF;
+      --navy: #0B0F1A;
+      --gray: #6B7280;
+      --gray-light: #F5F6F8;
+      --border: #E5E7EB;
+      --white: #FFFFFF;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      color: var(--navy);
+      background: var(--white);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.6;
+    }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+    .label-tag {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gray);
+      padding: 0.35rem 0.7rem;
+      background: var(--gray-light);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+
+    /* ── NAV ── */
+    nav.topnav {
+      position: sticky; top: 0; z-index: 50;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0 2.5rem; height: 60px;
+      background: rgba(255,255,255,0.96);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+    }
+    .wordmark {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700; font-size: 1.15rem;
+      color: var(--navy); letter-spacing: -0.02em;
+      text-decoration: none;
+    }
+    .wordmark span { color: var(--blue); }
+    nav.topnav .links { display: flex; gap: 2rem; }
+    nav.topnav .links a {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.82rem; font-weight: 500;
+      color: var(--gray); text-decoration: none;
+      letter-spacing: 0.01em;
+    }
+    nav.topnav .links a:hover { color: var(--navy); }
+    nav.topnav .cta {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600; font-size: 0.82rem;
+      color: var(--white); background: var(--navy);
+      padding: 0.45rem 1.1rem; border-radius: 6px;
+      text-decoration: none; letter-spacing: 0.02em;
+    }
+    nav.topnav .cta:hover { text-decoration: none; opacity: 0.9; }
+
+    /* ── SECTIONS ── */
+    section { padding: 80px 0; border-top: 1px solid var(--border); }
+    section:first-of-type { border-top: none; padding-top: 60px; }
+    h1 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 1.1; margin: 0.75rem 0 1.25rem;
+      color: var(--navy); font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    h2 {
+      font-size: clamp(1.5rem, 3vw, 2.2rem);
+      line-height: 1.15; margin: 0.75rem 0 1.25rem;
+      color: var(--navy); font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.78rem; font-weight: 600;
+      color: var(--blue); letter-spacing: 0.1em;
+      text-transform: uppercase; margin: 0 0 0.6rem;
+    }
+    p { color: var(--gray); font-size: 1rem; line-height: 1.7; margin: 0 0 1rem; max-width: 720px; }
+    p strong { color: var(--navy); font-weight: 600; }
+    ul.bullets { color: var(--gray); padding-left: 1.25rem; max-width: 720px; }
+    ul.bullets li { margin-bottom: 0.5rem; line-height: 1.65; }
+
+    /* ── BUSINESS MODEL ── */
+    .biz-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem;
+      margin-top: 2rem;
+    }
+    @media (max-width: 768px) { .biz-grid { grid-template-columns: 1fr; } }
+    .biz-card {
+      padding: 1.75rem;
+      background: var(--gray-light);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .biz-card h3 { color: var(--navy); font-size: 0.7rem; }
+    .biz-card .big { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.05rem; color: var(--navy); margin-bottom: 0.4rem; line-height: 1.3; }
+    .biz-card p { font-size: 0.9rem; margin-bottom: 0; }
+
+    /* ── FOUNDER BLOCK ── */
+    .founder-grid {
+      display: grid; grid-template-columns: 1fr 1.6fr; gap: 4rem;
+      margin-top: 2.5rem; align-items: start;
+    }
+    @media (max-width: 768px) { .founder-grid { grid-template-columns: 1fr; gap: 2rem; } }
+    .founder-photo {
+      width: 100%; max-width: 320px;
+      border-radius: 14px; overflow: hidden;
+      border: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
+    .founder-photo img { width: 100%; height: auto; display: block; }
+    .founder-name {
+      font-size: 2rem; font-weight: 700;
+      line-height: 1.1; margin: 0 0 0.35rem;
+      color: var(--navy);
+    }
+    .founder-role {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600; font-size: 0.8rem;
+      color: var(--blue); letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+    }
+    .founder-links {
+      display: flex; flex-direction: column; gap: 0.35rem;
+      margin-bottom: 1.25rem;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+    }
+    .founder-links a { color: var(--gray); }
+    .founder-awards {
+      display: flex; flex-wrap: wrap; gap: 0.5rem;
+    }
+    .founder-awards .award {
+      font-family: 'Space Grotesk', sans-serif; font-size: 0.68rem; font-weight: 600;
+      color: var(--gray); background: var(--white);
+      border: 1px solid var(--border); border-radius: 5px;
+      padding: 0.3rem 0.65rem;
+    }
+    .founder-credentials { display: flex; flex-direction: column; gap: 1.75rem; }
+    .credential { display: flex; gap: 1rem; }
+    .credential .bar { width: 2px; background: var(--blue); border-radius: 2px; flex-shrink: 0; min-height: 50px; }
+    .credential .tag { font-family: 'Space Grotesk', sans-serif; font-size: 0.62rem; font-weight: 600; color: var(--blue); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.35rem; }
+    .credential .title { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.95rem; color: var(--navy); margin-bottom: 0.4rem; line-height: 1.35; }
+    .credential p { font-size: 0.88rem; line-height: 1.65; margin: 0; }
+
+    /* ── TEAM (compact, 3-up below the headliner) ── */
+    .team-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    @media (max-width: 768px) { .team-grid { grid-template-columns: 1fr; } }
+    .team-card {
+      padding: 1.5rem;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .team-card .name {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700; font-size: 1.1rem;
+      color: var(--navy); margin: 0 0 0.3rem;
+      line-height: 1.2;
+    }
+    .team-card .role {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600; font-size: 0.75rem;
+      color: var(--blue); letter-spacing: 0.05em;
+      margin-bottom: 0.6rem;
+    }
+    .team-card .loc {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem; color: var(--gray);
+      margin-bottom: 1rem;
+    }
+    .team-card a.linkedin {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem; color: var(--blue);
+      display: inline-block;
+      word-break: break-all;
+    }
+
+    /* ── PARTNERS ── */
+    .partners { margin-top: 2rem; display: flex; align-items: center; gap: 2rem; flex-wrap: wrap; }
+    .partners img { height: 64px; width: auto; display: block; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--navy); color: rgba(255,255,255,0.7);
+      padding: 50px 0 30px; margin-top: 60px;
+    }
+    footer .container { padding: 0 2rem; }
+    footer .row {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1rem;
+    }
+    footer .wordmark-w {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700; font-size: 1.05rem;
+      color: rgba(255,255,255,0.95); letter-spacing: -0.02em;
+      text-decoration: none;
+    }
+    footer .wordmark-w span { color: var(--blue); }
+    footer .links a { color: rgba(255,255,255,0.7); margin-left: 1.5rem; font-size: 0.88rem; }
+    footer .bottom { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.78rem; color: rgba(255,255,255,0.45); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+  </style>
+</head>
+<body>
+
+  <nav class="topnav">
+    <a href="/" class="wordmark">SIM <span>XR.</span></a>
+    <div class="links">
+      <a href="/#demo">Demo</a>
+      <a href="/#how-it-works">How It Works</a>
+      <a href="/about">About</a>
+    </div>
+    <a href="/#contact" class="cta">Contact</a>
+  </nav>
+
+  <main>
+
+    <section>
+      <div class="container">
+        <span class="label-tag">About SIM XR</span>
+        <h1>The training layer for Physical AI.</h1>
+        <p>
+          SIM XR builds the data infrastructure for humanoid robotics. Robotics teams need
+          millions of teleoperation demonstrations to train manipulation policies — data
+          today is captured by in-house teams in lab studios at roughly $50K–$100K per
+          fully-loaded operator per year. It does not scale to the millions-of-demos
+          requirement modern Vision-Language-Action models need.
+        </p>
+        <p>
+          Our bet: the workforce that records this data is already deployed. Tens of millions
+          of Quest 3, Vision Pro, and Pico 4 Ultra headsets sit idle in living rooms. An
+          operator at home wears their own headset and teleoperates a simulated humanoid
+          robot inside a photoreal 3D-Gaussian-Splat reconstruction of the customer's real
+          environment. The hand-motion data is real. The action stream is real. The scene is
+          rendered. The robot is simulated. We ship customer-shaped demonstration datasets
+          in days, not months.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <span class="label-tag">Business model</span>
+        <h2>How SIM XR makes money.</h2>
+        <p>
+          Per-episode pricing on customer-shaped demonstration datasets. A target customer is
+          a humanoid robotics team training manipulation policies — they pay for completed,
+          quality-validated episodes recorded against their robot and their environment. The
+          two structural advantages we sell against in-house teleop programs are <strong>cost
+          per episode</strong> (consumer hardware + at-home operators) and <strong>scenario
+          coverage</strong> (one captured environment multiplied into many randomized
+          training scenes via object, task, and layout variation).
+        </p>
+        <div class="biz-grid">
+          <div class="biz-card">
+            <h3>Who pays</h3>
+            <div class="big">Humanoid robotics teams training manipulation policies</div>
+            <p>VLA fine-tuners, behavior-cloning teams, simulation-to-real research groups.</p>
+          </div>
+          <div class="biz-card">
+            <h3>What we sell</h3>
+            <div class="big">Demonstration episodes, customer-shaped</div>
+            <p>Recorded in the customer's 3DGS-reconstructed environment with their robot's embodiment and the operator network's hand-motion data.</p>
+          </div>
+          <div class="biz-card">
+            <h3>How it scales</h3>
+            <div class="big">Consumer VR as supply, sim multiplication as leverage</div>
+            <p>Operators connect from existing consumer headsets. One captured scene yields many randomized training variants.</p>
+          </div>
+          <div class="biz-card">
+            <h3>What's live today</h3>
+            <div class="big">simxr.app — operator product in production</div>
+            <p>One-click in-browser WebXR connect to live VR scenes on any headset. 9-scene catalog. <a href="https://simxr.app">simxr.app</a></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <span class="label-tag">The Founder</span>
+        <h2>Georgy Molodtsov</h2>
+        <div class="founder-grid">
+          <div>
+            <div class="founder-photo">
+              <img src="/images/founder_georgy.jpg" alt="Georgy Molodtsov — Founder &amp; CEO, SIM XR" />
+            </div>
+            <div class="founder-name">Georgy<br />Molodtsov</div>
+            <div class="founder-role">Founder &amp; CEO, SIM XR</div>
+            <div class="founder-links">
+              <a href="https://linkedin.com/in/gmolodtsov" target="_blank" rel="noopener noreferrer">linkedin.com/in/gmolodtsov</a>
+              <a href="mailto:gm@simxr.tech">gm@simxr.tech</a>
+              <a href="https://simxr.tech">simxr.tech</a>
+            </div>
+            <div class="founder-awards">
+              <div class="award">Webby Award</div>
+              <div class="award">European XR Award</div>
+              <div class="award">Raindance Immersive</div>
+              <div class="award">Fulbright Fellow</div>
+            </div>
+          </div>
+          <div class="founder-credentials">
+            <div class="credential">
+              <div class="bar"></div>
+              <div>
+                <div class="tag">XR Native — Scale Operator</div>
+                <div class="title">10+ Years. 50+ Festivals. Hundreds of thousands of VR device interactions.</div>
+                <p>Produced and curated XR experiences across Europe and CIS. Director of JMJ OXYMORE (400K+ visits) and producer on Notre&#8209;Dame VR (75M+ viewers). Founder of Film XR (Estonia/France).</p>
+              </div>
+            </div>
+            <div class="credential">
+              <div class="bar"></div>
+              <div>
+                <div class="tag">3DGS &amp; AI Pipeline R&amp;D</div>
+                <div class="title">Active R&amp;D in Gaussian Splatting, NeRFs &amp; AI video pipelines since 2024.</div>
+                <p>Hands-on research in 3D Gaussian Splatting and Volumetric Video for XR / Film / Animation. The core technology behind SIM XR's customer-environment-as-a-scene capability.</p>
+              </div>
+            </div>
+            <div class="credential">
+              <div class="bar"></div>
+              <div>
+                <div class="tag">Recognition</div>
+                <div class="title">Academy of Television Arts &amp; Sciences · Venice Biennale · Fulbright Fellow.</div>
+                <p>Member of ATAS Emerging Media Peer Group. Mentor, Venice Biennale College Cinema — Immersive (2025). Fulbright Graduate Fellow.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <span class="label-tag">Team</span>
+        <h2>Founding team.</h2>
+        <p>
+          SIM XR was founded by three operators across XR, consumer product, and 3D computer
+          vision. Direct LinkedIn profiles below.
+        </p>
+        <div class="team-grid">
+          <div class="team-card">
+            <div class="name">Georgy Molodtsov</div>
+            <div class="role">Co-Founder &amp; CEO</div>
+            <div class="loc">Paris, France</div>
+            <a class="linkedin" href="https://linkedin.com/in/gmolodtsov" target="_blank" rel="noopener noreferrer">linkedin.com/in/gmolodtsov</a>
+          </div>
+          <div class="team-card">
+            <div class="name">Mike Kats</div>
+            <div class="role">Co-Founder &amp; CPO</div>
+            <div class="loc">Los Angeles, USA</div>
+            <a class="linkedin" href="https://www.linkedin.com/in/mikhail-kats/" target="_blank" rel="noopener noreferrer">linkedin.com/in/mikhail-kats</a>
+          </div>
+          <div class="team-card">
+            <div class="name">Mikhail Mokrushin</div>
+            <div class="role">Co-Founder &amp; CTO</div>
+            <div class="loc">Tel Aviv, Israel</div>
+            <a class="linkedin" href="https://www.linkedin.com/in/mokrushinm/" target="_blank" rel="noopener noreferrer">linkedin.com/in/mokrushinm</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <span class="label-tag">Programs &amp; partners</span>
+        <h2>Validated by NVIDIA and AWS.</h2>
+        <p>
+          SIM XR is a member of the <strong>NVIDIA Inception Program</strong> (since April
+          2026) — the technical-validation startup network for the broader NVIDIA ecosystem,
+          aligned with our Isaac Sim 6 + CloudXR stack. We are also an <strong>AWS Activate
+          Member</strong> via NVIDIA Inception Global, running the production simulation
+          stack on AWS EC2 GPU instances in eu-north-1.
+        </p>
+        <div class="partners">
+          <img src="/images/partner-badges-white.png" alt="NVIDIA Inception Member · Powered by AWS Activate Member" />
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <span class="label-tag">Reach the team</span>
+        <h2>Get in touch.</h2>
+        <p>
+          Robotics teams that need demonstration data, engineers and researchers who want to
+          collaborate, and program partners: <a href="/#contact">request early access via the
+          main page</a>, or email <a href="mailto:gm@simxr.tech">gm@simxr.tech</a>.
+        </p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="row">
+        <a href="/" class="wordmark-w">SIM <span>XR.</span></a>
+        <div class="links">
+          <a href="/">Home</a>
+          <a href="/about">About</a>
+          <a href="/#contact">Contact</a>
+          <a href="https://simxr.app">simxr.app</a>
+        </div>
+      </div>
+      <div class="bottom">
+        <span>© 2026 SIM XR. The training layer for Physical AI.</span>
+        <span>California · Paris · Tel Aviv</span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

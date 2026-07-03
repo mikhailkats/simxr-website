@@ -268,6 +268,7 @@ export default function Home() {
             { label: "Demo", href: "#demo" },
             { label: "How It Works", href: "#how-it-works" },
             { label: "Founder", href: "#founder" },
+            { label: "About", href: "/about" },
           ].map((item) => (
             <a
               key={item.label}
@@ -828,6 +829,7 @@ export default function Home() {
                 COMPANY
               </div>
               <ul style={{ listStyle: "none", padding: 0, margin: 0, fontSize: "0.88rem", lineHeight: 1.9 }}>
+                <li><a href="/about" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>About</a></li>
                 <li><a href="#founder" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>Founder</a></li>
                 <li><a href="#contact" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>Contact</a></li>
                 <li><a href="mailto:gm@simxr.tech" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>gm@simxr.tech</a></li>

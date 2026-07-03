@@ -1,37 +1,35 @@
-# simxr-operator — public landing (deployed)
+# operator — public landing
 
-Live: https://simxr-operator.netlify.app
+Live: **https://simxr.tech/operator/**
 
-This is the **public** branch of the operator product. The full prototype (with working dashboard / task / session / earnings views) lives in `../operator-app/` and stays unpublished.
+Part of the main `simxr-website` repo. The site deploys from GitHub (`main`) to the
+Netlify project **`simxr-tech`** (slug has a hyphen; `simxr.tech` is the domain). The old
+standalone `simxr-operator.netlify.app` (project `simxr-operator`, form `operator-application`)
+is **deprecated** — don't use it. The full cockpit prototype (dashboard / task / session /
+earnings views) lives in `../operator-app/` and stays unpublished.
 
 ## What's here
 
-- `index.html` — public landing. CTAs lead to the in-page application form, not into the cockpit. Quest 3 and Vision Pro mention is for context only.
-- `app.html` — operator cockpit prototype, accessible at `/app.html` by direct URL only (no link from the landing). Used for internal demos and partner walk-throughs.
-- `thanks.html` — post-application confirmation page.
-- `images/` — drop hero / robot / scene illustrations here, reference as `images/<name>.<ext>` from `index.html`.
+- `index.html` — public landing. CTAs lead to the in-page waitlist form, not into the cockpit. Quest 3 / Vision Pro mention is for context only.
+- `app.html` — operator cockpit prototype, accessible at `/app.html` by direct URL only (no link from the landing). Internal demos / partner walk-throughs.
+- `thanks.html` — post-submission confirmation page. Reached via the form action `/operator/thanks` (rewritten to `thanks.html` in `netlify.toml`).
+- `images/` — hero / robot / scene illustrations, referenced as `/operator/images/<name>.<ext>`.
 
-## Application form
+## Waitlist form
 
-The form on `/#apply` is a Netlify Form (`name="operator-application"`). On first deploy, Netlify auto-detects it. Submissions land in:
+The form is a Netlify Form **`name="operator-waitlist"`** (NOT `operator-application` — that was the old landing). Netlify auto-detects it from the published HTML. Fields: `name`, `email`, `headsets[]`, `location`, `vr_experience`, `acknowledged`. Submissions land in:
 
-1. **Netlify dashboard** → Site → Forms → operator-application.
-2. **Email notifications** to `mk@simxr.tech` (and any other addresses) — configured in Netlify dashboard → Site → Forms → Form notifications → Add notification → Email.
-
-Adding the email notification is a one-time, one-minute step in the Netlify UI. Until it's added, submissions still record in the dashboard but no email goes out.
+1. **Netlify dashboard** → project `simxr-tech` → Forms → `operator-waitlist`. Direct inbox: `https://app.netlify.com/projects/simxr-tech/forms/69f28688f28d7a0008d44088`.
+2. **Email notification** to `mk@simxr.tech` (configured in Netlify → Forms → Form notifications). This is live and correct.
+3. **Confirmation email to the applicant** — the Netlify Function `../../netlify/functions/submission-created.mjs` listens for `operator-waitlist` submissions and sends a confirmation via Resend (From `SIM XR <welcome@simxr.app>`, Reply-To `mk@simxr.tech`). Copy + setup notes: `06_outreach/operator_waitlist_confirmation_email_2026-05-12.md` in the project root.
 
 ## Deploy
 
-See `../DEPLOY.md`. Short version:
-
-```bash
-cd ~/Documents/Claude/Projects/Sim\ XR/web/operator
-netlify deploy --prod --dir=.
-```
+Deploys automatically on push to `main` (GitHub → Netlify project `simxr-tech`). Build config: `netlify.toml` at repo root (`pnpm run build:scenes-fallback && pnpm vite build`, publish `dist/public`). No manual `netlify deploy` from this folder.
 
 ## Why two folders
 
 - `operator-app/` — design fidelity. Everything wired, dashboards working, task picker visible. Where we iterate on what the cockpit *should* look like.
-- `web/operator/` — what we want public eyeballs on right now. Subset of the prototype, simpler, with a real apply form and no silent doorway into the cockpit.
+- `client/public/operator/` (this folder) — what we want public eyeballs on right now. Subset of the prototype, simpler, with a real waitlist form and no silent doorway into the cockpit.
 
 When auth lands, the two collapse back into one product.
