@@ -218,8 +218,41 @@
     }
     .get-card ul li strong { color: var(--navy); font-weight: 600; }
 
+    /* ── SIMREADY EXPLAINER ── */
+    .simready-explainer {
+      margin-top: 2.5rem;
+      display: grid; grid-template-columns: 1fr 1.15fr; gap: 2.5rem;
+      align-items: center;
+      padding: 2rem;
+      background: var(--gray-light);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    @media (max-width: 820px) { .simready-explainer { grid-template-columns: 1fr; gap: 1.5rem; } }
+    .simready-explainer h3 { font-size: 0.78rem; }
+    .simready-explainer p { font-size: 0.95rem; }
+    .simready-figure { margin: 0; }
+    .simready-figure img {
+      display: block; width: 100%; height: auto;
+      border: 1px solid var(--border); border-radius: 10px;
+      background: var(--white);
+    }
+    .simready-figure figcaption {
+      display: flex; justify-content: space-between;
+      margin-top: 0.6rem; padding: 0 0.2rem;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.68rem;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray);
+    }
+    .simready-figure figcaption span:last-child { color: var(--blue); }
+
     /* ── PIPELINE ── */
-    .pipe-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-top: 2rem; }
+    .pipeline-strip { margin: 2rem 0 0; }
+    .pipeline-strip img {
+      display: block; width: 100%; height: auto;
+      border: 1px solid var(--border); border-radius: 12px;
+      background: var(--white);
+    }
+    .pipe-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-top: 1.25rem; }
     @media (max-width: 900px) { .pipe-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 560px) { .pipe-grid { grid-template-columns: 1fr; } }
     .pipe-card {
@@ -596,6 +629,32 @@
             </ul>
           </div>
         </div>
+
+        <div class="simready-explainer">
+          <div class="simready-text">
+            <h3>What &ldquo;SimReady&rdquo; means</h3>
+            <p>
+              A regular 3D model &mdash; stock or AI-generated &mdash; is geometry and textures:
+              it renders, but it doesn't behave. A <strong>SimReady asset</strong> adds what a
+              physics engine needs: watertight collision meshes, mass and inertia, friction,
+              physical materials. It's NVIDIA's standard for assets that can be dropped into a
+              simulator and act like the real object.
+            </p>
+            <p style="margin-bottom:0;">
+              Our twins meet that bar &mdash; with the physics values <strong>measured from the
+              physical unit</strong> in the box, not estimated.
+            </p>
+          </div>
+          <figure class="simready-figure">
+            <img src="/packs/images/simready-explainer.webp"
+                 alt="The same ceramic mug shown twice: on the left as a plain 3D render, on the right inside a semi-transparent blue convex collision hull with a center-of-mass marker and contact points on a grid floor"
+                 width="1672" height="941" loading="lazy" />
+            <figcaption>
+              <span>Looks right</span>
+              <span>Behaves right</span>
+            </figcaption>
+          </figure>
+        </div>
       </div>
     </section>
 
@@ -609,6 +668,11 @@
           scene work &mdash; applied at object level, with a validation pass in Isaac&nbsp;Sim
           before anything ships.
         </p>
+        <figure class="pipeline-strip">
+          <img src="/packs/images/pipeline-strip.webp"
+               alt="The same ceramic mug in four stages left to right: a photograph, a sparse blue point cloud, a gray mesh with blue wireframe, and a finished render standing on a simulation grid floor"
+               width="1916" height="821" loading="lazy" />
+        </figure>
         <div class="pipe-grid">
           <div class="pipe-card">
             <div class="step">01</div>
