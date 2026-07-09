@@ -1,0 +1,895 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VR Teleoperation Network — SIM XR | Hire vetted robot operators, on contract or in-house</title>
+  <meta name="description" content="SIM XR runs a network of vetted VR teleoperators and the full chain around them. Recruit operators in-house, embed them on contract, or hand us the whole data collection program. One entry point for everything robot teleoperation." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://simxr.tech/network/" />
+  <meta property="og:title" content="VR Teleoperation Network — SIM XR" />
+  <meta property="og:description" content="Vetted VR teleoperators plus the full chain around them. Recruit in-house, embed on contract, or hand us the whole program. One entry point for everything robot teleoperation." />
+  <meta property="og:url" content="https://simxr.tech/network/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://simxr.tech/network/images/og-network.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" type="image/svg+xml" href="/favicon-tech.svg" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --blue: #0057FF;
+      --navy: #0B0F1A;
+      --gray: #6B7280;
+      --gray-light: #F5F6F8;
+      --border: #E5E7EB;
+      --white: #FFFFFF;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      color: var(--navy);
+      background: var(--white);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.6;
+    }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+    .label-tag {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gray);
+      padding: 0.35rem 0.7rem;
+      background: var(--gray-light);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+
+    /* ── NAV ── */
+    nav.topnav {
+      position: sticky; top: 0; z-index: 50;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0 2.5rem; height: 60px;
+      background: rgba(255,255,255,0.96);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+    }
+    .wordmark {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700; font-size: 1.15rem;
+      color: var(--navy); letter-spacing: -0.02em;
+      text-decoration: none;
+    }
+    .wordmark span { color: var(--blue); }
+    nav.topnav .links { display: flex; gap: 2rem; }
+    nav.topnav .links a {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.82rem; font-weight: 500;
+      color: var(--gray); text-decoration: none;
+      letter-spacing: 0.01em;
+    }
+    nav.topnav .links a:hover { color: var(--navy); }
+    nav.topnav .cta {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600; font-size: 0.82rem;
+      color: var(--white); background: var(--navy);
+      padding: 0.45rem 1.1rem; border-radius: 6px;
+      text-decoration: none; letter-spacing: 0.02em;
+    }
+    nav.topnav .cta:hover { text-decoration: none; opacity: 0.9; }
+    @media (max-width: 640px) { nav.topnav .links { display: none; } }
+
+    /* ── SECTIONS ── */
+    section { padding: 80px 0; border-top: 1px solid var(--border); }
+    section:first-of-type { border-top: none; padding-top: 60px; }
+    h1 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 1.1; margin: 0.75rem 0 1.25rem;
+      color: var(--navy); font-weight: 700;
+      letter-spacing: -0.02em;
+      max-width: 800px;
+    }
+    h1 .accent { color: var(--blue); }
+    h2 {
+      font-size: clamp(1.5rem, 3vw, 2.2rem);
+      line-height: 1.15; margin: 0.75rem 0 1.25rem;
+      color: var(--navy); font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.78rem; font-weight: 600;
+      color: var(--blue); letter-spacing: 0.1em;
+      text-transform: uppercase; margin: 0 0 0.6rem;
+    }
+    p { color: var(--gray); font-size: 1rem; line-height: 1.7; margin: 0 0 1rem; max-width: 720px; }
+    p strong { color: var(--navy); font-weight: 600; }
+
+    .btn-primary {
+      display: inline-block;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600; font-size: 0.95rem;
+      color: var(--white); background: var(--blue);
+      padding: 0.8rem 1.7rem; border-radius: 8px;
+      text-decoration: none; letter-spacing: 0.01em;
+      border: none; cursor: pointer;
+      transition: background .15s ease, transform .05s ease;
+    }
+    .btn-primary:hover { background: #1a6dff; text-decoration: none; }
+    .btn-primary:active { background: #003ACC; transform: translateY(1px); }
+    .btn-ghost {
+      display: inline-block;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600; font-size: 0.95rem;
+      color: var(--navy); background: var(--white);
+      padding: 0.8rem 1.7rem; border-radius: 8px;
+      text-decoration: none; letter-spacing: 0.01em;
+      border: 1px solid var(--border); cursor: pointer;
+    }
+    .btn-ghost:hover { border-color: var(--navy); text-decoration: none; }
+    .hero-ctas { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.75rem; }
+
+    /* ── HERO chips + badges ── */
+    .chip-row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 2.5rem; }
+    .chip {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+      color: var(--gray); letter-spacing: 0.05em;
+      padding: 0.4rem 0.75rem;
+      border: 1px solid var(--border); border-radius: 999px;
+      background: var(--gray-light);
+      display: inline-flex; align-items: center; gap: 0.45rem;
+    }
+    .chip::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--blue); }
+    .hero-badges { margin-top: 2.25rem; display: flex; align-items: center; gap: 1rem; }
+    .hero-badges img { height: 44px; width: auto; display: block; }
+    .hero-visual {
+      margin-top: 3rem;
+      border: 1px solid var(--border); border-radius: 14px;
+      overflow: hidden; background: var(--gray-light);
+    }
+    .hero-visual img { display: block; width: 100%; height: auto; }
+    .visual-caption {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+      color: var(--gray); letter-spacing: 0.05em; margin-top: 0.75rem;
+    }
+
+    /* ── PAIN CARDS ── */
+    .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 2rem; }
+    @media (max-width: 768px) { .card-grid { grid-template-columns: 1fr; } }
+    .pain-card {
+      padding: 1.75rem;
+      background: var(--gray-light);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .pain-card h3 { color: var(--navy); font-size: 0.7rem; }
+    .pain-card .big { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.05rem; color: var(--navy); margin-bottom: 0.4rem; line-height: 1.3; }
+    .pain-card p { font-size: 0.9rem; margin-bottom: 0; }
+
+    /* ── ENGAGEMENT MODELS ── */
+    .model-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 2rem; }
+    @media (max-width: 820px) { .model-grid { grid-template-columns: 1fr; } }
+    .model-card {
+      padding: 2rem;
+      border: 1px solid var(--border); border-radius: 12px;
+      background: var(--white);
+      display: flex; flex-direction: column;
+    }
+    .model-card.featured { border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue); }
+    .model-card .kicker {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+      color: var(--blue); letter-spacing: 0.12em; text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+    .model-card .title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.25rem; color: var(--navy); margin-bottom: 0.6rem; }
+    .model-card p { font-size: 0.92rem; flex: 1; }
+    .model-card .terms {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+      color: var(--gray); letter-spacing: 0.04em;
+      margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border);
+    }
+    .models-note { margin-top: 1.75rem; }
+
+    /* ── SERVICE LADDER ── */
+    .get-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 2rem; }
+    @media (max-width: 768px) { .get-grid { grid-template-columns: 1fr; } }
+    .get-card {
+      padding: 2rem;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--white);
+    }
+    .get-card.tinted { background: var(--gray-light); }
+    .get-card .num {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+      color: var(--blue); letter-spacing: 0.12em; margin-bottom: 0.75rem;
+    }
+    .get-card .title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.25rem; color: var(--navy); margin-bottom: 0.75rem; }
+    .get-card p { font-size: 0.92rem; }
+    .get-card ul { list-style: none; padding: 0; margin: 1rem 0 0; }
+    .get-card ul li {
+      font-size: 0.88rem; color: var(--gray); padding: 0.45rem 0 0.45rem 1.4rem;
+      border-top: 1px solid var(--border); position: relative; line-height: 1.55;
+    }
+    .get-card ul li::before {
+      content: ''; position: absolute; left: 0; top: 0.95rem;
+      width: 12px; height: 12px;
+      background: no-repeat center / contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230057FF' stroke-width='3'%3E%3Cpath d='M20 6L9 17l-5-5'/%3E%3C/svg%3E");
+    }
+
+    /* ── HOW IT WORKS ── */
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 2rem; }
+    @media (max-width: 768px) { .steps { grid-template-columns: 1fr; } }
+    .step {
+      padding: 1.75rem;
+      background: var(--gray-light); border: 1px solid var(--border); border-radius: 10px;
+    }
+    .step .snum {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+      color: var(--blue); letter-spacing: 0.12em; margin-bottom: 0.75rem;
+    }
+    .step .title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--navy); margin-bottom: 0.5rem; }
+    .step p { font-size: 0.9rem; margin-bottom: 0; }
+
+    /* ── PIPELINE STRIP (why us) ── */
+    .whyus { background: var(--navy); border-top: none; }
+    .whyus h2 { color: var(--white); }
+    .whyus p { color: rgba(255,255,255,0.65); }
+    .whyus .label-tag { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.6); }
+    .pipeline {
+      display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
+      margin: 2.25rem 0 1rem;
+    }
+    .pipe-step {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+      color: rgba(255,255,255,0.85); letter-spacing: 0.04em;
+      padding: 0.5rem 0.8rem;
+      border: 1px solid rgba(255,255,255,0.18); border-radius: 6px;
+      background: rgba(255,255,255,0.04);
+      white-space: nowrap;
+    }
+    .pipe-arrow { color: rgba(255,255,255,0.35); font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
+    .pipe-caption {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+      color: rgba(255,255,255,0.4); letter-spacing: 0.05em; margin-bottom: 2rem;
+    }
+    .whyus .partners-strip { margin-top: 2.5rem; }
+    .whyus .partners-strip img { height: 56px; width: auto; display: block; }
+    .net-visual {
+      margin-top: 2.5rem;
+      border: 1px solid rgba(255,255,255,0.14); border-radius: 12px;
+      overflow: hidden;
+    }
+    .net-visual img { display: block; width: 100%; height: auto; }
+    .whyus .visual-caption { color: rgba(255,255,255,0.4); }
+
+    /* ── CASE ── */
+    .case-wrap {
+      margin-top: 2rem;
+      border: 1px solid var(--border); border-radius: 14px;
+      overflow: hidden;
+      display: grid; grid-template-columns: 1.2fr 1fr;
+    }
+    @media (max-width: 820px) { .case-wrap { grid-template-columns: 1fr; } }
+    .case-main { padding: 2.25rem; }
+    .case-main .kicker {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+      color: var(--blue); letter-spacing: 0.12em; text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+    .case-main .title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.4rem; color: var(--navy); margin-bottom: 0.75rem; line-height: 1.25; }
+    .case-main p { font-size: 0.95rem; }
+    .case-side {
+      background: var(--gray-light); border-left: 1px solid var(--border);
+      padding: 2.25rem; display: flex; flex-direction: column; justify-content: center; gap: 1.5rem;
+    }
+    @media (max-width: 820px) { .case-side { border-left: none; border-top: 1px solid var(--border); } }
+    .case-stat .val { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.9rem; color: var(--navy); line-height: 1.1; }
+    .case-stat .val span { color: var(--blue); }
+    .case-stat .lab {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+      color: var(--gray); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 0.25rem;
+    }
+    .case-foot {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--gray);
+      letter-spacing: 0.03em; margin-top: 1.5rem;
+    }
+
+    /* ── ROLES ── */
+    .roles-wrap { display: grid; grid-template-columns: 0.75fr 1.25fr; gap: 2rem; margin-top: 2rem; align-items: stretch; }
+    @media (max-width: 820px) { .roles-wrap { grid-template-columns: 1fr; } }
+    .roles-photo {
+      border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+      min-height: 320px;
+    }
+    .roles-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .role-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+    .role-card {
+      padding: 2rem;
+      border: 1px solid var(--border); border-radius: 12px;
+      background: var(--white);
+      display: flex; flex-direction: column;
+    }
+    .role-card .meta {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+      color: var(--gray); letter-spacing: 0.08em; text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+    .role-card .title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.2rem; color: var(--navy); margin-bottom: 0.6rem; }
+    .role-card p { font-size: 0.92rem; flex: 1; }
+    .role-card .apply {
+      font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 0.88rem;
+      color: var(--blue); margin-top: 0.75rem; display: inline-block;
+    }
+    .roles-note { margin-top: 1.75rem; }
+
+    /* ── WHO ── */
+    .who-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-top: 2rem; }
+    @media (max-width: 768px) { .who-grid { grid-template-columns: 1fr; } }
+    .who-card {
+      padding: 1.75rem;
+      border: 1px solid var(--border); border-radius: 10px;
+      background: var(--gray-light);
+    }
+    .who-card .title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.05rem; color: var(--navy); margin-bottom: 0.5rem; }
+    .who-card p { font-size: 0.9rem; margin-bottom: 0; }
+
+    /* ── FAQ ── */
+    .faq-list { margin-top: 2rem; max-width: 800px; }
+    .faq-item { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 0.75rem; background: var(--white); }
+    .faq-item summary {
+      cursor: pointer; list-style: none;
+      padding: 1.1rem 1.4rem;
+      font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 0.98rem;
+      color: var(--navy);
+      display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary::after {
+      content: '+'; font-family: 'JetBrains Mono', monospace; color: var(--blue);
+      font-size: 1.1rem; flex-shrink: 0;
+    }
+    .faq-item[open] summary::after { content: '–'; }
+    .faq-item .answer { padding: 0 1.4rem 1.2rem; }
+    .faq-item .answer p { font-size: 0.92rem; margin-bottom: 0; }
+
+    /* ── INQUIRY ── */
+    .inquiry-wrap { display: grid; grid-template-columns: 1fr 1.1fr; gap: 3.5rem; margin-top: 2rem; align-items: start; }
+    @media (max-width: 820px) { .inquiry-wrap { grid-template-columns: 1fr; gap: 2rem; } }
+    form.inquiry { display: flex; flex-direction: column; gap: 1.1rem; }
+    .field label {
+      display: block;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray);
+      margin-bottom: 0.5rem;
+    }
+    .field label .opt { text-transform: none; letter-spacing: normal; color: #9CA3AF; }
+    .field input, .field textarea, .field select {
+      width: 100%;
+      font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: var(--navy);
+      padding: 0.7rem 0.9rem;
+      background: var(--white);
+      border: 1px solid var(--border); border-radius: 8px;
+      transition: border-color .15s ease;
+    }
+    .field textarea { resize: vertical; min-height: 76px; }
+    .field input:focus, .field textarea:focus, .field select:focus { outline: none; border-color: var(--blue); }
+    .form-note { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--gray); letter-spacing: 0.03em; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--navy); color: rgba(255,255,255,0.7);
+      padding: 50px 0 30px; margin-top: 60px;
+    }
+    footer .container { padding: 0 2rem; }
+    footer .row {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1rem;
+    }
+    footer .wordmark-w {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700; font-size: 1.05rem;
+      color: rgba(255,255,255,0.95); letter-spacing: -0.02em;
+      text-decoration: none;
+    }
+    footer .wordmark-w span { color: var(--blue); }
+    footer .links a { color: rgba(255,255,255,0.7); margin-left: 1.5rem; font-size: 0.88rem; }
+    footer .bottom { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.78rem; color: rgba(255,255,255,0.45); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+  </style>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Do operators work remotely or on-site?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Remote-first. Operators connect from their own VR headsets through our low-latency streaming stack into your simulator or robot. For programs that require physical presence — hardware calibration, on-premises robots, secure facilities — we recruit and place operators on-site." }
+      },
+      {
+        "@type": "Question",
+        "name": "Can we hire your operators in-house?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. Recruit-to-hire is one of our three engagement models: we source, vet, and certify operators against your task, you interview the shortlist and hire them as your employees. We charge a placement fee and stay available for training support." }
+      },
+      {
+        "@type": "Question",
+        "name": "Whose hardware and software stack do you use?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Either. Operators are certified per platform — we train them on your teleop interface and hardware if you have one, or run the whole program on our own stack: consumer VR headsets streaming into GPU-cloud simulation, with 3D Gaussian Splatting reconstruction of your environment when the task needs it." }
+      },
+      {
+        "@type": "Question",
+        "name": "What data formats do you deliver?",
+        "acceptedAnswer": { "@type": "Answer", "text": "HDF5 and LeRobot-ready formats today, with delivery shaped to your training pipeline — episode structure, sensor sync, and pass/fail QA criteria are agreed before collection starts, not after." }
+      },
+      {
+        "@type": "Question",
+        "name": "How does pricing work?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Depends on the model: placement fee for recruit-to-hire, hourly or monthly rates for embedded contract operators, per-episode or per-program pricing for managed data collection. Every engagement starts with a scoped trial batch so both sides can verify quality before committing." }
+      },
+      {
+        "@type": "Question",
+        "name": "How fast can we start?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Scoping starts as soon as you describe the task. First trial sessions run once operators are certified on your specific setup — for tasks on our own stack that is typically days, not months." }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+
+  <nav class="topnav">
+    <a href="/" class="wordmark">SIM <span>XR.</span></a>
+    <div class="links">
+      <a href="#models">Ways to Hire</a>
+      <a href="#services">Services</a>
+      <a href="#how">How It Works</a>
+      <a href="#roles">Open Roles</a>
+      <a href="/operator/">For Operators</a>
+    </div>
+    <a href="#inquiry" class="cta">Start a project</a>
+  </nav>
+
+  <main>
+
+    <!-- ============ HERO ============ -->
+    <section>
+      <div class="container">
+        <span class="label-tag">Operator Network &middot; VR Teleoperation</span>
+        <h1>Every robot still needs a human.<br /><span class="accent">We run the network.</span></h1>
+        <p>
+          SIM XR operates a network of vetted VR teleoperators &mdash; and the full chain
+          around them: recruiting, certification, teleop infrastructure, quality control,
+          and dataset delivery. <strong>Hire operators in-house, embed them on contract,
+          or hand us the whole program.</strong> If your task involves a human driving a
+          robot, it starts here.
+        </p>
+        <div class="hero-ctas">
+          <a href="#inquiry" class="btn-primary">Start a project</a>
+          <a href="#roles" class="btn-ghost">Join as an operator</a>
+        </div>
+        <div class="chip-row">
+          <span class="chip">Vetted &amp; certified operators</span>
+          <span class="chip">Full chain: headset &rarr; policy</span>
+          <span class="chip">HDF5 / LeRobot delivery</span>
+          <span class="chip">Remote-first, worldwide</span>
+        </div>
+        <div class="hero-badges">
+          <img src="/images/partner-badges-white.png" alt="NVIDIA Inception Member · AWS Activate Member" />
+        </div>
+        <div class="hero-visual">
+          <img src="/network/images/hero-teleop.webp" alt="A VR teleoperator at a home desk and a humanoid robot in a lab mirroring the same manipulation gesture, connected by a data link" width="1600" height="900" />
+        </div>
+        <div class="visual-caption">One operator. One robot. One chain in between &mdash; ours.</div>
+      </div>
+    </section>
+
+    <!-- ============ WHY NOW ============ -->
+    <section>
+      <div class="container">
+        <span class="label-tag">The moment</span>
+        <h2>Teleoperation became the most important job in robotics.</h2>
+        <p>
+          Teleoperated demonstrations are now the primary training input for
+          vision-language-action models &mdash; and the fastest-growing job category in
+          physical AI. Robot companies are hiring operators for data collection,
+          pilot deployments, and human-in-the-loop recovery. The vacancy is easy
+          to post. Everything after that is the hard part.
+        </p>
+        <div class="card-grid">
+          <div class="pain-card">
+            <h3>Pain 01</h3>
+            <div class="big">Operator quality is data quality</div>
+            <p>An untrained operator produces interface-adaptation noise, not task demonstrations. Sourcing, testing, certifying, and coaching operators is a discipline of its own &mdash; and it's where most collection programs quietly fail.</p>
+          </div>
+          <div class="pain-card">
+            <h3>Pain 02</h3>
+            <div class="big">The infrastructure tax</div>
+            <p>Low-latency VR streaming, headset fleets, episode recording, sensor sync, format conversion &mdash; months of engineering before the first useful demonstration, none of it your core roadmap.</p>
+          </div>
+          <div class="pain-card">
+            <h3>Pain 03</h3>
+            <div class="big">Scale without drift</div>
+            <p>Scenario diversity, in-session QA, and re-collection policy decide whether ten thousand episodes make your model better &mdash; or teach it the same easy case ten thousand times.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ENGAGEMENT MODELS ============ -->
+    <section id="models">
+      <div class="container">
+        <span class="label-tag">Ways to hire us</span>
+        <h2>Recruit them. Embed them. Or hand us the keys.</h2>
+        <p>
+          Work with the network the way you'd work with any specialist talent partner
+          &mdash; except we also built the stack your operators will run on. Three models,
+          freely mixed:
+        </p>
+        <div class="model-grid">
+          <div class="model-card">
+            <div class="kicker">Model A &middot; Recruit-to-hire</div>
+            <div class="title">Your team, our vetting</div>
+            <p>We source, test, and certify operators against your actual task &mdash; you interview the shortlist and hire them as your own employees. You get people who passed a real teleop trial, not a resume screen.</p>
+            <div class="terms">Placement fee &middot; training support included</div>
+          </div>
+          <div class="model-card featured">
+            <div class="kicker">Model B &middot; Embedded operators</div>
+            <div class="title">Our operators, your program</div>
+            <p>Certified operators from the network work inside your team &mdash; your stack, your schedule, your tasks &mdash; while we handle sourcing, certification, coaching, and backfill. Scale hours up and down with your training runs.</p>
+            <div class="terms">Hourly or monthly &middot; scale up &amp; down</div>
+          </div>
+          <div class="model-card">
+            <div class="kicker">Model C &middot; Managed program</div>
+            <div class="title">You get datasets, not headcount</div>
+            <p>Hand us the task. We run the whole chain &mdash; operators, infrastructure, scenario scripting, QA &mdash; and deliver training-ready demonstration data shaped to your pipeline.</p>
+            <div class="terms">Per-episode or per-program</div>
+          </div>
+        </div>
+        <p class="models-note form-note">Not sure which fits? Every engagement starts with the same scoped trial batch &mdash; decide after you've seen the data.</p>
+      </div>
+    </section>
+
+    <!-- ============ SERVICES ============ -->
+    <section id="services">
+      <div class="container">
+        <span class="label-tag">What we cover</span>
+        <h2>One entry point. The whole chain.</h2>
+        <p>
+          Whichever model you pick, the same capabilities sit underneath. Take the
+          whole chain or the one piece you're missing &mdash; <strong>bring us a task where
+          you need a human in the loop</strong>, ideally your scene and your assets, and
+          we'll scope it.
+        </p>
+        <div class="get-grid">
+          <div class="get-card tinted">
+            <div class="num">01 / STAFFING</div>
+            <div class="title">Operator staffing</div>
+            <p>Vetted VR teleoperators from our network, on your stack or ours. Remote-first, trialed on your task before they touch production collection.</p>
+            <ul>
+              <li>Platform-specific certification before first session</li>
+              <li>Trial batch on your task, then scale</li>
+              <li>Recruit-to-hire, embedded, or managed</li>
+            </ul>
+          </div>
+          <div class="get-card">
+            <div class="num">02 / DATA</div>
+            <div class="title">Managed data collection</div>
+            <p>The full program: scenario scripting, collection, in-session QA, and delivery shaped to your training pipeline &mdash; not a folder of raw recordings.</p>
+            <ul>
+              <li>Scenario &amp; diversity engineering up front</li>
+              <li>Episode-level QA with defined pass/fail criteria</li>
+              <li>HDF5 / LeRobot-ready delivery formats</li>
+            </ul>
+          </div>
+          <div class="get-card">
+            <div class="num">03 / TRAINING</div>
+            <div class="title">Operator training &amp; certification</div>
+            <p>We design qualification tests and train operators &mdash; ours or your in-house hires &mdash; on your hardware, your interface, your task list.</p>
+            <ul>
+              <li>Task-specific qualification criteria</li>
+              <li>Structured ramp: sim reps before real hardware</li>
+              <li>Ongoing quality review, not one-time onboarding</li>
+            </ul>
+          </div>
+          <div class="get-card tinted">
+            <div class="num">04 / INFRASTRUCTURE</div>
+            <div class="title">Teleop infrastructure</div>
+            <p>Our own stack, built and operated in-house: consumer VR headsets streaming into GPU-cloud simulation, with photoreal scene reconstruction when the task needs your environment.</p>
+            <ul>
+              <li>Low-latency VR streaming to Quest-class headsets</li>
+              <li>Simulated environments in NVIDIA Isaac Sim / Isaac Lab</li>
+              <li>3D Gaussian Splatting reconstruction of real scenes</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ HOW IT WORKS ============ -->
+    <section id="how">
+      <div class="container">
+        <span class="label-tag">How it works</span>
+        <h2>Task to trial in three steps.</h2>
+        <div class="steps">
+          <div class="step">
+            <div class="snum">STEP 01</div>
+            <div class="title">Scope the task</div>
+            <p>Tell us what the human needs to do &mdash; robot, task, environment, target volume. We come back with a concrete plan: operator profile, setup, timeline, and price for a trial batch.</p>
+          </div>
+          <div class="step">
+            <div class="snum">STEP 02</div>
+            <div class="title">Run a trial batch</div>
+            <p>Operators certified on your task run a small paid pilot. You review the episodes against agreed pass/fail criteria &mdash; quality is proven on your data, not promised on a call.</p>
+          </div>
+          <div class="step">
+            <div class="snum">STEP 03</div>
+            <div class="title">Scale your way</div>
+            <p>Keep the operators embedded on contract, hire them in-house, or hand us the full program. The trial tells both sides exactly what scaling will look like.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ WHY US ============ -->
+    <section class="whyus">
+      <div class="container">
+        <span class="label-tag">Why us</span>
+        <h2>We've done every job we staff.</h2>
+        <p>
+          We don't resell hours. We built the loop ourselves and run it in-house
+          &mdash; from a consumer headset on an operator's desk to an evaluated robot
+          policy &mdash; so when we place an operator or scope a program, the judgment
+          comes from running the chain, not from a staffing playbook.
+        </p>
+        <div class="pipeline">
+          <span class="pipe-step">Headset</span><span class="pipe-arrow">&rarr;</span>
+          <span class="pipe-step">VR streaming</span><span class="pipe-arrow">&rarr;</span>
+          <span class="pipe-step">Sim / robot</span><span class="pipe-arrow">&rarr;</span>
+          <span class="pipe-step">Recording</span><span class="pipe-arrow">&rarr;</span>
+          <span class="pipe-step">QA</span><span class="pipe-arrow">&rarr;</span>
+          <span class="pipe-step">Dataset</span><span class="pipe-arrow">&rarr;</span>
+          <span class="pipe-step">Policy fine-tune</span><span class="pipe-arrow">&rarr;</span>
+          <span class="pipe-step">Evaluation</span>
+        </div>
+        <div class="pipe-caption">Every step above runs in-house today &mdash; end to end.</div>
+        <p>
+          Consumer Quest headsets stream into our GPU-cloud simulation over our own
+          low-latency VR stack. We reconstruct real environments as 3D Gaussian
+          Splatting scenes, capture demonstrations, prepare datasets, fine-tune
+          vision-language-action policies, and evaluate them against task success
+          &mdash; the same loop your program needs, already running.
+        </p>
+        <div class="net-visual">
+          <img src="/network/images/network-map.webp" alt="World map visualization: VR headset nodes across continents connected to a central humanoid robot hub" width="1600" height="800" loading="lazy" />
+        </div>
+        <div class="visual-caption" style="margin-top:0.75rem;">Operators connect from anywhere &mdash; the network is remote-first by design.</div>
+        <div class="partners-strip">
+          <img src="/images/partner-badges-white.png" alt="NVIDIA Inception Member · AWS Activate Member" />
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CASE ============ -->
+    <section>
+      <div class="container">
+        <span class="label-tag">Proof of work</span>
+        <h2>Case 00: we were our own first customer.</h2>
+        <div class="case-wrap">
+          <div class="case-main">
+            <div class="kicker">Internal pilot &middot; Humanoid manipulation &middot; 2026</div>
+            <div class="title">Full chain, one team: from VR teleop stack to an evaluated humanoid policy.</div>
+            <p>
+              Before offering the chain to anyone else, we ran it end to end ourselves.
+              We built a browser-to-headset teleop stack &mdash; consumer Quest headsets
+              connecting in one click to live GPU-cloud simulation scenes &mdash; and
+              reconstructed real environments as photoreal 3D Gaussian Splatting
+              scenes inside NVIDIA Isaac Sim.
+            </p>
+            <p>
+              Then we proved the training side of the loop: fine-tuned a
+              vision-language-action policy for a pick-and-place task on a humanoid
+              robot and evaluated it against strict task-success criteria &mdash; using
+              the same pipeline, QA gates, and data formats we run for customer
+              programs.
+            </p>
+            <div class="case-foot">Internal program, June 2026. Customer case studies will be published as programs complete.</div>
+          </div>
+          <div class="case-side">
+            <div class="case-stat">
+              <div class="val"><span>63%</span> task success</div>
+              <div class="lab">Evaluated policy &middot; 96 scored rollouts</div>
+            </div>
+            <div class="case-stat">
+              <div class="val">1-click</div>
+              <div class="lab">Headset &rarr; live scene connect, in browser</div>
+            </div>
+            <div class="case-stat">
+              <div class="val">8/8</div>
+              <div class="lab">Chain steps run in-house, headset to eval</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ WHO IT'S FOR ============ -->
+    <section>
+      <div class="container">
+        <span class="label-tag">Who it's for</span>
+        <h2>Anyone putting a human in the robot loop.</h2>
+        <div class="who-grid">
+          <div class="who-card">
+            <div class="title">Humanoid &amp; robot OEMs</div>
+            <p>Data collection programs and certified operators without building an ops team &mdash; scale operator hours up and down with your training runs.</p>
+          </div>
+          <div class="who-card">
+            <div class="title">Foundation model labs</div>
+            <p>Demonstration data shaped to your training pipeline: scenario diversity engineered up front, QA'd per episode, delivered in your format.</p>
+          </div>
+          <div class="who-card">
+            <div class="title">Research labs</div>
+            <p>Small, scoped collection batches with fast turnaround &mdash; enough episodes to test a hypothesis, without procurement overhead.</p>
+          </div>
+          <div class="who-card">
+            <div class="title">Fleet operators &amp; integrators</div>
+            <p>Trained remote operators for supervised autonomy, edge-case recovery, and pilot deployments where a human still closes the loop.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ OPEN ROLES ============ -->
+    <section id="roles">
+      <div class="container">
+        <span class="label-tag">Open roles</span>
+        <h2>Join the operator network.</h2>
+        <p>
+          We onboard operators continuously and staff new projects from the network
+          &mdash; early applicants get first sessions. All roles are remote and
+          project-based: you work from your own VR headset, sessions are scheduled
+          per program.
+        </p>
+        <div class="roles-wrap">
+          <div class="roles-photo">
+            <img src="/network/images/operator-home.webp" alt="A VR teleoperator working from home: standing in a living room wearing a headset, hands raised in a precise manipulation gesture" loading="lazy" />
+          </div>
+          <div class="role-grid">
+            <div class="role-card">
+              <div class="meta">Remote &middot; Project-based &middot; Own VR headset</div>
+              <div class="title">VR Teleoperator</div>
+              <p>Drive simulated and real robots through manipulation tasks from your VR headset. Sessions are recorded as training demonstrations &mdash; your skill becomes the data that teaches robots. Quest 3 or similar required; no robotics background needed, coordination and consistency are what we test for.</p>
+              <a class="apply" href="/operator/">Apply &rarr;</a>
+            </div>
+            <div class="role-card">
+              <div class="meta">Remote &middot; Project-based &middot; Experienced operators</div>
+              <div class="title">Lead Operator / QA Reviewer</div>
+              <p>Review collected episodes against pass/fail criteria, coach operators, and test-drive new task setups before they go to the network. Grows from within the network &mdash; strong teleoperators are promoted into this role.</p>
+              <a class="apply" href="/operator/">Apply &rarr;</a>
+            </div>
+          </div>
+        </div>
+        <p class="roles-note form-note">More roles open as programs scale. One application covers the whole network &mdash; we match you to projects.</p>
+      </div>
+    </section>
+
+    <!-- ============ FAQ ============ -->
+    <section>
+      <div class="container">
+        <span class="label-tag">FAQ</span>
+        <h2>The questions every program asks first.</h2>
+        <div class="faq-list">
+          <details class="faq-item">
+            <summary>Do operators work remotely or on-site?</summary>
+            <div class="answer"><p>Remote-first. Operators connect from their own VR headsets through our low-latency streaming stack into your simulator or robot. For programs that require physical presence &mdash; hardware calibration, on-premises robots, secure facilities &mdash; we recruit and place operators on-site.</p></div>
+          </details>
+          <details class="faq-item">
+            <summary>Can we hire your operators in-house?</summary>
+            <div class="answer"><p>Yes. Recruit-to-hire is one of our three engagement models: we source, vet, and certify operators against your task, you interview the shortlist and hire them as your employees. We charge a placement fee and stay available for training support.</p></div>
+          </details>
+          <details class="faq-item">
+            <summary>Whose hardware and software stack do you use?</summary>
+            <div class="answer"><p>Either. Operators are certified per platform &mdash; we train them on your teleop interface and hardware if you have one, or run the whole program on our own stack: consumer VR headsets streaming into GPU-cloud simulation, with 3D Gaussian Splatting reconstruction of your environment when the task needs it.</p></div>
+          </details>
+          <details class="faq-item">
+            <summary>What data formats do you deliver?</summary>
+            <div class="answer"><p>HDF5 and LeRobot-ready formats today, with delivery shaped to your training pipeline &mdash; episode structure, sensor sync, and pass/fail QA criteria are agreed before collection starts, not after.</p></div>
+          </details>
+          <details class="faq-item">
+            <summary>How does pricing work?</summary>
+            <div class="answer"><p>Depends on the model: placement fee for recruit-to-hire, hourly or monthly rates for embedded contract operators, per-episode or per-program pricing for managed data collection. Every engagement starts with a scoped trial batch so both sides can verify quality before committing.</p></div>
+          </details>
+          <details class="faq-item">
+            <summary>How fast can we start?</summary>
+            <div class="answer"><p>Scoping starts as soon as you describe the task. First trial sessions run once operators are certified on your specific setup &mdash; for tasks on our own stack that is typically days, not months.</p></div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ INQUIRY ============ -->
+    <section id="inquiry">
+      <div class="container">
+        <span class="label-tag">Start a project</span>
+        <h2>Tell us the task.</h2>
+        <div class="inquiry-wrap">
+          <div>
+            <p>
+              Bring us a task where you need a human in the loop &mdash; data collection,
+              pilot operations, operator hiring, or all of it. We'll come back with
+              a scoped proposal: operators, setup, timeline, and a priced trial batch.
+            </p>
+            <p class="form-note">One reply from the team. No mailing list.</p>
+          </div>
+          <form class="inquiry" name="teleop-network-inquiry" method="POST" action="/network/thanks" data-netlify="true" data-netlify-honeypot="bot-field">
+            <input type="hidden" name="form-name" value="teleop-network-inquiry" />
+            <p style="display:none;"><label>Don't fill this out: <input name="bot-field" /></label></p>
+            <div class="field">
+              <label for="f-name">Name</label>
+              <input id="f-name" name="name" required autocomplete="name" placeholder="Your name" />
+            </div>
+            <div class="field">
+              <label for="f-email">Work email</label>
+              <input id="f-email" name="email" type="email" required autocomplete="email" placeholder="you@company.example" />
+            </div>
+            <div class="field">
+              <label for="f-company">Company / lab</label>
+              <input id="f-company" name="company" required autocomplete="organization" placeholder="Team or organization" />
+            </div>
+            <div class="field">
+              <label for="f-model">How would you like to work with us? <span class="opt">(optional)</span></label>
+              <select id="f-model" name="engagement">
+                <option value="">Not sure yet — advise me</option>
+                <option value="recruit-to-hire">Recruit-to-hire — help us hire operators in-house</option>
+                <option value="embedded">Embedded operators — contract operators in our team</option>
+                <option value="managed">Managed program — deliver us the data</option>
+                <option value="training">Operator training / certification only</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="f-task">What do you need operators for? <span class="opt">(task, robot, environment)</span></label>
+              <textarea id="f-task" name="task" placeholder="e.g. bimanual pick-and-place data collection on our G1; remote recovery operators for a warehouse pilot"></textarea>
+            </div>
+            <div class="field">
+              <label for="f-scale">Timeline &amp; scale <span class="opt">(optional)</span></label>
+              <input id="f-scale" name="scale" placeholder="e.g. 2,000 episodes by September; 3 operators ongoing" />
+            </div>
+            <button type="submit" class="btn-primary">Start the conversation</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="row">
+        <a href="/" class="wordmark-w">SIM <span>XR.</span></a>
+        <div class="links">
+          <a href="/">Home</a>
+          <a href="/about">About</a>
+          <a href="/operator/">Operators</a>
+          <a href="https://simxr.app">simxr.app</a>
+        </div>
+      </div>
+      <div class="bottom">
+        <span>&copy; 2026 SIM XR. The training layer for Physical AI.</span>
+        <span>California &middot; Paris &middot; Tel Aviv</span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
