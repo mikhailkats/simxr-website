@@ -16,6 +16,7 @@
  */
 (function () {
   var LINKS = [
+    { label: "Platform", href: "/" },
     { label: "Asset Packs", href: "/packs/" },
     { label: "Hire Operators", href: "/network/" },
     { label: "For Operators", href: "/operator/" },
@@ -49,8 +50,9 @@
 
   function isActive(href) {
     var p = location.pathname;
+    if (href === "/") return p === "/" || p === "/index.html";
     if (href === "/about") return p === "/about" || p === "/about.html";
-    return p.indexOf(href.replace(/\/$/, "")) === 0 && href !== "/";
+    return p.indexOf(href.replace(/\/$/, "")) === 0;
   }
 
   function linkHtml(cls) {
