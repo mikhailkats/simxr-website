@@ -246,61 +246,32 @@ const T = {
 export default function Home() {
   useReveal();
 
+  // Unified site header — single source of truth is /site-header.js
+  // (same script the static pages use). Loaded once, renders into #sxr-header.
+  useEffect(() => {
+    const existing = document.querySelector<HTMLScriptElement>('script[src="/site-header.js"]');
+    if (existing) {
+      (window as any).__sxrRenderHeader?.();
+      return;
+    }
+    const s = document.createElement("script");
+    s.src = "/site-header.js";
+    s.defer = true;
+    s.onload = () => (window as any).__sxrRenderHeader?.();
+    document.head.appendChild(s);
+  }, []);
+
   return (
     <div style={{ background: C.white, color: C.navy, fontFamily: T.display }}>
 
-      {/* ── NAV ── */}
-      <nav
-        style={{
-          position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-          background: "rgba(255,255,255,0.92)",
-          backdropFilter: "blur(12px)",
-          borderBottom: `1px solid ${C.border}`,
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "0 2.5rem", height: "60px",
-        }}
-      >
-        <span style={{ fontFamily: T.label, fontWeight: 700, fontSize: "1.15rem", color: C.navy, letterSpacing: "-0.02em" }}>
-          SIM <span style={{ color: C.blue }}>XR.</span>
-        </span>
-        <div style={{ display: "flex", gap: "2rem" }} className="hidden md:flex">
-          {[
-            { label: "Demo", href: "#demo" },
-            { label: "How It Works", href: "#how-it-works" },
-            { label: "Asset Packs", href: "/packs/" },
-            { label: "Hire Operators", href: "/network/" },
-            { label: "For Operators", href: "/operator/" },
-            { label: "About", href: "/about" },
-          ].map((item) => (
-            <a
-              key={item.label}
-              href={item.href}
-              style={{ fontFamily: T.label, fontSize: "0.82rem", fontWeight: 500, color: C.gray, textDecoration: "none", letterSpacing: "0.01em" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = C.navy)}
-              onMouseLeave={(e) => (e.currentTarget.style.color = C.gray)}
-            >
-              {item.label}
-            </a>
-          ))}
-        </div>
-        <a
-          href="#contact"
-          style={{
-            fontFamily: T.label, fontWeight: 600, fontSize: "0.82rem",
-            color: C.white, background: C.navy,
-            padding: "0.45rem 1.1rem", borderRadius: "6px",
-            textDecoration: "none", letterSpacing: "0.02em",
-          }}
-        >
-          Contact
-        </a>
-      </nav>
+      {/* ── NAV — unified site header, rendered by /site-header.js ── */}
+      <div id="sxr-header" data-cta-label="Contact" data-cta-href="#contact" />
 
       {/* ── HERO ── */}
       <section
         id="hero"
         style={{
-          paddingTop: "120px",
+          paddingTop: "60px", /* header is sticky in-flow (60px) now, was fixed +120px padding */
           paddingBottom: "100px",
           background: C.white,
           overflow: "hidden",
