@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /connect
+Disallow: /demo
+Disallow: /v2
+Disallow: /recordings
+
+Sitemap: https://simxr.tech/sitemap.xml

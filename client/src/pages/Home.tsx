@@ -267,7 +267,9 @@ export default function Home() {
           {[
             { label: "Demo", href: "#demo" },
             { label: "How It Works", href: "#how-it-works" },
-            { label: "Founder", href: "#founder" },
+            { label: "Asset Packs", href: "/packs/" },
+            { label: "Hire Operators", href: "/network/" },
+            { label: "For Operators", href: "/operator/" },
             { label: "About", href: "/about" },
           ].map((item) => (
             <a
@@ -621,6 +623,65 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── WORK WITH US — offer teasers linking the /packs/, /network/, /operator/ landings ── */}
+      <section id="work-with-us" style={{ padding: "100px 0", background: C.white, borderTop: `1px solid ${C.border}` }}>
+        <div className="container">
+          <div className="reveal" style={{ textAlign: "center", maxWidth: "640px", margin: "0 auto 3.5rem" }}>
+            <div className="label-tag" style={{ marginBottom: "0.75rem" }}>Work With Us</div>
+            <h2 style={{ fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)", color: C.navy, lineHeight: 1.15 }}>
+              Three ways to start
+            </h2>
+            <p style={{ color: C.gray, fontSize: "1rem", maxWidth: "480px", margin: "0.75rem auto 0", lineHeight: 1.65 }}>
+              Hire trained operators, equip your lab with paired real-and-sim objects, or join the operator side yourself.
+            </p>
+          </div>
+
+          <div className="reveal" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1.5rem" }}>
+            {[
+              {
+                tag: "TELEOP NETWORK",
+                title: "Hire robot operators",
+                body: "Vetted VR teleoperators for data collection or live robot operations — on contract or placed in-house. Remote-first, our streaming stack included.",
+                href: "/network/",
+                cta: "Explore the network →",
+              },
+              {
+                tag: "ASSET PACKS",
+                title: "Training asset packs",
+                body: "Physical object sets with matched simulation-ready digital twins. Collect real-world and sim data on identical objects — no asset-prep detour.",
+                href: "/packs/",
+                cta: "Browse the packs →",
+              },
+              {
+                tag: "FOR OPERATORS",
+                title: "Become an operator",
+                body: "Teach robots real-world skills from your own VR headset. Five-minute missions, weekly payouts, no robotics experience needed.",
+                href: "/operator/",
+                cta: "Join the waitlist →",
+              },
+            ].map((card) => (
+              <a
+                key={card.href}
+                href={card.href}
+                style={{
+                  display: "block",
+                  background: C.grayLight,
+                  border: `1px solid ${C.border}`,
+                  borderRadius: "12px",
+                  padding: "2rem 1.75rem",
+                  textDecoration: "none",
+                }}
+              >
+                <div style={{ fontFamily: T.mono, fontSize: "0.65rem", color: C.blue, letterSpacing: "0.12em", marginBottom: "1rem" }}>{card.tag}</div>
+                <div style={{ fontFamily: T.display, fontWeight: 700, fontSize: "1.05rem", color: C.navy, marginBottom: "0.6rem", lineHeight: 1.3 }}>{card.title}</div>
+                <p style={{ color: C.gray, fontSize: "0.9rem", lineHeight: 1.65, margin: "0 0 1.1rem" }}>{card.body}</p>
+                <span style={{ fontFamily: T.label, fontSize: "0.82rem", fontWeight: 600, color: C.blue }}>{card.cta}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── FOUNDER — kept BIT-EXACTLY from deck version per Gosha's ask ── */}
       <section id="founder" style={{ padding: "100px 0", background: C.white, borderTop: `1px solid ${C.border}` }}>
         <div className="container">
@@ -820,6 +881,8 @@ export default function Home() {
                 <li><a href="#demo" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>Demo</a></li>
                 <li><a href="#what-it-is" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>What it is</a></li>
                 <li><a href="#how-it-works" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>How it works</a></li>
+                <li><a href="/packs/" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>Asset Packs</a></li>
+                <li><a href="/network/" style={{ color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>Teleop Network</a></li>
               </ul>
             </div>
 
