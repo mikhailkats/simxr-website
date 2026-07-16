@@ -162,6 +162,65 @@
       padding: 0.25rem 0.7rem;
     }
 
+    /* ── FEATURED DEMO-SCENE BLOCK ── */
+    .scene-block {
+      background: var(--navy);
+      border-radius: 16px;
+      padding: 2.5rem;
+      margin-top: 1.5rem;
+      color: rgba(255,255,255,0.82);
+    }
+    .scene-block .label-tag {
+      color: rgba(255,255,255,0.65);
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.14);
+    }
+    .scene-block h2 { color: var(--white); margin-top: 0.75rem; }
+    .scene-block p { color: rgba(255,255,255,0.72); }
+    .scene-block p strong { color: var(--white); }
+    .scene-shots {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;
+      margin: 1.75rem 0 0.5rem;
+    }
+    @media (max-width: 720px) { .scene-shots { grid-template-columns: 1fr; } }
+    .shot {
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px; overflow: hidden;
+      background: #000;
+    }
+    .shot img { display: block; width: 100%; height: auto; }
+    .shot .cap {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem; letter-spacing: 0.04em;
+      color: rgba(255,255,255,0.55);
+      padding: 0.6rem 0.85rem;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .task-flow { margin-top: 2rem; }
+    .task-flow h3 { color: #7FA8FF; }
+    ol.task-steps { list-style: none; counter-reset: t; padding: 0; margin: 1rem 0 0; }
+    ol.task-steps li {
+      counter-increment: t;
+      position: relative; padding: 0 0 0.9rem 2.6rem;
+      color: rgba(255,255,255,0.82); line-height: 1.6;
+    }
+    ol.task-steps li::before {
+      content: counter(t);
+      position: absolute; left: 0; top: -0.05rem;
+      width: 1.7rem; height: 1.7rem;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 0.82rem;
+      color: var(--navy); background: #7FA8FF; border-radius: 50%;
+    }
+    .scene-callout {
+      margin-top: 1.5rem; padding: 1rem 1.25rem;
+      background: rgba(127,168,255,0.1);
+      border: 1px solid rgba(127,168,255,0.3);
+      border-radius: 10px;
+      font-size: 0.94rem; color: rgba(255,255,255,0.85); line-height: 1.6;
+    }
+    .scene-callout strong { color: var(--white); }
+
     /* footer */
     footer { background: var(--navy); color: rgba(255,255,255,0.7); padding: 2.5rem 0; margin-top: 40px; }
     footer .container { padding: 0 2rem; max-width: 1100px; }
@@ -195,6 +254,55 @@
         <div class="cta-row">
           <a class="btn-primary" href="https://simxr.app">Open simxr.app in your headset →</a>
           <span class="cta-note">works best on Meta Quest 3 / 3S</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="scene-block">
+          <span class="label-tag">● Live right now</span>
+          <h2>The scene you'll step into.</h2>
+          <p>
+            Right now the server is running <strong>“Bright Living Room”</strong> — a photorealistic
+            3D-Gaussian-Splat reconstruction of a real living room, with a Unitree&nbsp;G1 humanoid
+            robot standing at the table. Your headset streams this scene live, and your own hand
+            movements drive the robot's hands in real time.
+          </p>
+
+          <div class="scene-shots">
+            <div class="shot">
+              <img src="/quickstart/img/dashboard-card.jpg" alt="The Live scene card on simxr.app with a Connect button" />
+              <div class="cap">1 · simxr.app — the Live card, tap Connect</div>
+            </div>
+            <div class="shot">
+              <img src="/quickstart/img/scene-view.jpg" alt="Inside the scene: a reconstructed living room with a wooden table, a steering wheel, and a basket" />
+              <div class="cap">2 · Inside VR — the table, the steering wheel, the basket</div>
+            </div>
+          </div>
+
+          <div class="scene-callout">
+            <strong>If you're sitting, stand up.</strong> The robot stands at the table, so stand up
+            too — that puts your eyes and hands at the robot's level and makes everything reach naturally.
+          </div>
+
+          <div class="task-flow">
+            <h3>Your task</h3>
+            <p style="margin-bottom: 0.5rem;">
+              As soon as you're in, hand-tracking is already active — no setup. Then, calmly:
+            </p>
+            <ol class="task-steps">
+              <li>Pick up the <strong>steering wheel</strong> from the table with your <strong>left hand</strong>.</li>
+              <li>Pass it across to your <strong>right hand</strong>.</li>
+              <li>Place it into the <strong>basket</strong>.</li>
+              <li>Done cleanly? The scene <strong>resets to its starting state</strong> on its own — ready to try again.</li>
+            </ol>
+            <p style="margin-top: 1.25rem; font-size: 0.94rem;">
+              Move slowly and smoothly — the first few reaches feel unfamiliar, and within a minute
+              your hands and the robot's hands click into sync. There's nothing to break: take your
+              time and get a feel for it.
+            </p>
+          </div>
         </div>
       </div>
     </section>
@@ -244,7 +352,8 @@
           </li>
           <li>
             <span class="t">Try the task</span>
-            Pick up the apple from the table and place it on the plate.
+            Complete the task for the live scene — for the current room, that's the
+            steering-wheel handoff described below.
           </li>
           <li>
             <span class="t">Done? Just exit</span>
