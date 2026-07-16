@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Operator Quick Start — SIM XR</title>
+  <meta name="description" content="Teleoperate a humanoid robot from your own VR headset in two minutes. No account, no app install — open simxr.app in the headset browser and connect." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://simxr.app/quickstart/" />
+  <meta property="og:title" content="Operator Quick Start — SIM XR" />
+  <meta property="og:description" content="Teleoperate a humanoid robot from your own VR headset in two minutes. No account, no install." />
+  <meta property="og:url" content="https://simxr.app/quickstart/" />
+  <meta property="og:type" content="website" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --blue: #0057FF;
+      --navy: #0B0F1A;
+      --gray: #6B7280;
+      --gray-light: #F5F6F8;
+      --border: #E5E7EB;
+      --white: #FFFFFF;
+      --green: #16A34A;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      color: var(--navy);
+      background: var(--white);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.6;
+    }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: 900px; margin: 0 auto; padding: 0 2rem; }
+    .label-tag {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gray);
+      padding: 0.35rem 0.7rem;
+      background: var(--gray-light);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+
+    section { padding: 64px 0; border-top: 1px solid var(--border); }
+    section:first-of-type { border-top: none; padding-top: 56px; }
+    h1 {
+      font-size: clamp(2rem, 4vw, 2.8rem);
+      line-height: 1.1; margin: 0.75rem 0 1.25rem;
+      color: var(--navy); font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    h2 {
+      font-size: clamp(1.4rem, 3vw, 1.9rem);
+      line-height: 1.15; margin: 0.75rem 0 1.25rem;
+      color: var(--navy); font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    p { color: var(--gray); font-size: 1rem; line-height: 1.7; margin: 0 0 1rem; max-width: 720px; }
+    p strong { color: var(--navy); font-weight: 600; }
+
+    .cta-row { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-top: 1.75rem; }
+    .btn-primary {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600; font-size: 0.95rem;
+      color: var(--white); background: var(--blue);
+      padding: 0.75rem 1.6rem; border-radius: 8px;
+      text-decoration: none; letter-spacing: 0.02em;
+      display: inline-block;
+    }
+    .btn-primary:hover { text-decoration: none; opacity: 0.92; }
+    .cta-note { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--gray); }
+
+    /* need cards */
+    .need-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-top: 1.5rem; }
+    @media (max-width: 768px) { .need-grid { grid-template-columns: 1fr; } }
+    .need-card {
+      padding: 1.4rem 1.5rem;
+      background: var(--gray-light);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .need-card .big {
+      font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+      font-size: 1rem; color: var(--navy); margin-bottom: 0.35rem; line-height: 1.3;
+    }
+    .need-card p { font-size: 0.88rem; margin-bottom: 0; }
+
+    /* steps */
+    ol.steps { list-style: none; counter-reset: step; padding: 0; margin: 2rem 0 0; max-width: 720px; }
+    ol.steps li {
+      counter-increment: step;
+      position: relative;
+      padding: 0 0 1.6rem 3.4rem;
+      color: var(--gray); line-height: 1.65;
+    }
+    ol.steps li::before {
+      content: counter(step);
+      position: absolute; left: 0; top: -0.15rem;
+      width: 2.2rem; height: 2.2rem;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1rem;
+      color: var(--blue); background: var(--white);
+      border: 2px solid var(--blue); border-radius: 50%;
+    }
+    ol.steps li:not(:last-child)::after {
+      content: "";
+      position: absolute; left: 1.1rem; top: 2.3rem; bottom: 0.2rem;
+      width: 2px; background: var(--border);
+    }
+    ol.steps .t { display: block; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 1.02rem; color: var(--navy); margin-bottom: 0.2rem; }
+
+    /* notes */
+    ul.notes { color: var(--gray); padding-left: 1.25rem; max-width: 720px; }
+    ul.notes li { margin-bottom: 0.6rem; line-height: 1.65; }
+    ul.notes li strong { color: var(--navy); }
+
+    /* troubleshooting table */
+    .ts-table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
+    .ts-table th {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--gray); text-align: left;
+      padding: 0.6rem 1rem; border-bottom: 2px solid var(--border);
+    }
+    .ts-table td {
+      padding: 0.85rem 1rem; border-bottom: 1px solid var(--border);
+      color: var(--gray); font-size: 0.92rem; line-height: 1.55; vertical-align: top;
+    }
+    .ts-table td:first-child { color: var(--navy); font-weight: 500; width: 42%; }
+    @media (max-width: 640px) {
+      .ts-table, .ts-table thead, .ts-table tbody, .ts-table tr, .ts-table th, .ts-table td { display: block; }
+      .ts-table thead { display: none; }
+      .ts-table td:first-child { width: auto; padding-bottom: 0.15rem; }
+      .ts-table td:last-child { padding-top: 0; border-bottom: 1px solid var(--border); margin-bottom: 0.4rem; }
+      .ts-table td { border-bottom: none; }
+    }
+
+    .status-pill {
+      display: inline-block; font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem; letter-spacing: 0.06em;
+      color: var(--green); background: #F0FDF4;
+      border: 1px solid #BBF7D0; border-radius: 999px;
+      padding: 0.25rem 0.7rem;
+    }
+
+    /* footer */
+    footer { background: var(--navy); color: rgba(255,255,255,0.7); padding: 2.5rem 0; margin-top: 40px; }
+    footer .container { padding: 0 2rem; max-width: 1100px; }
+    footer .row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+    .wordmark-w {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700; font-size: 1.05rem;
+      color: var(--white); letter-spacing: -0.02em; text-decoration: none;
+    }
+    .wordmark-w span { color: var(--blue); }
+    footer .links a { color: rgba(255,255,255,0.7); margin-left: 1.5rem; font-size: 0.88rem; }
+    footer .bottom { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.78rem; color: rgba(255,255,255,0.45); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+  </style>
+</head>
+<body>
+
+  <!-- Unified site header — single source: /site-header.js -->
+  <div id="sxr-header"></div>
+  <script src="/site-header.js" defer></script>
+
+  <main>
+
+    <section>
+      <div class="container">
+        <span class="label-tag">Operator quick start</span>
+        <h1>Teleoperate a humanoid robot in two minutes.</h1>
+        <p>
+          You'll remotely operate a humanoid robot (Unitree G1) inside a photorealistic
+          simulated living room, streamed live to your headset from our US cloud server.
+          <strong>No account, no app install, no downloads</strong> — everything runs in the
+          headset's built-in browser.
+        </p>
+        <div class="cta-row">
+          <a class="btn-primary" href="https://simxr.app">Open simxr.app in your headset →</a>
+          <span class="cta-note">works best on Meta Quest 3 / 3S</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <span class="label-tag">What you need</span>
+        <div class="need-grid">
+          <div class="need-card">
+            <div class="big">Meta Quest 3 or 3S</div>
+            <p>The tested and recommended headset. Other devices are not verified yet.</p>
+          </div>
+          <div class="need-card">
+            <div class="big">Home Wi-Fi</div>
+            <p>A regular home connection, 5&nbsp;GHz preferred. Office and hotel networks often block streaming.</p>
+          </div>
+          <div class="need-card">
+            <div class="big">5 minutes</div>
+            <p>Nothing to sign up for, nothing to install. Open a page, press Connect, you're in.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <span class="label-tag">Steps</span>
+        <h2>From headset to robot.</h2>
+        <ol class="steps">
+          <li>
+            <span class="t">Open the browser inside your headset</span>
+            Put on the headset and launch the built-in browser app.
+          </li>
+          <li>
+            <span class="t">Go to simxr.app</span>
+            Type <strong>simxr.app</strong> in the address bar. You'll see the live scene catalog.
+          </li>
+          <li>
+            <span class="t">Connect to the US server</span>
+            Find the card marked <span class="status-pill">● Live</span> and tap
+            <strong>Connect</strong>, then confirm <strong>Enter&nbsp;VR</strong> when the browser asks.
+          </li>
+          <li>
+            <span class="t">Look around, then reach out</span>
+            You're standing in the room. Put the controllers down and use your bare hands —
+            the robot's hands follow yours. Controllers work too, but hands are the magic.
+          </li>
+          <li>
+            <span class="t">Try the task</span>
+            Pick up the apple from the table and place it on the plate.
+          </li>
+          <li>
+            <span class="t">Done? Just exit</span>
+            Take off the headset or exit VR. The scene resets itself for the next operator
+            about a minute later.
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <span class="label-tag">Good to know</span>
+        <ul class="notes">
+          <li><strong>One operator at a time.</strong> If the card shows <strong>“In session”</strong>, someone else is connected — try again in a few minutes.</li>
+          <li><strong>The server is in Oregon, US.</strong> From North America the experience is smooth; from Europe you may notice slight latency — still fine for a first look.</li>
+          <li><strong>Sessions may be recorded as robot demonstration data</strong> — the robot's motions, not video of you. Ask us for the data agreement if you'd like the details.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <span class="label-tag">If something looks wrong</span>
+        <h2>Troubleshooting.</h2>
+        <table class="ts-table">
+          <thead>
+            <tr><th>Symptom</th><th>Fix</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Card shows “In session”</td>
+              <td>The server is busy with another operator — retry in ~5 minutes.</td>
+            </tr>
+            <tr>
+              <td>Black screen after connecting</td>
+              <td>Exit VR, wait 2 minutes (the scene may be restarting), then reconnect.</td>
+            </tr>
+            <tr>
+              <td>Connects but no image, on office or hotel Wi-Fi</td>
+              <td>Corporate networks often block the video stream (UDP). Switch to a phone hotspot.</td>
+            </tr>
+            <tr>
+              <td>First connect after a long idle feels slow</td>
+              <td>Give it ~30 seconds — the first handshake warms up the stream.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p style="margin-top: 1.75rem;">
+          Still stuck? Email <a href="mailto:mk@simxr.tech">mk@simxr.tech</a> — include your
+          headset model and rough location, we usually reply fast.
+        </p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="row">
+        <a href="/" class="wordmark-w">SIM <span>XR.</span></a>
+        <div class="links">
+          <a href="https://simxr.tech/">Home</a>
+          <a href="https://simxr.tech/packs/">Asset Packs</a>
+          <a href="https://simxr.tech/network/">Hire Operators</a>
+          <a href="https://simxr.tech/operator/">For Operators</a>
+          <a href="https://simxr.app">simxr.app</a>
+        </div>
+      </div>
+      <div class="bottom">
+        <span>© 2026 SIM XR. The training layer for Physical AI.</span>
+        <span>California · Paris · Tel Aviv</span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
