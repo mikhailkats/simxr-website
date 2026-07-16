@@ -80,6 +80,14 @@
     }
     .btn-primary:hover { text-decoration: none; opacity: 0.92; }
     .cta-note { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--gray); }
+    .page-wordmark {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700; font-size: 1.15rem;
+      color: var(--navy); letter-spacing: -0.02em;
+      text-decoration: none;
+    }
+    .page-wordmark span { color: var(--blue); }
+    .page-wordmark:hover { text-decoration: none; }
 
     /* need cards */
     .need-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-top: 1.5rem; }
@@ -170,14 +178,12 @@
 </head>
 <body>
 
-  <!-- Unified site header — single source: /site-header.js -->
-  <div id="sxr-header"></div>
-  <script src="/site-header.js" defer></script>
-
   <main>
 
     <section>
       <div class="container">
+        <a href="https://simxr.app" class="page-wordmark">SIM <span>XR.</span></a>
+        <div style="height: 2.2rem;"></div>
         <span class="label-tag">Operator quick start</span>
         <h1>Teleoperate a humanoid robot in two minutes.</h1>
         <p>
@@ -299,13 +305,10 @@
   <footer>
     <div class="container">
       <div class="row">
-        <a href="/" class="wordmark-w">SIM <span>XR.</span></a>
+        <a href="https://simxr.app" class="wordmark-w">SIM <span>XR.</span></a>
         <div class="links">
-          <a href="https://simxr.tech/">Home</a>
-          <a href="https://simxr.tech/packs/">Asset Packs</a>
-          <a href="https://simxr.tech/network/">Hire Operators</a>
-          <a href="https://simxr.tech/operator/">For Operators</a>
           <a href="https://simxr.app">simxr.app</a>
+          <a href="mailto:mk@simxr.tech">Contact</a>
         </div>
       </div>
       <div class="bottom">
