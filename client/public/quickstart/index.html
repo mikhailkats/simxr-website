@@ -179,10 +179,9 @@
     .scene-block p { color: rgba(255,255,255,0.72); }
     .scene-block p strong { color: var(--white); }
     .scene-shots {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;
+      display: flex; flex-direction: column; gap: 1.25rem;
       margin: 1.75rem 0 0.5rem;
     }
-    @media (max-width: 720px) { .scene-shots { grid-template-columns: 1fr; } }
     .shot {
       border: 1px solid rgba(255,255,255,0.12);
       border-radius: 10px; overflow: hidden;
