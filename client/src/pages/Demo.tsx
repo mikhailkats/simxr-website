@@ -60,6 +60,18 @@ const CSS = `
   .sxrd-mark span { color: var(--accent); }
   .sxrd-mark small { font-family: 'JetBrains Mono', monospace; font-weight: 400;
     font-size: 10px; letter-spacing: 0.22em; color: var(--faint); margin-left: 10px; }
+  .sxrd-hright { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    justify-content: flex-end; }
+  /* Server/latency pills — mirrors the Dashboard topbar h-pill design
+     (icon + "US ~161ms" + 20-sample sparkline, green/amber/red). */
+  .sxrd-pill { display: inline-flex; align-items: center; gap: 7px;
+    padding: 6px 11px; border-radius: 6px;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--line);
+    font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--dim); }
+  .sxrd-pill.dim { opacity: 0.4; background: transparent; }
+  .sxrd-pill .lat-ok { color: #4ECE8C; font-weight: 500; }
+  .sxrd-pill .lat-warn { color: #F5B842; font-weight: 500; }
+  .sxrd-pill .lat-bad { color: #FF4A5C; font-weight: 500; }
   .sxrd-hstat { font-family: 'JetBrains Mono', monospace; font-size: 10px;
     letter-spacing: 0.24em; text-transform: uppercase; display: flex;
     align-items: center; gap: 8px; }
@@ -108,18 +120,8 @@ const CSS = `
     font-size: clamp(20px, 2.3vw, 28px); letter-spacing: -0.01em; margin: 0; }
   .sxrd-tt .sub { font-family: 'JetBrains Mono', monospace; font-size: 10px;
     letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); margin-top: 8px; }
-
-  .sxrd-telemetry { display: flex; gap: 0; border: 1px solid var(--line);
-    border-radius: 10px; overflow: hidden; background: rgba(5,6,11,0.55);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-  .sxrd-telemetry .cell { padding: 9px 16px 10px; border-left: 1px solid var(--line);
-    text-align: left; min-width: 86px; }
-  .sxrd-telemetry .cell:first-child { border-left: none; }
-  .sxrd-telemetry .l { font-family: 'JetBrains Mono', monospace; font-size: 8px;
-    letter-spacing: 0.26em; text-transform: uppercase; color: var(--faint);
-    margin-bottom: 4px; }
-  .sxrd-telemetry .v { font-family: 'JetBrains Mono', monospace; font-size: 11.5px;
-    color: #aab1bc; white-space: nowrap; }
+  .sxrd-tt .meta { font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); margin-top: 7px; }
 
   .sxrd-connect { font-family: 'Space Grotesk', sans-serif; font-weight: 700;
     font-size: 15px; letter-spacing: 0.03em; color: #04140b; background: var(--live);
@@ -173,7 +175,6 @@ const CSS = `
     .sxrd-portalcol { position: static; transform: none; margin: 26px auto 12px; }
     .sxrd-portal { width: min(64vw, 320px); }
     .sxrd-others { position: static; padding: 8px 4.5vw 22px; }
-    .sxrd-telemetry { flex-wrap: wrap; }
   }
   /* Short-but-wide viewports (laptops with the browser not maximized):
      the absolutely-centered column would overlap the catalog rail, so let
@@ -583,6 +584,50 @@ function PortalMedia({
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// Latency sparkline — same design as the Dashboard topbar (last N round-trip
+// samples as 2px bars, green <200ms / amber 200–500 / red >500; null samples
+// render as faint ghost stubs so offline windows visibly gap).
+// ─────────────────────────────────────────────────────────────────────────
+const LATENCY_HISTORY_LEN = 20;
+
+function LatencySparkline({ history }: { history: (number | null)[] }) {
+  const N = LATENCY_HISTORY_LEN;
+  const W = 2, GAP = 1, H = 14;
+  const totalW = N * W + (N - 1) * GAP;
+  const cap = 600;
+  const padded: (number | null)[] = Array(N).fill(null);
+  const tail = history.slice(-N);
+  for (let i = 0; i < tail.length; i++) padded[N - tail.length + i] = tail[i];
+  return (
+    <svg
+      width={totalW}
+      height={H}
+      viewBox={`0 0 ${totalW} ${H}`}
+      style={{ verticalAlign: "middle", marginLeft: 4 }}
+      aria-hidden="true"
+    >
+      {padded.map((v, i) => {
+        const x = i * (W + GAP);
+        if (v == null) {
+          return <rect key={i} x={x} y={H - 3} width={W} height={3} fill="currentColor" opacity={0.18} />;
+        }
+        const ratio = Math.min(1, v / cap);
+        const h = Math.max(2, Math.round(ratio * H));
+        const colour = v > 500 ? "#FF4A5C" : v > 200 ? "#F5B842" : "#4ECE8C";
+        return <rect key={i} x={x} y={H - h} width={W} height={h} fill={colour} />;
+      })}
+    </svg>
+  );
+}
+
+function latClass(ms: number | null): string {
+  if (ms == null) return "";
+  if (ms > 500) return "lat-bad";
+  if (ms > 200) return "lat-warn";
+  return "lat-ok";
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // Fleet helpers
 // ─────────────────────────────────────────────────────────────────────────
 type HeroPick = {
@@ -655,6 +700,7 @@ const FLEET_POLL_MS = 10_000;
 export default function Demo() {
   const [scenes, setScenes] = useState<Scene[] | null>(null);
   const [snapshots, setSnapshots] = useState<ServerSnapshot[]>([]);
+  const [latencyHistory, setLatencyHistory] = useState<Record<string, (number | null)[]>>({});
   const [fleetLoaded, setFleetLoaded] = useState(false);
   const [preferredServerId, setPreferredServerId] = useState<string | null>(null);
   const portalRef = useRef<HTMLDivElement | null>(null);
@@ -690,6 +736,14 @@ export default function Demo() {
       if (!cancelled) {
         setSnapshots(snaps);
         setFleetLoaded(true);
+        setLatencyHistory((prev) => {
+          const next: Record<string, (number | null)[]> = { ...prev };
+          for (const s of snaps) {
+            const h = next[s.server.id] ?? [];
+            next[s.server.id] = [...h.slice(-(LATENCY_HISTORY_LEN - 1)), s.latencyMs];
+          }
+          return next;
+        });
       }
     }
     void tick(true);
@@ -766,12 +820,11 @@ export default function Demo() {
 
   const anyLive = snapshots.some((s) => s.health?.live_scene);
 
-  // Fleet summary for the footer, e.g. "EU · Frankfurt idle 132ms".
+  // Fleet summary for the footer (latency lives in the header pills now).
   const fleetSummary = snapshots
     .map((s) => {
       const st = !s.health ? "offline" : s.health.live_scene ? "live" : "idle";
-      const lat = s.latencyMs !== null ? ` ${s.latencyMs}ms` : "";
-      return `${s.server.label} — ${st}${lat}`;
+      return `${s.server.label} — ${st}`;
     })
     .join("  ·  ");
 
@@ -789,10 +842,28 @@ export default function Demo() {
             SIM <span>XR.</span>
             <small>/ DEMO</small>
           </span>
-          <span className={`sxrd-hstat ${anyLive ? "live" : "idle"}`}>
-            <i />
-            {anyLive ? "Scene live" : fleetLoaded ? "Between sessions" : "Checking…"}
-          </span>
+          <div className="sxrd-hright">
+            {snapshots.map((s) => (
+              <span
+                key={s.server.id}
+                className={`sxrd-pill ${s.health ? "" : "dim"}`}
+                title={`${s.server.label} · round-trip latency · last ${LATENCY_HISTORY_LEN} samples`}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                </svg>
+                {s.server.id.toUpperCase()}{" "}
+                <span className={latClass(s.latencyMs)}>
+                  {s.latencyMs != null ? `~${s.latencyMs}ms` : "offline"}
+                </span>
+                <LatencySparkline history={latencyHistory[s.server.id] ?? []} />
+              </span>
+            ))}
+            <span className={`sxrd-hstat ${anyLive ? "live" : "idle"}`}>
+              <i />
+              {anyLive ? "Scene live" : fleetLoaded ? "Between sessions" : "Checking…"}
+            </span>
+          </div>
         </header>
 
         <div className="sxrd-stage">
@@ -838,6 +909,11 @@ export default function Demo() {
                   <div className="sub">
                     {robotLabel(hero.sceneId)} · {skillTag(hero.sceneId)}
                   </div>
+                  <div className="meta">
+                    {hero.snapshot.server.label} · {hero.snapshot.health?.active_clients ?? 0}{" "}
+                    operator{(hero.snapshot.health?.active_clients ?? 0) === 1 ? "" : "s"}
+                    {updatedTs ? ` · upd ${updatedTs}` : ""}
+                  </div>
                 </>
               ) : (
                 <>
@@ -846,33 +922,6 @@ export default function Demo() {
                 </>
               )}
             </div>
-
-            {hero && (
-              <div className="sxrd-telemetry">
-                <div className="cell">
-                  <div className="l">Server</div>
-                  <div className="v">{hero.snapshot.server.label}</div>
-                </div>
-                <div className="cell">
-                  <div className="l">Latency</div>
-                  <div className="v">
-                    {hero.snapshot.latencyMs !== null
-                      ? `${hero.snapshot.latencyMs} ms`
-                      : "—"}
-                  </div>
-                </div>
-                <div className="cell">
-                  <div className="l">Operators</div>
-                  <div className="v">{hero.snapshot.health?.active_clients ?? 0}</div>
-                </div>
-                {updatedTs && (
-                  <div className="cell">
-                    <div className="l">Updated</div>
-                    <div className="v">{updatedTs}</div>
-                  </div>
-                )}
-              </div>
-            )}
 
             {hero ? (
               <>
