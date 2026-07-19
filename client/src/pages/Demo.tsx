@@ -175,6 +175,16 @@ const CSS = `
     .sxrd-others { position: static; padding: 8px 4.5vw 22px; }
     .sxrd-telemetry { flex-wrap: wrap; }
   }
+  /* Short-but-wide viewports (laptops with the browser not maximized):
+     the absolutely-centered column would overlap the catalog rail, so let
+     the page flow and scroll instead. Canvas keeps tracking the portal —
+     its position is measured per-frame. */
+  @media (min-width: 901px) and (max-height: 880px) {
+    .sxrd-stage { min-height: 0; }
+    .sxrd-portalcol { position: static; transform: none; margin: 20px auto 10px; }
+    .sxrd-portal { width: min(38vh, 30vw); }
+    .sxrd-others { position: static; padding: 16px 4.5vw 24px; }
+  }
 `;
 
 function Fonts() {
