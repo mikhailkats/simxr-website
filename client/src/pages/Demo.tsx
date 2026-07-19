@@ -670,15 +670,19 @@ export default function Demo() {
 
   useEffect(() => {
     let cancelled = false;
-    async function tick() {
-      if (typeof document !== "undefined" && document.hidden) return;
+    // `force` — the very first fetch must run even in a hidden/background
+    // tab (users open /demo links in background tabs; and without it the
+    // page sits on "Checking…" until the tab is focused). Only the
+    // periodic re-polls pause while hidden.
+    async function tick(force = false) {
+      if (!force && typeof document !== "undefined" && document.hidden) return;
       const snaps = await fetchFleet();
       if (!cancelled) {
         setSnapshots(snaps);
         setFleetLoaded(true);
       }
     }
-    void tick();
+    void tick(true);
     const interval = setInterval(() => void tick(), FLEET_POLL_MS);
     const onVis = () => {
       if (!document.hidden) void tick();
