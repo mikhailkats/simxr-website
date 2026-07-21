@@ -194,7 +194,6 @@ function useFleet(intervalMs = 5000): {
 
     const start = () => {
       if (timer != null) return;
-      void tick();
       timer = window.setInterval(() => void tick(), intervalMs);
     };
     const stop = () => {
@@ -203,8 +202,22 @@ function useFleet(intervalMs = 5000): {
       timer = null;
     };
 
+    // First poll fires immediately and UNCONDITIONALLY — even when the tab
+    // is currently hidden. simxr.app links are frequently opened in a
+    // background tab (cmd-click, "open in new tab", session restore); without
+    // this forced first fetch the dashboard would sit on "0/2 online / no
+    // scene" until the tab is first focused, while /demo (which force-fetches
+    // via tick(true)) already shows the live scene. The *recurring* interval
+    // still pauses while hidden to avoid needless background polling.
+    void tick();
     if (!document.hidden) start();
-    const onVis = () => (document.hidden ? stop() : start());
+    const onVis = () => {
+      if (document.hidden) stop();
+      else {
+        void tick(); // instant refresh on refocus, then resume the interval
+        start();
+      }
+    };
     document.addEventListener("visibilitychange", onVis);
 
     return () => {
