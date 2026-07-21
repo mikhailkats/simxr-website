@@ -81,15 +81,27 @@ const CSS = `
     box-shadow: 0 0 10px currentColor; animation: sxrdBreathe 2.2s ease-in-out infinite; }
   @keyframes sxrdBreathe { 0%,100% { opacity: .5; } 50% { opacity: 1; } }
 
-  .sxrd-stage { position: relative; flex: 1; min-height: 620px; }
+  /* Flow-centered hero. Previously the column was position:absolute at
+     top:44% + translateY(-50%) and the page never scrolled — on browsers
+     whose visual viewport is shorter than the layout viewport (Meta Quest
+     Browser), the title + Connect button fell below the visible area with
+     NO way to scroll to them (the desktop was fine only because its window
+     was short enough to trip the max-height flow branch). Now the stage is
+     a flex container that centres the column with `margin:auto` and scrolls
+     when the content is taller than the viewport, so Connect is always
+     reachable regardless of how the client reports vh. */
+  .sxrd-stage { position: relative; flex: 1; min-height: 0;
+    display: flex; overflow-y: auto; }
   .sxrd-fx { position: absolute; inset: 0; width: 100%; height: 100%;
     display: block; z-index: 1; }
 
-  .sxrd-portalcol { position: absolute; left: 50%; top: 44%;
-    transform: translate(-50%, -50%); z-index: 5;
+  .sxrd-portalcol { position: relative; z-index: 5; margin: auto;
     display: flex; flex-direction: column; align-items: center; gap: 18px;
-    width: min(92vw, 560px); }
-  .sxrd-portal { position: relative; width: min(44vh, 34vw); aspect-ratio: 1; }
+    width: min(92vw, 560px); padding: 24px 0; }
+  /* clamp() hard-caps the portal at 360px so a client that reports an
+     inflated vh can't blow the circle up and shove Connect off-screen. */
+  .sxrd-portal { position: relative;
+    width: clamp(200px, min(42vh, 34vw), 360px); aspect-ratio: 1; }
   .sxrd-portal .pv { position: absolute; inset: 5%; border-radius: 50%; overflow: hidden;
     background: #0a0d14;
     box-shadow: 0 0 130px rgba(70,120,255,0.28), inset 0 0 70px rgba(0,0,0,0.55); }
