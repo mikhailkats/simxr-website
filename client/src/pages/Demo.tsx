@@ -87,7 +87,7 @@ const CSS = `
      Browser), the title + Connect button fell below the visible area with
      NO way to scroll to them (the desktop was fine only because its window
      was short enough to trip the max-height flow branch). Now the stage is
-     a flex container that centres the column with `margin:auto` and scrolls
+     a flex container that centres the column with margin:auto and scrolls
      when the content is taller than the viewport, so Connect is always
      reachable regardless of how the client reports vh. */
   .sxrd-stage { position: relative; flex: 1; min-height: 0;
