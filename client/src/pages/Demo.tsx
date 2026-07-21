@@ -146,17 +146,23 @@ const CSS = `
     margin-bottom: 8px; }
   .sxrd-minis { display: flex; gap: 12px; flex-wrap: wrap; }
   .sxrd-mini { width: 162px; border-radius: 10px; overflow: hidden;
-    border: 1px solid var(--line); background: rgba(5,6,11,0.6); opacity: .5;
+    border: 1px solid var(--line); background: rgba(5,6,11,0.6); opacity: .7;
     transition: opacity .2s, transform .2s; }
   .sxrd-mini:hover { opacity: 1; transform: translateY(-2px); }
   .sxrd-mini.clickable { cursor: pointer; }
-  .sxrd-mini.is-live { opacity: .85; border-color: rgba(89,255,156,0.35); }
+  .sxrd-mini.is-live { opacity: .95; border-color: rgba(89,255,156,0.35); }
   .sxrd-mini .thumb { position: relative; aspect-ratio: 16/9; background: #0a0d14; }
   .sxrd-mini .thumb video, .sxrd-mini .thumb img {
     width: 100%; height: 100%; object-fit: cover; display: block; }
+  /* Offline previews use the SAME gentle dimming as the Dashboard catalog
+     (Dashboard.css .scene-card.offline: saturate .35 / brightness .85, full
+     colour on hover) — the previous grayscale(1)+brightness(.55) was so dark
+     the loaded clips read as "didn't load" next to the main page. */
   .sxrd-mini.off .thumb video, .sxrd-mini.off .thumb img {
-    filter: grayscale(1) brightness(.55); }
-  .sxrd-mini.busy .thumb video, .sxrd-mini.busy .thumb img { opacity: .6; }
+    filter: saturate(.35) brightness(.85); transition: filter .2s ease; }
+  .sxrd-mini.off:hover .thumb video, .sxrd-mini.off:hover .thumb img {
+    filter: saturate(1) brightness(1); }
+  .sxrd-mini.busy .thumb video, .sxrd-mini.busy .thumb img { opacity: .8; }
   .sxrd-mini .b { position: absolute; top: 6px; left: 6px; transform: scale(.82);
     transform-origin: top left; }
   .sxrd-mini .nm { font-family: 'JetBrains Mono', monospace; font-size: 9.5px;
