@@ -11,8 +11,8 @@
 | Mustard candidate | `media/mustard-candidate-headcam.png` | Robot-head-camera frame extracted from Misha’s linked experiment artifact | Ready |
 | Mustard task scene | `media/mustard-final-scene.png` | Final mustard-to-bowl layout extracted from Misha’s linked experiment artifact | Ready |
 | Mustard follow-ups | `media/mustard-followup-environments-and-hands.png` | Scanned environment, GR1T2, and Inspire FTP frames from Misha’s linked experiment artifact | Ready |
-| Revised visual master | `video/out/sim_xr_gr00t_case_study_20260724_v2_visual.mp4` | Revised 90-second 16:9 Sim XR edit with mustard ending | Ready and validated; ElevenLabs audio pending |
-| Revised social video | `video/out/sim_xr_gr00t_case_study_20260724_v2_visual_720p.mp4` | Compressed 16:9 derivative | Ready and validated; ElevenLabs audio pending |
+| Final master | `../remotion_case_study_20260724/project/out/sim_xr_gr00t_case_study_20260724_v3_audio_master.mp4` | Revised 90-second 16:9 Sim XR edit with mustard ending, ElevenLabs narration, and ElevenLabs music | Ready and validated |
+| Final social video | `../remotion_case_study_20260724/project/out/sim_xr_gr00t_case_study_20260724_v3_audio_720p.mp4` | Compressed 16:9 derivative with the final audio mix | Ready and validated |
 
 ## Existing evidence reused in the video
 
@@ -38,11 +38,11 @@ SSH key, so no additional frontal camera was rendered.
 
 ## Audio status
 
-The narration script, timings, ElevenLabs voice settings, music direction, and
-generation script are complete. The configured ElevenLabs credential currently
-returns `invalid_api_key`, so the revised render remains silent rather than
-substituting another provider. Enable the audio composition only after the
-generated files pass duration and listening checks.
+The final master contains ten English narration blocks generated with the
+ElevenLabs Daniel voice and a 90-second instrumental score generated with
+ElevenLabs Music. The blocks were duration-checked against their visual scenes.
+The final stereo AAC mix is 48 kHz, peaks at -1.5 dB, and fully decodes without
+errors. The local credential is excluded from Git.
 
 ## Recommended additional capture
 

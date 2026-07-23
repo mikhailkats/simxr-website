@@ -11,7 +11,7 @@ import {
   useVideoConfig,
 } from 'remotion';
 
-const AUDIO_READY = false;
+const AUDIO_READY = true;
 
 const C = {
   ink: '#0B0F1A',

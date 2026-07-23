@@ -26,6 +26,7 @@
   "scripts": {
     "dev": "remotion studio",
     "build": "remotion bundle",
+    "audio": "env -u ELEVENLABS_API_KEY node --env-file=.env scripts/generate_audio.mjs",
     "upgrade": "remotion upgrade",
     "lint": "eslint src && tsc"
   },

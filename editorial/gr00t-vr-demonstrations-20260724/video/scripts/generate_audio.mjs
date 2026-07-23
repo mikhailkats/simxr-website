@@ -12,17 +12,20 @@ const outputDir = path.resolve('public/audio');
 await mkdir(outputDir, {recursive: true});
 
 const narration = [
-  'Sim XR turns remote VR teleoperation into training data for robot policies.',
-  'We first reproduced NVIDIA’s apple-to-plate workflow on our own GPU infrastructure, including closed-loop Arena evaluation.',
-  'Fifty Quest demonstrations trained our apple policy to eighty-four successes out of one hundred, versus ninety-three for the NVIDIA-data checkpoint.',
-  'Moved to the other working side, both old policies scored zero out of twenty. Targeted data reached seventy-four out of one hundred.',
-  'On a matched position grid, success-filtered demonstrations improved the policy from four hundred to four hundred forty-eight successes out of five hundred.',
-  'Then we changed the task: a mustard bottle on the left, and a wooden bowl on the right.',
-  'The bottle is visible and graspable from both ends. One operator recorded fifty successful demonstrations in four short sessions.',
-  'The released apple checkpoint scored zero out of thirty. After fine-tuning, the new checkpoint reached twenty-seven out of thirty, or ninety percent.',
-  'We also checked the same task pipeline in a scanned environment, on another humanoid, and with five-finger hands. These remain simulation tests.',
-  'This is the infrastructure result: remote demonstrations, validated data, policy training, and measured change.',
+  'Remote VR demonstrations become robot training data.',
+  'First, we reproduced NVIDIA’s apple-to-plate workflow on our own GPU infrastructure, with closed-loop Arena evaluation.',
+  'Fifty Quest demonstrations trained our apple policy to eighty-four percent success, versus ninety-three percent with NVIDIA data.',
+  'On the other working side, both old policies scored zero. Targeted data raised success to seventy-four percent.',
+  'On a matched position grid, success-filtered demonstrations improved results from four hundred to four hundred forty-eight out of five hundred.',
+  'Then we changed the task: mustard on the left, and a wooden bowl on the right.',
+  'One operator captured fifty successful mustard demonstrations in four short VR sessions.',
+  'The apple checkpoint scored zero out of thirty. Fine-tuning reached twenty-seven out of thirty: ninety percent.',
+  'We then checked the pipeline in a scanned environment, on another humanoid, and with five-finger hands. These are still simulation tests.',
+  'The result is infrastructure: remote demonstrations, validated data, policy training, and measured change.',
 ];
+const voiceOnlyIndex = process.env.VO_INDEX
+  ? Number.parseInt(process.env.VO_INDEX, 10)
+  : null;
 
 const streamToBuffer = async (stream) => {
   const reader = stream.getReader();
@@ -36,6 +39,7 @@ const streamToBuffer = async (stream) => {
 };
 
 for (let index = 0; index < narration.length; index += 1) {
+  if (voiceOnlyIndex !== null && index !== voiceOnlyIndex - 1) continue;
   const stream = await client.textToSpeech.convert('onwK4e9ZLuTAKqWW03F9', {
     text: narration[index],
     modelId: 'eleven_multilingual_v2',
@@ -46,7 +50,7 @@ for (let index = 0; index < narration.length; index += 1) {
       stability: 0.68,
       similarityBoost: 0.78,
       style: 0.12,
-      speed: 1.02,
+      speed: 1.12,
       useSpeakerBoost: true,
     },
   });
@@ -55,6 +59,10 @@ for (let index = 0; index < narration.length; index += 1) {
     path.join(outputDir, `vo_${String(index + 1).padStart(2, '0')}.mp3`),
     audio,
   );
+}
+
+if (voiceOnlyIndex !== null) {
+  process.exit(0);
 }
 
 const score = await client.music.composeDetailed({

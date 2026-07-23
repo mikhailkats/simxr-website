@@ -1,0 +1,127 @@
+{
+  "compositionPlan": {
+    "positiveGlobalStyles": [
+      "instrumental",
+      "corporate",
+      "tech",
+      "optimistic",
+      "minimalist electronic",
+      "background score",
+      "clean production"
+    ],
+    "negativeGlobalStyles": [
+      "vocals",
+      "lyrics",
+      "dramatic trailer booms",
+      "aggressive bass",
+      "cyberpunk"
+    ],
+    "sections": [
+      {
+        "sectionName": "Intro",
+        "positiveLocalStyles": [
+          "minimal electronic pulse",
+          "soft synth pad",
+          "sparse",
+          "clean sound",
+          "atmospheric"
+        ],
+        "negativeLocalStyles": [
+          "percussion",
+          "melody",
+          "loud",
+          "busy arrangement"
+        ],
+        "durationMs": 8000,
+        "lines": []
+      },
+      {
+        "sectionName": "Build 1",
+        "positiveLocalStyles": [
+          "steady momentum",
+          "restrained tactile percussion enters",
+          "gentle electronic pulse",
+          "sparse piano-like tones",
+          "understated build"
+        ],
+        "negativeLocalStyles": [
+          "dramatic",
+          "sudden changes",
+          "dominant melody",
+          "heavy bass"
+        ],
+        "durationMs": 17000,
+        "lines": []
+      },
+      {
+        "sectionName": "Build 2",
+        "positiveLocalStyles": [
+          "continued steady momentum",
+          "developing percussion pattern",
+          "soft low synth layers in",
+          "maintaining forward motion",
+          "quietly optimistic feel"
+        ],
+        "negativeLocalStyles": [
+          "tension",
+          "abrupt shifts",
+          "orchestral elements",
+          "complex melody"
+        ],
+        "durationMs": 20000,
+        "lines": []
+      },
+      {
+        "sectionName": "Tension",
+        "positiveLocalStyles": [
+          "subtle tension",
+          "slightly more complex rhythm",
+          "minor key synth tones",
+          "questioning feel",
+          "pensive atmosphere"
+        ],
+        "negativeLocalStyles": [
+          "overtly dramatic",
+          "aggressive",
+          "booming sounds",
+          "upbeat"
+        ],
+        "durationMs": 15000,
+        "lines": []
+      },
+      {
+        "sectionName": "Resolution and Outro",
+        "positiveLocalStyles": [
+          "resolves to major key",
+          "confident warmth",
+          "clean electronic pulse",
+          "brighter piano-like tones",
+          "warm synth pads",
+          "gentle fadeout in final seconds"
+        ],
+        "negativeLocalStyles": [
+          "orchestral climax",
+          "sudden ending",
+          "dissonance",
+          "heavy percussion"
+        ],
+        "durationMs": 30000,
+        "lines": []
+      }
+    ]
+  },
+  "songMetadata": {
+    "title": "Sim XR Case Study Score",
+    "description": "A precise, human-centered and quietly optimistic instrumental score for a robotics case study. It features a clean electronic pulse, restrained tactile percussion, soft synths, and sparse piano tones, with generous space for narration. The track builds steady momentum, introduces subtle tension, and resolves with confident warmth.",
+    "genres": [
+      "corporate",
+      "ambient",
+      "electronic",
+      "background music",
+      "instrumental"
+    ],
+    "languages": [],
+    "isExplicit": false
+  },
+  "wordsTimestamps": null
+}
