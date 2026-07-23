@@ -27,7 +27,7 @@ const C = {
   redSoft: '#FBEAEC',
 };
 
-const sequenceStarts = [18, 150, 420, 720, 1020, 1320, 1530, 1770, 2100, 2460];
+const sequenceStarts = [0, 150, 435, 720, 1020, 1320, 1530, 1770, 2100, 2460];
 
 const fade = (frame: number, duration: number) =>
   interpolate(frame, [0, 9, duration - 9, duration], [0, 1, 1, 0], {
@@ -125,60 +125,68 @@ const Intro: React.FC = () => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const duration = 135;
-  const crop = interpolate(frame, [0, 46], [26, 0], {
-    extrapolateRight: 'clamp',
-  });
 
   return (
     <AbsoluteFill style={{opacity: fade(frame, duration), background: C.white, color: C.ink}}>
-      <Brand context="Remote demonstration infrastructure" />
       <div
         style={{
           position: 'absolute',
-          left: 74,
-          top: 208,
-          width: 850,
+          inset: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '86px 140px 72px',
+          textAlign: 'center',
           ...enter(frame, fps, 2),
         }}
       >
-        <StageTitle size={72} maxWidth={840}>
-          Teaching robot policies from remote VR demonstrations
-        </StageTitle>
+        <Img
+          src={staticFile('brand/sim-xr-logo.png')}
+          style={{width: 540, height: 'auto', objectFit: 'contain'}}
+        />
         <div
           style={{
-            marginTop: 34,
-            width: 110,
-            height: 8,
-            borderRadius: 8,
+            marginTop: 50,
+            fontSize: 62,
+            lineHeight: 1.06,
+            letterSpacing: '-0.045em',
+            fontWeight: 900,
+            maxWidth: 1220,
+          }}
+        >
+          Teaching robot policies from remote VR demonstrations
+        </div>
+        <div
+          style={{
+            marginTop: 28,
+            width: 96,
+            height: 7,
+            borderRadius: 7,
             background: C.blue,
           }}
         />
         <div
           style={{
-            marginTop: 30,
-            fontSize: 27,
-            lineHeight: 1.35,
+            marginTop: 25,
+            fontSize: 24,
+            lineHeight: 1.3,
             color: C.muted,
-            maxWidth: 670,
+            fontWeight: 600,
           }}
         >
-          Apple reproduction, spatial failure analysis, and a new mustard-to-bowl skill.
+          NVIDIA Isaac Lab · CloudXR · Isaac Teleop
         </div>
-      </div>
-      <div
-        style={{
-          position: 'absolute',
-          right: 58,
-          top: 118,
-          width: 820,
-          height: 858,
-          overflow: 'hidden',
-          borderRadius: 10,
-          clipPath: `inset(0 ${crop}% 0 0 round 10px)`,
-          background: C.surface,
-        }}
-      >
-        <FullVideo src="final_static_apple_policy_rollout.mp4" position="42% 50%" scale={1.18} />
+        <div
+          style={{
+            marginTop: 17,
+            fontSize: 18,
+            color: C.muted,
+            letterSpacing: '0.01em',
+          }}
+        >
+          NVIDIA Inception member · Supported by AWS Startups
+        </div>
       </div>
     </AbsoluteFill>
   );
@@ -761,50 +769,102 @@ const FollowUps: React.FC = () => {
 const MustardOutro: React.FC = () => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const duration = 255;
+  const mustardOpacity = interpolate(frame, [135, 150], [1, 0], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+  const endCardOpacity = interpolate(frame, [150, 165], [0, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
   return (
-    <AbsoluteFill style={{opacity: fade(frame, duration), background: C.ink, color: C.white}}>
-      <div style={{position: 'absolute', inset: 0}}>
+    <AbsoluteFill
+      style={{
+        opacity: interpolate(frame, [0, 9], [0, 1], {
+          extrapolateLeft: 'clamp',
+          extrapolateRight: 'clamp',
+        }),
+        background: C.white,
+        color: C.white,
+      }}
+    >
+      <AbsoluteFill style={{opacity: mustardOpacity}}>
         <FullVideo
           src="misha_artifact/mustard_simxr_success.mp4"
           position="50% 50%"
           scale={1.42}
         />
-      </div>
+        <div
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            top: 0,
+            height: 124,
+            background: 'rgba(11,15,26,.68)',
+          }}
+        />
+        <Brand context="Simulation result · 27/30" onImage />
+        <div
+          style={{
+            position: 'absolute',
+            left: 58,
+            right: 58,
+            bottom: 48,
+            minHeight: 210,
+            padding: '32px 38px',
+            borderRadius: 8,
+            background: 'rgba(255,255,255,.95)',
+            color: C.ink,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 44,
+            ...enter(frame, fps, 8),
+          }}
+        >
+          <div style={{fontSize: 46, lineHeight: 1.08, fontWeight: 900, maxWidth: 1110}}>
+            Remote demonstrations → validated data → policy training → measured change
+          </div>
+          <div
+            style={{fontSize: 72, fontWeight: 900, color: C.green, whiteSpace: 'nowrap'}}
+          >
+            90%
+          </div>
+        </div>
+      </AbsoluteFill>
       <div
         style={{
           position: 'absolute',
-          left: 0,
-          right: 0,
-          top: 0,
-          height: 124,
-          background: 'rgba(11,15,26,.68)',
-        }}
-      />
-      <Brand context="Simulation result · 27/30" onImage />
-      <div
-        style={{
-          position: 'absolute',
-          left: 58,
-          right: 58,
-          bottom: 48,
-          minHeight: 210,
-          padding: '32px 38px',
-          borderRadius: 8,
-          background: 'rgba(255,255,255,.95)',
+          inset: 0,
+          zIndex: 50,
+          opacity: endCardOpacity,
           color: C.ink,
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 44,
-          ...enter(frame, fps, 8),
+          justifyContent: 'center',
+          textAlign: 'center',
+          padding: 100,
         }}
       >
-        <div style={{fontSize: 46, lineHeight: 1.08, fontWeight: 900, maxWidth: 1110}}>
-          Remote demonstrations → validated data → policy training → measured change
+        <Img
+          src={staticFile('brand/sim-xr-logo.png')}
+          style={{width: 520, height: 'auto', objectFit: 'contain'}}
+        />
+        <div
+          style={{
+            marginTop: 45,
+            fontSize: 38,
+            lineHeight: 1.18,
+            fontWeight: 700,
+            maxWidth: 1100,
+          }}
+        >
+          Human demonstration data for Physical AI at cloud scale.
         </div>
-        <div style={{fontSize: 72, fontWeight: 900, color: C.green, whiteSpace: 'nowrap'}}>
-          90%
+        <div style={{marginTop: 28, fontSize: 26, fontWeight: 700, color: C.blue}}>
+          simxr.app
         </div>
       </div>
     </AbsoluteFill>
@@ -816,9 +876,9 @@ const Soundtrack: React.FC = () => {
   return (
     <>
       <Audio
-        src={staticFile('audio/sim_xr_case_study_score.mp3')}
+        src={staticFile('audio/sim_xr_case_study_score_extended.mp3')}
         volume={(frame) =>
-          interpolate(frame, [0, 35, 2600, 2700], [0, 0.11, 0.11, 0], {
+          interpolate(frame, [0, 35], [0, 0.11], {
             extrapolateLeft: 'clamp',
             extrapolateRight: 'clamp',
           })

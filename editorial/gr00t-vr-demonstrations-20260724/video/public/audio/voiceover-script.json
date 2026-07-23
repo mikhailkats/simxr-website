@@ -3,8 +3,8 @@
   "voiceId": "onwK4e9ZLuTAKqWW03F9",
   "model": "eleven_multilingual_v2",
   "blocks": [
-    "Sim XR turns remote VR demonstrations into training data for robot policies.",
-    "First, we reproduced NVIDIA’s apple-to-plate workflow on our own GPU infrastructure, with closed-loop Arena evaluation.",
+    "Sim XR turns VR demonstrations into robot training data.",
+    "With NVIDIA Isaac Lab, CloudXR, and Isaac Teleop, we reproduced the apple-to-plate workflow on AWS.",
     "Fifty Quest demonstrations trained our apple policy to eighty-four percent success, versus ninety-three percent with NVIDIA data.",
     "On the other working side, both old policies scored zero. Targeted data raised success to seventy-four percent.",
     "On a matched position grid, success-filtered demonstrations improved results from four hundred to four hundred forty-eight out of five hundred.",
@@ -12,6 +12,6 @@
     "One operator captured fifty successful mustard demonstrations in four short VR sessions.",
     "The apple checkpoint scored zero out of thirty. Fine-tuning reached twenty-seven out of thirty: ninety percent.",
     "We then checked the pipeline in a scanned environment, on another humanoid, and with five-finger hands. These are still simulation tests.",
-    "The result is infrastructure: remote demonstrations, validated data, policy training, and measured change."
+    "This is Sim XR infrastructure: remote demonstrations, validated data, policy training, and measured change."
   ]
 }

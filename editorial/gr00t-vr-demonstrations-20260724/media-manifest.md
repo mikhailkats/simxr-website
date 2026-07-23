@@ -11,8 +11,8 @@
 | Mustard candidate | `media/mustard-candidate-headcam.png` | Robot-head-camera frame extracted from Misha’s linked experiment artifact | Ready |
 | Mustard task scene | `media/mustard-final-scene.png` | Final mustard-to-bowl layout extracted from Misha’s linked experiment artifact | Ready |
 | Mustard follow-ups | `media/mustard-followup-environments-and-hands.png` | Scanned environment, GR1T2, and Inspire FTP frames from Misha’s linked experiment artifact | Ready |
-| Final master | `../remotion_case_study_20260724/project/out/sim_xr_gr00t_case_study_20260724_v3_audio_master.mp4` | Revised 90-second 16:9 Sim XR edit with mustard ending, ElevenLabs narration, and ElevenLabs music | Ready and validated |
-| Final social video | `../remotion_case_study_20260724/project/out/sim_xr_gr00t_case_study_20260724_v3_audio_720p.mp4` | Compressed 16:9 derivative with the final audio mix | Ready and validated |
+| Final master | `../remotion_case_study_20260724/project/out/sim_xr_gr00t_case_study_20260724_v4_branded_master.mp4` | Final 90-second 16:9 Sim XR edit with branded opening and closing cards, mustard ending, ElevenLabs narration, and ElevenLabs music | Ready and validated |
+| Final social video | `../remotion_case_study_20260724/project/out/sim_xr_gr00t_case_study_20260724_v4_branded_720p.mp4` | Compressed 16:9 derivative with the final branded edit and audio mix | Ready and validated |
 
 ## Existing evidence reused in the video
 
@@ -40,9 +40,12 @@ SSH key, so no additional frontal camera was rendered.
 
 The final master contains ten English narration blocks generated with the
 ElevenLabs Daniel voice and a 90-second instrumental score generated with
-ElevenLabs Music. The blocks were duration-checked against their visual scenes.
-The final stereo AAC mix is 48 kHz, peaks at -1.5 dB, and fully decodes without
-errors. The local credential is excluded from Git.
+ElevenLabs Music. The generated score's original 4.6-second silent tail was
+replaced by a crossfaded reprise of its active closing material, with a final
+0.7-second fade. Measured audio remains present through 89.95 seconds. The
+blocks were duration-checked against their visual scenes. The final stereo AAC
+mix is 48 kHz and fully decodes without errors. The local credential is
+excluded from Git.
 
 ## Recommended additional capture
 

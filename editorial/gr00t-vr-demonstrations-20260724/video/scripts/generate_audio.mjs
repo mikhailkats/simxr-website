@@ -1,4 +1,5 @@
 import {ElevenLabsClient} from '@elevenlabs/elevenlabs-js';
+import {spawn} from 'node:child_process';
 import {mkdir, writeFile} from 'node:fs/promises';
 import path from 'node:path';
 
@@ -12,8 +13,8 @@ const outputDir = path.resolve('public/audio');
 await mkdir(outputDir, {recursive: true});
 
 const narration = [
-  'Remote VR demonstrations become robot training data.',
-  'First, we reproduced NVIDIA’s apple-to-plate workflow on our own GPU infrastructure, with closed-loop Arena evaluation.',
+  'Sim XR turns VR demonstrations into robot training data.',
+  'With NVIDIA Isaac Lab, CloudXR, and Isaac Teleop, we reproduced the apple-to-plate workflow on AWS.',
   'Fifty Quest demonstrations trained our apple policy to eighty-four percent success, versus ninety-three percent with NVIDIA data.',
   'On the other working side, both old policies scored zero. Targeted data raised success to seventy-four percent.',
   'On a matched position grid, success-filtered demonstrations improved results from four hundred to four hundred forty-eight out of five hundred.',
@@ -21,11 +22,25 @@ const narration = [
   'One operator captured fifty successful mustard demonstrations in four short VR sessions.',
   'The apple checkpoint scored zero out of thirty. Fine-tuning reached twenty-seven out of thirty: ninety percent.',
   'We then checked the pipeline in a scanned environment, on another humanoid, and with five-finger hands. These are still simulation tests.',
-  'The result is infrastructure: remote demonstrations, validated data, policy training, and measured change.',
+  'This is Sim XR infrastructure: remote demonstrations, validated data, policy training, and measured change.',
 ];
 const voiceOnlyIndex = process.env.VO_INDEX
   ? Number.parseInt(process.env.VO_INDEX, 10)
   : null;
+
+await writeFile(
+  path.join(outputDir, 'voiceover-script.json'),
+  `${JSON.stringify(
+    {
+      voice: 'Daniel',
+      voiceId: 'onwK4e9ZLuTAKqWW03F9',
+      model: 'eleven_multilingual_v2',
+      blocks: narration,
+    },
+    null,
+    2,
+  )}\n`,
+);
 
 const streamToBuffer = async (stream) => {
   const reader = stream.getReader();
@@ -77,16 +92,35 @@ await writeFile(
   `${JSON.stringify(score.json, null, 2)}\n`,
 );
 
-await writeFile(
-  path.join(outputDir, 'voiceover-script.json'),
-  `${JSON.stringify(
-    {
-      voice: 'Daniel',
-      voiceId: 'onwK4e9ZLuTAKqWW03F9',
-      model: 'eleven_multilingual_v2',
-      blocks: narration,
-    },
-    null,
-    2,
-  )}\n`,
+const ffmpeg = spawn(
+  'ffmpeg',
+  [
+    '-y',
+    '-hide_banner',
+    '-loglevel',
+    'warning',
+    '-i',
+    path.join(outputDir, 'sim_xr_case_study_score.mp3'),
+    '-filter_complex',
+    '[0:a]atrim=start=0:end=85,asetpts=PTS-STARTPTS[main];' +
+      '[0:a]atrim=start=76:end=82.3,asetpts=PTS-STARTPTS[tail];' +
+      '[main][tail]acrossfade=d=1.3:c1=tri:c2=tri,' +
+      'afade=t=out:st=89.3:d=0.7[a]',
+    '-map',
+    '[a]',
+    '-c:a',
+    'libmp3lame',
+    '-b:a',
+    '192k',
+    path.join(outputDir, 'sim_xr_case_study_score_extended.mp3'),
+  ],
+  {stdio: 'inherit'},
 );
+
+await new Promise((resolve, reject) => {
+  ffmpeg.on('error', reject);
+  ffmpeg.on('exit', (code) => {
+    if (code === 0) resolve();
+    else reject(new Error(`ffmpeg music extension failed with exit code ${code}`));
+  });
+});
