@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Policy Improvement Sprint — SIM XR | Fix a specific robot policy failure</title>
+  <title>Policy Improvement Sprint — SIM XR | Fix one policy failure. Measure the improvement.</title>
   <meta name="description" content="Bring us one task your robot struggles with. SIM XR reproduces it in simulation, collects targeted human demonstrations where the policy breaks, validates every trajectory, and measures what changed — without consuming robot hours." />
   <meta name="robots" content="index,follow" />
   <link rel="canonical" href="https://simxr.tech/sprint/" />
@@ -229,7 +229,7 @@
     <section>
       <div class="container">
         <span class="label-tag">Policy Improvement Sprint</span>
-        <h1>Turn a policy failure into a <span class="accent">measured improvement</span> sprint.</h1>
+        <h1>Fix one policy failure. <span class="accent">Measure the improvement.</span></h1>
         <p>
           Bring us one task your robot struggles with. SIM&nbsp;XR reproduces the task in simulation,
           collects targeted human demonstrations exactly where the policy breaks, validates every
@@ -246,7 +246,7 @@
           </div>
           <div class="bench-card">
             <div class="num">50 demos</div>
-            <p>Recorded by a single operator. Baseline: the humanoid model NVIDIA fine-tuned for its own benchmark task scored 0% on this new task.</p>
+            <p>Recorded by a single operator. Baseline: GR00T N1.7, fine-tuned by NVIDIA for its own G1 benchmark task, scored 0% on this structurally new task.</p>
           </div>
           <div class="bench-card">
             <div class="num">~3 days</div>
@@ -315,8 +315,8 @@
             <ul>
               <li>Demonstrations in the robot&rsquo;s <strong>action space</strong> &mdash; recorded via teleop, not retargeted from video</li>
               <li><strong>Our own operator pool and infrastructure:</strong> consumer headsets, GPU servers in the EU and US, instant scene resets</li>
-              <li><strong>Zero robot-hours consumed</strong> &mdash; collection and evaluation run off-robot, in simulation</li>
-              <li>Standard <strong>NVIDIA Isaac / GR00T / LeRobot</strong> toolchain &mdash; everything drops into your existing workflow</li>
+              <li><strong>No client robot time required</strong> for data collection &mdash; sessions run off-robot, in simulation</li>
+              <li>Compatible with <strong>NVIDIA Isaac and GR00T</strong> workflows, with LeRobot-format export</li>
             </ul>
           </div>
         </div>
