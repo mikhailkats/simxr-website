@@ -1,3 +1,31 @@
+@font-face {
+  font-family: 'DM Sans';
+  src: url('./fonts/dm-sans-400.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'DM Sans';
+  src: url('./fonts/dm-sans-700.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'DM Sans';
+  src: url('./fonts/dm-sans-900.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('./fonts/space-grotesk-700.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -5,5 +33,7 @@
 html,
 body {
   margin: 0;
-  background: #f6f9fe;
+  background: #ffffff;
+  color: #0b0f1a;
+  font-family: 'DM Sans', Arial, sans-serif;
 }

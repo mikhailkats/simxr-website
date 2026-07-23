@@ -6,6 +6,7 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.59.0",
     "@remotion/cli": "4.0.492",
     "@remotion/media": "4.0.492",
     "@remotion/tailwind-v4": "4.0.492",

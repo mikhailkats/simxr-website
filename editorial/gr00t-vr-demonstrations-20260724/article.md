@@ -15,7 +15,7 @@ To test that infrastructure, we started with NVIDIA’s published [Unitree G1 st
 
 The important result is not that one checkpoint generalized everywhere. It did not. The result is that we built a repeatable system for finding a narrow learned skill, collecting the missing data, retraining from a controlled base, and measuring exactly what changed.
 
-![Sim XR GR00T case-study video cover](media/video-cover.jpg)
+![Sim XR GR00T case-study video cover](media/video-cover-v2.jpg)
 
 ## Reproducing the released NVIDIA workflow
 
@@ -88,16 +88,28 @@ The result was also not uniformly positive. Eighteen grid cells improved, three 
 
 The apple experiments showed that we could reproduce and modify a published task. The stronger test was whether we could create a task absent from the original dataset and teach it using only demonstrations collected through our own infrastructure.
 
-On our Oregon server, we composed a cross-body task: a mustard bottle starts on the left, a wooden bowl sits on the right, and the instruction is “move the mustard bottle to the bowl.”
+On our Oregon server, we composed a cross-body task: a mustard bottle starts on the left, a wooden bowl sits on the right, and the instruction is “move the mustard bottle to the bowl.” The geometry matters. The bottle sits near the left arm’s working limit, while the destination is on the opposite side. The policy must carry the object across the body instead of replaying the short left-side motion learned from the apple task.
+
+The object choice came from operator experience rather than visual novelty. A lemon was too small for a stable transfer between the G1’s three-finger hands. A white box had poor contrast against the shelf. The mustard bottle was elongated enough to grasp from either end and its yellow body remained easy to see through the robot-head camera.
+
+![Mustard bottle candidate seen through the robot-head camera](media/mustard-candidate-headcam.png)
+
+![Final cross-body mustard-to-bowl scene](media/mustard-final-scene.png)
 
 Under the same scene, seed, CPU-physics setting, and contact-sensor success definition:
 
 - the released apple checkpoint scored 0/30;
 - GR00T N1.7 fine-tuned on 50 successful Sim XR operator demonstrations scored 27/30, or 90%.
 
-The 50 demonstrations came from one VR operator in sessions of 10–15 episodes. The full fine-tune ran for 20,000 steps and took approximately 5.5 hours. Because the evaluation contains 30 episodes, the raw count—27/30—is more informative than the percentage alone; its Wilson 95% interval is approximately 74.4–96.5%.
+The 50 demonstrations came from one VR operator in four sessions of 10–15 episodes. Every retained episode passed the environment’s success condition. Demonstrations lasted 183–318 simulation steps, with an average close to 230. The recorded HDF5 files contained the robot-head camera, 23-dimensional teleoperation commands, and the 43-dimensional joint targets produced after inverse kinematics. The same conversion path used for the apple experiment produced the LeRobot training dataset.
+
+The full fine-tune ran for 20,000 steps and took approximately 5.5 hours on one L40S. The final training loss was 0.024. Because the evaluation contains 30 episodes, the raw count, 27/30, is more informative than the percentage alone; its Wilson 95% interval is approximately 74.4–96.5%.
 
 This does not demonstrate zero-shot object generalization. We post-trained the model for the new task. What it demonstrates is more useful for our current stage: we can compose a new simulation task, collect clean human demonstrations remotely, convert and validate the data, fine-tune the VLA, and produce a large improvement under a matched closed-loop protocol.
+
+The mustard task also became a practical test fixture for the infrastructure around the policy. The team rendered the task in a scanned-room environment, ported the scene and teleoperation flow to a Fourier GR1T2, and accepted a Unitree G1 configuration with five-finger Inspire FTP hands in live VR. These are follow-up simulation and teleoperation checks, not evidence that one mustard checkpoint works on every embodiment. They show that the task, camera, recording, and operator workflow can be adapted without rebuilding the entire data pipeline.
+
+![Mustard follow-up checks: scanned environment, Fourier GR1T2, and Unitree G1 with Inspire FTP hands](media/mustard-followup-environments-and-hands.png)
 
 ## What these experiments prove—and what they do not
 
@@ -121,7 +133,7 @@ Our next experiments are intentionally harder:
 
 - train one policy across both working sides rather than separate left- and right-side checkpoints;
 - combine demonstrations with held-out randomization of object and destination positions;
-- extend the protocol to other hands and embodiments;
+- collect full training datasets for the already accepted alternate-hand and alternate-embodiment configurations;
 - add richer visual domains, including 3D Gaussian Splatting, as a controlled observation-layer variable;
 - test augmentation derived from validated recordings without changing action or geometry semantics;
 - measure whether these interventions improve held-out simulation robustness before making any sim-to-real claim.
