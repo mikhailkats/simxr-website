@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Policy Improvement Sprint — SIM XR | Fix a specific robot policy failure</title>
+  <meta name="description" content="Bring us one task your robot struggles with. SIM XR reproduces it in simulation, collects targeted human demonstrations where the policy breaks, validates every trajectory, and measures what changed — without consuming robot hours." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://simxr.tech/sprint/" />
+  <meta property="og:title" content="Policy Improvement Sprint — SIM XR" />
+  <meta property="og:description" content="Turn a policy failure into a measured improvement sprint: targeted VR demonstrations, validation gates, and before/after evaluation — in simulation, on our infrastructure." />
+  <meta property="og:url" content="https://simxr.tech/sprint/" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" type="image/svg+xml" href="/favicon-tech.svg" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --blue: #0057FF;
+      --navy: #0B0F1A;
+      --gray: #6B7280;
+      --gray-light: #F5F6F8;
+      --border: #E5E7EB;
+      --white: #FFFFFF;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      color: var(--navy);
+      background: var(--white);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.6;
+    }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+    .label-tag {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gray);
+      padding: 0.35rem 0.7rem;
+      background: var(--gray-light);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+    section { padding: 80px 0; border-top: 1px solid var(--border); }
+    section:first-of-type { border-top: none; padding-top: 60px; }
+    h1 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 1.1; margin: 0.75rem 0 1.25rem;
+      color: var(--navy); font-weight: 700;
+      letter-spacing: -0.02em;
+      max-width: 800px;
+    }
+    h1 .accent { color: var(--blue); }
+    h2 {
+      font-size: clamp(1.5rem, 3vw, 2.2rem);
+      line-height: 1.15; margin: 0.75rem 0 1.25rem;
+      color: var(--navy); font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.78rem; font-weight: 600;
+      color: var(--blue); letter-spacing: 0.1em;
+      text-transform: uppercase; margin: 0 0 0.6rem;
+    }
+    p { color: var(--gray); font-size: 1rem; line-height: 1.7; margin: 0 0 1rem; max-width: 720px; }
+    p strong { color: var(--navy); font-weight: 600; }
+    .btn-primary {
+      display: inline-block;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600; font-size: 0.95rem;
+      color: var(--white); background: var(--blue);
+      padding: 0.8rem 1.7rem; border-radius: 8px;
+      text-decoration: none; letter-spacing: 0.01em;
+      border: none; cursor: pointer;
+      transition: background .15s ease, transform .05s ease;
+    }
+    .btn-primary:hover { background: #1a6dff; text-decoration: none; }
+    .btn-primary:active { background: #003ACC; transform: translateY(1px); }
+
+    /* ── BENCHMARK STRIP ── */
+    .bench-note {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--blue);
+      margin: 2.5rem 0 0.75rem;
+    }
+    .bench-note::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--blue); }
+    .bench-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+    @media (max-width: 768px) { .bench-grid { grid-template-columns: 1fr; } }
+    .bench-card {
+      padding: 1.75rem;
+      background: var(--gray-light);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .bench-card .num {
+      font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+      font-size: 1.9rem; color: var(--navy); letter-spacing: -0.02em;
+      line-height: 1.1; margin-bottom: 0.5rem;
+    }
+    .bench-card .num .accent { color: var(--blue); }
+    .bench-card p { font-size: 0.88rem; margin: 0; }
+
+    /* ── PIPELINE ── */
+    .pipe-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.25rem; margin-top: 2rem; }
+    @media (max-width: 900px) { .pipe-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px) { .pipe-grid { grid-template-columns: 1fr; } }
+    .pipe-card {
+      padding: 1.5rem;
+      border: 1px solid var(--border); border-radius: 10px;
+      background: var(--white);
+    }
+    .pipe-card .step {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--navy); color: var(--white);
+      font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1rem;
+    }
+    .pipe-card:last-child .step { background: var(--blue); }
+    .pipe-card .title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1rem; color: var(--navy); margin-bottom: 0.5rem; }
+    .pipe-card p { font-size: 0.86rem; margin: 0; }
+
+    /* ── GET CARDS ── */
+    .get-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 2rem; }
+    @media (max-width: 768px) { .get-grid { grid-template-columns: 1fr; } }
+    .get-card {
+      padding: 2rem;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--white);
+    }
+    .get-card.tinted { background: var(--gray-light); }
+    .get-card .title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.25rem; color: var(--navy); margin-bottom: 0.75rem; }
+    .get-card ul { list-style: none; padding: 0; margin: 1rem 0 0; }
+    .get-card ul li {
+      font-size: 0.88rem; color: var(--gray); padding: 0.45rem 0 0.45rem 1.4rem;
+      border-top: 1px solid var(--border); position: relative; line-height: 1.55;
+    }
+    .get-card ul li::before {
+      content: ''; position: absolute; left: 0; top: 0.95rem;
+      width: 12px; height: 12px;
+      background: no-repeat center / contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230057FF' stroke-width='3'%3E%3Cpath d='M20 6L9 17l-5-5'/%3E%3C/svg%3E");
+    }
+    .get-card ul li strong { color: var(--navy); font-weight: 600; }
+
+    /* ── SPRINT CALLOUT ── */
+    .gen-callout {
+      margin-top: 2rem;
+      padding: 1.6rem 1.9rem;
+      background: var(--navy);
+      border-radius: 10px;
+    }
+    .gen-callout-tag {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: #7EA6FF; margin-bottom: 0.6rem;
+    }
+    .gen-callout p { color: rgba(255,255,255,0.75); font-size: 0.95rem; margin: 0; max-width: 820px; }
+    .gen-callout p strong { color: var(--white); }
+
+    /* ── FORM ── */
+    .inquiry-wrap { display: grid; grid-template-columns: 1fr 1.1fr; gap: 3.5rem; margin-top: 2rem; align-items: start; }
+    @media (max-width: 820px) { .inquiry-wrap { grid-template-columns: 1fr; gap: 2rem; } }
+    form.inquiry { display: flex; flex-direction: column; gap: 1.1rem; }
+    .field label {
+      display: block;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray);
+      margin-bottom: 0.5rem;
+    }
+    .field label .opt { text-transform: none; letter-spacing: normal; color: #9CA3AF; }
+    .field input, .field textarea {
+      width: 100%;
+      font-family: 'DM Sans', sans-serif; font-size: 0.95rem; color: var(--navy);
+      padding: 0.7rem 0.9rem;
+      background: var(--white);
+      border: 1px solid var(--border); border-radius: 8px;
+      transition: border-color .15s ease;
+    }
+    .field textarea { resize: vertical; min-height: 76px; }
+    .field input:focus, .field textarea:focus { outline: none; border-color: var(--blue); }
+    .form-note { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--gray); letter-spacing: 0.03em; }
+    .partners-strip { margin-top: 2rem; }
+    .partners-strip img { height: 56px; width: auto; display: block; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--navy); color: rgba(255,255,255,0.7);
+      padding: 50px 0 30px; margin-top: 60px;
+    }
+    footer .container { padding: 0 2rem; }
+    footer .row {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1rem;
+    }
+    footer .wordmark-w {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700; font-size: 1.05rem;
+      color: rgba(255,255,255,0.95); letter-spacing: -0.02em;
+      text-decoration: none;
+    }
+    footer .wordmark-w span { color: var(--blue); }
+    footer .links a { color: rgba(255,255,255,0.7); margin-left: 1.5rem; font-size: 0.88rem; }
+    footer .bottom { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.78rem; color: rgba(255,255,255,0.45); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+  </style>
+</head>
+<body>
+
+  <!-- Unified site header — single source: /site-header.js -->
+  <div id="sxr-header" data-cta-label="Scope a sprint" data-cta-href="#inquiry"></div>
+  <script src="/site-header.js" defer></script>
+
+  <main>
+
+    <!-- ============ HERO ============ -->
+    <section>
+      <div class="container">
+        <span class="label-tag">Policy Improvement Sprint</span>
+        <h1>Turn a policy failure into a <span class="accent">measured improvement</span> sprint.</h1>
+        <p>
+          Bring us one task your robot struggles with. SIM&nbsp;XR reproduces the task in simulation,
+          collects targeted human demonstrations exactly where the policy breaks, validates every
+          trajectory, and measures what changed &mdash; without consuming additional robot hours
+          on your side.
+        </p>
+        <a href="#inquiry" class="btn-primary">Bring us one failure case</a>
+
+        <div class="bench-note">Internal benchmark &middot; run end-to-end in our simulation pipeline</div>
+        <div class="bench-grid">
+          <div class="bench-card">
+            <div class="num">0% &rarr; <span class="accent">90%</span></div>
+            <p>Success rate on a structurally new manipulation task &mdash; before and after fine-tuning on our targeted demonstrations, same evaluation protocol and initial states.</p>
+          </div>
+          <div class="bench-card">
+            <div class="num">50 demos</div>
+            <p>Recorded by a single operator. Baseline: the humanoid model NVIDIA fine-tuned for its own benchmark task scored 0% on this new task.</p>
+          </div>
+          <div class="bench-card">
+            <div class="num">~3 days</div>
+            <p>From task definition to a measured policy &mdash; collection, fine-tune and evaluation included.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ HOW A SPRINT RUNS ============ -->
+    <section>
+      <div class="container">
+        <span class="label-tag">Process</span>
+        <h2>How a sprint runs.</h2>
+        <div class="pipe-grid">
+          <div class="pipe-card">
+            <div class="step">1</div>
+            <div class="title">Define</div>
+            <p>The failing task, success criteria, action/observation schema and evaluation protocol &mdash; agreed up front.</p>
+          </div>
+          <div class="pipe-card">
+            <div class="step">2</div>
+            <div class="title">Reproduce</div>
+            <p>The task and its failure distribution in simulation &mdash; including your environment, reconstructed from a scan when the scene matters.</p>
+          </div>
+          <div class="pipe-card">
+            <div class="step">3</div>
+            <div class="title">Collect</div>
+            <p>Targeted VR demonstrations aimed at the measured failure modes &mdash; not blanket hours.</p>
+          </div>
+          <div class="pipe-card">
+            <div class="step">4</div>
+            <div class="title">Validate</div>
+            <p>Accept/reject gates and replay validation on every trajectory. Rejects are our cost, not yours.</p>
+          </div>
+          <div class="pipe-card">
+            <div class="step">5</div>
+            <div class="title">Measure</div>
+            <p>Before/after evaluation on the same protocol &mdash; in your stack where integration permits, or in our evaluation harness.</p>
+          </div>
+        </div>
+        <div class="gen-callout">
+          <div class="gen-callout-tag">Scope</div>
+          <p><strong>One task or a bounded failure distribution, at a fixed project price.</strong> Success protocol agreed before the first session; demonstrations, validation and the evaluation report always included.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ DELIVERABLES ============ -->
+    <section>
+      <div class="container">
+        <span class="label-tag">Deliverables</span>
+        <h2>What you receive &mdash; and why it works.</h2>
+        <div class="get-grid">
+          <div class="get-card tinted">
+            <div class="title">What you receive</div>
+            <ul>
+              <li><strong>Targeted demonstrations</strong> in your schema &mdash; LeRobot-ready, replayable, with per-episode logs</li>
+              <li><strong>Validation results</strong> &mdash; accept/reject outcomes and replay checks for every trajectory</li>
+              <li><strong>Evaluation report</strong> &mdash; baseline vs. post-training on identical initial states, plus coverage of the failure distribution</li>
+              <li><strong>Optional fine-tuned checkpoint</strong> and recommendations for the next iteration</li>
+            </ul>
+          </div>
+          <div class="get-card">
+            <div class="title">Why it works</div>
+            <ul>
+              <li>Demonstrations in the robot&rsquo;s <strong>action space</strong> &mdash; recorded via teleop, not retargeted from video</li>
+              <li><strong>Our own operator pool and infrastructure:</strong> consumer headsets, GPU servers in the EU and US, instant scene resets</li>
+              <li><strong>Zero robot-hours consumed</strong> &mdash; collection and evaluation run off-robot, in simulation</li>
+              <li>Standard <strong>NVIDIA Isaac / GR00T / LeRobot</strong> toolchain &mdash; everything drops into your existing workflow</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ INQUIRY ============ -->
+    <section id="inquiry">
+      <div class="container">
+        <div class="inquiry-wrap">
+          <div>
+            <span class="label-tag">Scope a sprint</span>
+            <h2>Show us where your policy breaks.</h2>
+            <p>
+              Describe the task and where the current policy fails. We&rsquo;ll come back with a
+              sprint scope: evaluation protocol, collection plan, and a fixed price.
+            </p>
+            <p class="form-note">One reply from the team. No mailing list.</p>
+            <div class="partners-strip">
+              <img src="/images/partner-badges-white.png" alt="NVIDIA Inception Member · Powered by AWS Activate Member" />
+            </div>
+          </div>
+          <form class="inquiry" name="sprint-inquiry" method="POST" action="/sprint/thanks" data-netlify="true" data-netlify-honeypot="bot-field">
+            <input type="hidden" name="form-name" value="sprint-inquiry" />
+            <p style="display:none;"><label>Don't fill this out: <input name="bot-field" /></label></p>
+            <div class="field">
+              <label for="f-name">Name</label>
+              <input id="f-name" name="name" required autocomplete="name" placeholder="Your name" />
+            </div>
+            <div class="field">
+              <label for="f-email">Work email</label>
+              <input id="f-email" name="email" type="email" required autocomplete="email" placeholder="you@company.example" />
+            </div>
+            <div class="field">
+              <label for="f-company">Company / lab</label>
+              <input id="f-company" name="company" required autocomplete="organization" placeholder="Team or organization" />
+            </div>
+            <div class="field">
+              <label for="f-task">Which task is failing? <span class="opt">(what the robot should do, where it breaks)</span></label>
+              <textarea id="f-task" name="task" required placeholder="e.g. bimanual handover of deformable items — policy drops the object on transfer"></textarea>
+            </div>
+            <div class="field">
+              <label for="f-stack">Robot &amp; stack <span class="opt">(embodiment, policy/model, simulator if any)</span></label>
+              <textarea id="f-stack" name="stack" placeholder="e.g. Unitree G1, GR00T fine-tune, Isaac Lab"></textarea>
+            </div>
+            <button type="submit" class="btn-primary">Request a sprint scope</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="row">
+        <a href="/" class="wordmark-w">SIM <span>XR.</span></a>
+        <div class="links">
+          <a href="/">Home</a>
+          <a href="/packs/">Asset Packs</a>
+          <a href="/network/">Hire Operators</a>
+          <a href="/operator/">For Operators</a>
+          <a href="/about">About</a>
+        </div>
+      </div>
+      <div class="bottom">
+        <span>© 2026 SIM XR. The training layer for Physical AI.</span>
+        <span>California · Paris · Tel Aviv</span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
