@@ -1,25 +1,29 @@
 ---
-title: "From Reproduction to New Skills: Teaching GR00T N1.7 with Remote VR Demonstrations"
-subtitle: "What an apple, a mustard bottle, and several thousand closed-loop rollouts taught us about building human-data infrastructure for Physical AI"
+title: "From NVIDIA’s 208 Demonstrations to a New Skill with 50 Remote VR Episodes"
+subtitle: "How Sim XR used NVIDIA’s published Isaac Lab-to-GR00T recipe to validate remote human-data infrastructure for Physical AI"
 author: "Georgy Molodtsov, Sim XR"
 language: en
 status: publication-ready-draft
 date: 2026-07-24
 ---
 
-# From Reproduction to New Skills: Teaching GR00T N1.7 with Remote VR Demonstrations
+# From NVIDIA’s 208 Demonstrations to a New Skill with 50 Remote VR Episodes
 
-At Sim XR, we are building infrastructure for people to teleoperate robots inside simulation and turn those interactions into training data for vision-language-action models. The thesis is simple: consumer VR can make high-quality human demonstrations easier to collect, while cloud simulation lets us repeat, measure, and improve a task before moving toward real hardware.
+NVIDIA published something unusually useful for the robotics community: a complete, step-by-step path from human demonstrations in Isaac Lab to a fine-tuned GR00T N1.7 vision-language-action policy and closed-loop evaluation in Isaac Lab-Arena. The release gave us more than a checkpoint to run. It gave us a reference pipeline against which we could test the part Sim XR is building: remote human-data collection.
 
-To test that infrastructure, we started with NVIDIA’s published [Unitree G1 static apple-to-plate workflow](https://isaac-sim.github.io/IsaacLab-Arena/main/pages/example_workflows/static_apple/index.html). It is a useful reference task because it covers the complete loop: teleoperation, HDF5 recording, conversion to LeRobot, GR00T N1.7 post-training, and closed-loop evaluation in Isaac Lab-Arena. We first reproduced that loop on our own GPU server. Then we replaced the source data with demonstrations collected through our own VR stack, deliberately changed the task geometry, diagnosed where the policy failed, and finally trained a genuinely new mustard-bottle-to-bowl skill.
+After auditing the released files, we identified 208 usable non-empty NVIDIA trajectories. A checkpoint trained from that data reached 93/100 in our matched apple evaluation. We then ran the same training and evaluation loop with only 50 selected demonstrations collected through Meta Quest, Isaac Teleop, and CloudXR. The operator and the AWS GPU server were thousands of kilometres apart; nobody needed to stand beside a physical robot or travel to the compute. That 50-demo checkpoint reached 84/100.
 
-The important result is not that one checkpoint generalized everywhere. It did not. The result is that we built a repeatable system for finding a narrow learned skill, collecting the missing data, retraining from a controlled base, and measuring exactly what changed.
+The nine-point gap is real, but so is the leverage: less than one quarter as many demonstrations, collected remotely, produced a working policy through the same GR00T N1.7 interface. More importantly, when the apple policies later scored zero after we changed the task geometry, we could collect the missing behavior and train a new checkpoint. When we replaced the apple with a mustard bottle and changed the destination, the apple checkpoint again scored zero; 50 new remote demonstrations produced 27/30 success.
+
+That is the central Sim XR result. We are not claiming that one policy generalized to everything. We are showing an infrastructure loop that can identify a narrow policy failure, connect a remote operator, collect the missing demonstrations, fine-tune from a controlled base, and measure what changed.
 
 ![Sim XR GR00T case-study video cover](media/video-cover-v2.jpg)
 
-## Reproducing the released NVIDIA workflow
+## NVIDIA published the complete simulation-to-VLA recipe
 
-NVIDIA’s [end-to-end GR00T tutorial](https://developer.nvidia.com/blog/develop-humanoid-robot-policies-end-to-end-with-nvidia-isaac-gr00t/) uses a Unitree G1 humanoid standing at a shelf. An apple begins near one hand, and the policy must pick it up and place it on a plate. NVIDIA released the task, a fine-tuned checkpoint, and a dataset on [Hugging Face](https://huggingface.co/datasets/nvidia/Arena-G1-Static-PickNPlace-Task).
+NVIDIA’s [end-to-end GR00T tutorial](https://developer.nvidia.com/blog/develop-humanoid-robot-policies-end-to-end-with-nvidia-isaac-gr00t/) uses a Unitree G1 humanoid standing at a shelf. An apple begins near one hand, and the policy must pick it up and place it on a plate. NVIDIA released the task, a fine-tuned checkpoint, and a dataset on [Hugging Face](https://huggingface.co/datasets/nvidia/Arena-G1-Static-PickNPlace-Task). The documented recipe covers the full sequence:
+
+`teleoperate in Isaac Lab → record HDF5 → convert to LeRobot → fine-tune GR00T N1.7 → evaluate in Arena`
 
 We treated the public files as data to audit, not just download. The headline counts across the blog, dataset card, and metadata do not agree. Our file-level inspection found 251 HDF5 groups marked as successful, but 43 were empty placeholders. We rebuilt a contiguous LeRobot dataset from the 208 non-empty trajectories: 35,066 frames, 208 parquet episodes, and 208 video streams.
 
@@ -27,9 +31,9 @@ We then fine-tuned GR00T N1.7 for 20,000 steps on an NVIDIA L40S and evaluated t
 
 That gave us a stable reference implementation: released demonstrations in, validated LeRobot data out, a new checkpoint, and closed-loop metrics plus video evidence.
 
-## Replacing the source data with our own VR demonstrations
+## Fifty demonstrations, collected thousands of kilometres from the server
 
-Next, we collected the same apple-to-plate interaction through the Sim XR teleoperation stack using Meta Quest 3 hand tracking. A human operator controlled the simulated G1, and we recorded the resulting actions, robot state, camera observations, object motion, and success state.
+Next, we collected the same apple-to-plate interaction through the Sim XR teleoperation stack using Meta Quest 3 hand tracking. Isaac Teleop carried the operator input, CloudXR streamed the interactive simulation, and the task ran on our AWS GPU infrastructure. The human operator was thousands of kilometres from the server. We recorded the resulting actions, robot state, camera observations, object motion, and success state without placing the operator inside a robotics laboratory.
 
 We selected the best 50 demonstrations, converted them through the same training interface, and fine-tuned a fresh GR00T N1.7 checkpoint from the same base model. On the original apple layout, using the same 100-episode evaluation seed:
 
@@ -38,11 +42,13 @@ We selected the best 50 demonstrations, converted them through the same training
 | NVIDIA-data checkpoint | 208 usable released trajectories | 93/100 | 94/100 |
 | Sim XR checkpoint | 50 selected Quest demonstrations | 84/100 | 98/100 |
 
-The nine-point gap matters, and we are not hiding it. The Sim XR policy did not match the released-data checkpoint. But 84 successes in 100 closed-loop episodes—using only 50 demonstrations collected through our own VR path—was enough to validate the infrastructure from operator input to learned behavior.
+The nine-point gap matters, and we are not hiding it. The Sim XR policy did not match the released-data checkpoint. But 84 successes in 100 closed-loop episodes—using 50 rather than 208 demonstrations, collected through our remote VR path—validated the infrastructure from operator input to learned behavior.
+
+This is the commercial point behind the benchmark. The operator does not need to be co-located with the robot lab or GPU server. When a team finds a recurring policy failure, it can connect the right operator, collect a focused batch in simulation, and run the same data-to-policy loop without moving people or hardware.
 
 It also exposed a data-quality issue. The initial recording format preserved simulation steps but not full wall-clock timing. The trajectories were converted at a nominal 50 Hz, so we could not make a clean statement about the operator’s real-time cadence. That audit now informs the next collection protocol: timing must be measured, not assumed, especially when the remaining errors cluster around grasp closure and stable hold.
 
-## Moving the apple showed how narrow the learned skill was
+## When the old policies scored zero, we collected the missing behavior
 
 We then moved the apple and plate across the workspace so the robot had to use the other working side. This was not a cosmetic change. It altered approach direction, occlusion, reach, grasp orientation, and transport path.
 
@@ -51,7 +57,7 @@ The old checkpoints failed on the new `swapped-separated` layout:
 - NVIDIA’s released apple checkpoint: 0/20.
 - Our original-layout Quest checkpoint: 0/20.
 
-We collected 60 successful right-side demonstrations through the same teleoperation stack and trained new checkpoints. The best-50 dataset produced 72/100 success; training on all 60 produced 74/100. Both moved the apple in 100/100 attempts.
+We collected 60 successful right-side demonstrations through the same remote teleoperation stack and trained new checkpoints. The best-50 dataset produced 72/100 success; training on all 60 produced 74/100. Both moved the apple in 100/100 attempts.
 
 That is meaningful learning, but it is not a solved task. We had set a strict continuation gate of more than 75%, and 74% did not pass. Most failures were not high-level planning errors: the hand reached and moved the object, but contact did not become a stable lift, or the apple was lifted and then dropped.
 
@@ -84,9 +90,9 @@ This was success-filtered behavioral cloning, or self-imitation—not classical 
 
 The result was also not uniformly positive. Eighteen grid cells improved, three were unchanged, and four regressed. That is precisely why we use a spatial benchmark instead of one headline number: a single aggregate can hide where robustness was gained and where it was traded away.
 
-## A new skill on the Oregon server
+## The same remote loop created a new mustard skill
 
-The apple experiments showed that we could reproduce and modify a published task. The stronger test was whether we could create a task absent from the original dataset and teach it using only demonstrations collected through our own infrastructure.
+The apple experiments showed that we could reproduce and modify a published task. The stronger test was whether the same remote collection loop could create a task absent from the original dataset and teach it using demonstrations collected through our own infrastructure.
 
 On our Oregon server, we composed a cross-body task: a mustard bottle starts on the left, a wooden bowl sits on the right, and the instruction is “move the mustard bottle to the bowl.” The geometry matters. The bottle sits near the left arm’s working limit, while the destination is on the opposite side. The policy must carry the object across the body instead of replaying the short left-side motion learned from the apple task.
 
@@ -125,7 +131,7 @@ Together, the experiments validate a working Sim XR loop:
 
 They do not prove production reliability, real-robot deployment, or a reduced sim-to-real gap. Every result reported here is from simulation. We also do not claim that photorealism alone fixes policy transfer, or that a single trained checkpoint works across arbitrary positions, objects, or embodiments.
 
-The evidence supports a narrower and more defensible conclusion: Sim XR has the infrastructure and practical competence to execute the human-data loop for Physical AI, diagnose its weak points, and improve a policy through controlled data interventions.
+The evidence supports a narrower and more defensible conclusion: Sim XR can connect remote operators to cloud simulation, execute the human-data loop for Physical AI, diagnose its weak points, and improve a policy through controlled data interventions. The sale is not one apple rollout or one mustard checkpoint. It is the ability to collect the next missing behavior without requiring the operator to be in the laboratory.
 
 ## The next gates
 

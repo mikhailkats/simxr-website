@@ -14,15 +14,15 @@ await mkdir(outputDir, {recursive: true});
 
 const narration = [
   'Sim XR turns VR demonstrations into robot training data.',
-  'With NVIDIA Isaac Lab, CloudXR, and Isaac Teleop, we reproduced the apple-to-plate workflow on AWS.',
-  'Fifty Quest demonstrations trained our apple policy to eighty-four percent success, versus ninety-three percent with NVIDIA data.',
-  'On the other working side, both old policies scored zero. Targeted data raised success to seventy-four percent.',
-  'On a matched position grid, success-filtered demonstrations improved results from four hundred to four hundred forty-eight out of five hundred.',
-  'Then we changed the task: mustard on the left, and a wooden bowl on the right.',
-  'One operator captured fifty successful mustard demonstrations in four short VR sessions.',
-  'The apple checkpoint scored zero out of thirty. Fine-tuning reached twenty-seven out of thirty: ninety percent.',
+  'NVIDIA published the path: Isaac Lab, LeRobot, GR00T fine-tuning, and Arena evaluation.',
+  'NVIDIA’s two-hundred-eight-demo dataset reached ninety-three percent. Our fifty-demo remote CloudXR batch reached eighty-four.',
+  'When the task moved to the other side, both old policies scored zero. Targeted remote demonstrations raised success to seventy-four percent.',
+  'We repeated the loop on weak positions. Targeted additions raised matched success from eighty to eighty-nine point six percent.',
+  'Then we changed the task itself: mustard on the left, and a wooden bowl on the right.',
+  'One remote operator captured fifty successful mustard demonstrations in four short VR sessions.',
+  'The apple policy scored zero out of thirty on mustard. After targeted fine-tuning, the new skill reached twenty-seven out of thirty.',
   'We then checked the pipeline in a scanned environment, on another humanoid, and with five-finger hands. These are still simulation tests.',
-  'This is Sim XR infrastructure: remote demonstrations, validated data, policy training, and measured change.',
+  'That is the Sim XR advantage: operators can collect the missing behavior remotely, without being inside the robot lab.',
 ];
 const voiceOnlyIndex = process.env.VO_INDEX
   ? Number.parseInt(process.env.VO_INDEX, 10)

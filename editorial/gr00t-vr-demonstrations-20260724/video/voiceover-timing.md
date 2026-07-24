@@ -6,15 +6,15 @@ Target: 90 seconds, English narration, Daniel voice, ElevenLabs
 | Time | Visual block | Narration |
 |---|---|---|
 | 00:00.0–00:04.9 | Sim XR introduction | Sim XR turns VR demonstrations into robot training data. |
-| 00:05.0–00:13.0 | Published apple workflow | With NVIDIA Isaac Lab, CloudXR, and Isaac Teleop, we reproduced the apple-to-plate workflow on AWS. |
-| 00:14.5–00:23.2 | Sim XR Quest demonstrations | Fifty Quest demonstrations trained our apple policy to eighty-four percent success, versus ninety-three percent with NVIDIA data. |
-| 00:24.0–00:33.0 | Shifted working side | On the other working side, both old policies scored zero. Targeted data raised success to seventy-four percent. |
-| 00:34.0–00:43.0 | Targeted spatial data | On a matched position grid, success-filtered demonstrations improved results from four hundred to four hundred forty-eight out of five hundred. |
-| 00:44.0–00:50.5 | Mustard task design | Then we changed the task: mustard on the left, and a wooden bowl on the right. |
-| 00:51.0–00:58.5 | Mustard operator demonstration | One operator captured fifty successful mustard demonstrations in four short VR sessions. |
-| 00:59.0–01:09.0 | Mustard before and after | The apple checkpoint scored zero out of thirty. Fine-tuning reached twenty-seven out of thirty: ninety percent. |
+| 00:05.0–00:13.0 | Published NVIDIA pipeline | NVIDIA published the path: Isaac Lab, LeRobot, GR00T fine-tuning, and Arena evaluation. |
+| 00:14.5–00:23.2 | Sim XR remote demonstrations | NVIDIA’s two-hundred-eight-demo dataset reached ninety-three percent. Our fifty-demo remote CloudXR batch reached eighty-four. |
+| 00:24.0–00:33.0 | Shifted working side | When the task moved to the other side, both old policies scored zero. Targeted remote demonstrations raised success to seventy-four percent. |
+| 00:34.0–00:43.0 | Targeted spatial data | We repeated the loop on weak positions. Targeted additions raised matched success from eighty to eighty-nine point six percent. |
+| 00:44.0–00:50.5 | Mustard task design | Then we changed the task itself: mustard on the left, and a wooden bowl on the right. |
+| 00:51.0–00:58.5 | Mustard operator demonstration | One remote operator captured fifty successful mustard demonstrations in four short VR sessions. |
+| 00:59.0–01:09.0 | Mustard before and after | The apple policy scored zero out of thirty on mustard. After targeted fine-tuning, the new skill reached twenty-seven out of thirty. |
 | 01:10.0–01:22.0 | Scanned room and new embodiments | We then checked the pipeline in a scanned environment, on another humanoid, and with five-finger hands. These are still simulation tests. |
-| 01:22.0–01:29.0 | Successful mustard rollout and conclusion | This is Sim XR infrastructure: remote demonstrations, validated data, policy training, and measured change. |
+| 01:22.0–01:29.0 | Successful mustard rollout and conclusion | That is the Sim XR advantage: operators can collect the missing behavior remotely, without being inside the robot lab. |
 
 ## Music direction
 

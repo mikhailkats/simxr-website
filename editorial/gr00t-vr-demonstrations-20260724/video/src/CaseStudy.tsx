@@ -196,19 +196,54 @@ const Reproduce: React.FC = () => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const duration = 270;
+  const pipeline = [
+    ['01', 'Teleoperate', 'Isaac Lab'],
+    ['02', 'Record + convert', 'HDF5 → LeRobot'],
+    ['03', 'Fine-tune', 'GR00T N1.7'],
+    ['04', 'Evaluate', 'Isaac Lab-Arena'],
+  ];
   return (
     <AbsoluteFill style={{opacity: fade(frame, duration), background: C.white, color: C.ink}}>
-      <Brand />
-      <div style={{position: 'absolute', left: 58, top: 114, ...enter(frame, fps)}}>
-        <StageTitle>First, reproduce the published workflow</StageTitle>
+      <Brand context="NVIDIA reference pipeline" />
+      <div style={{position: 'absolute', left: 58, top: 108, ...enter(frame, fps)}}>
+        <StageTitle size={51}>NVIDIA published the complete simulation-to-VLA recipe</StageTitle>
       </div>
       <div
         style={{
           position: 'absolute',
           left: 58,
-          top: 220,
-          width: 1210,
-          height: 770,
+          right: 58,
+          top: 225,
+          height: 146,
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: 12,
+        }}
+      >
+        {pipeline.map(([number, title, tool], index) => (
+          <div
+            key={number}
+            style={{
+              position: 'relative',
+              borderRadius: 8,
+              background: index === 2 ? C.blueSoft : C.surface,
+              border: `1px solid ${index === 2 ? '#BFD2FF' : C.line}`,
+              padding: '22px 26px',
+            }}
+          >
+            <div style={{fontSize: 15, fontWeight: 800, color: C.blue}}>{number}</div>
+            <div style={{fontSize: 26, fontWeight: 800, marginTop: 8}}>{title}</div>
+            <div style={{fontSize: 18, color: C.muted, marginTop: 5}}>{tool}</div>
+          </div>
+        ))}
+      </div>
+      <div
+        style={{
+          position: 'absolute',
+          left: 58,
+          top: 382,
+          width: 1040,
+          height: 626,
           overflow: 'hidden',
           borderRadius: 8,
           background: C.ink,
@@ -220,37 +255,35 @@ const Reproduce: React.FC = () => {
         style={{
           position: 'absolute',
           right: 58,
-          top: 270,
-          width: 530,
-          color: C.muted,
-          fontSize: 26,
-          lineHeight: 1.38,
+          top: 382,
+          width: 728,
+          height: 626,
+          borderRadius: 8,
+          background: C.surface,
+          border: `1px solid ${C.line}`,
+          padding: '42px 46px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
           ...enter(frame, fps, 10),
         }}
       >
-        NVIDIA’s released apple-to-plate task, rebuilt on our own GPU infrastructure and
-        evaluated through the closed-loop Arena path.
-      </div>
-      <div
-        style={{
-          position: 'absolute',
-          right: 58,
-          bottom: 120,
-          width: 530,
-          paddingTop: 24,
-          borderTop: `1px solid ${C.line}`,
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 20,
-        }}
-      >
-        <div>
-          <div style={{fontSize: 52, fontWeight: 900}}>208</div>
-          <div style={{fontSize: 18, color: C.muted}}>usable released trajectories</div>
+        <div style={{fontSize: 18, color: C.muted}}>Released source data, after audit</div>
+        <div style={{display: 'flex', alignItems: 'baseline', gap: 18, marginTop: 10}}>
+          <div style={{fontSize: 86, lineHeight: 1, fontWeight: 900}}>208</div>
+          <div style={{fontSize: 24, lineHeight: 1.22, color: C.muted}}>
+            usable
+            <br />
+            demonstrations
+          </div>
         </div>
-        <div>
-          <div style={{fontSize: 52, fontWeight: 900}}>20k</div>
-          <div style={{fontSize: 18, color: C.muted}}>fine-tuning steps</div>
+        <div style={{height: 1, background: C.line, margin: '38px 0 32px'}} />
+        <div style={{fontSize: 18, color: C.muted}}>Matched apple evaluation</div>
+        <div style={{fontSize: 88, lineHeight: 1, fontWeight: 900, color: C.green, marginTop: 12}}>
+          93 / 100
+        </div>
+        <div style={{fontSize: 22, color: C.muted, marginTop: 16}}>
+          A stable benchmark for the remote-data test.
         </div>
       </div>
     </AbsoluteFill>
@@ -263,14 +296,17 @@ const OwnedData: React.FC = () => {
   const duration = 300;
   return (
     <AbsoluteFill style={{opacity: fade(frame, duration), background: C.surface, color: C.ink}}>
-      <Brand context="Quest demonstrations · matched evaluation" />
+      <Brand context="Remote operator ↔ CloudXR ↔ AWS GPU" />
+      <div style={{position: 'absolute', left: 58, top: 112, ...enter(frame, fps, 2)}}>
+        <StageTitle size={52}>We ran the same loop remotely—with only 50 demonstrations</StageTitle>
+      </div>
       <div
         style={{
           position: 'absolute',
           left: 58,
-          top: 118,
+          top: 226,
           bottom: 72,
-          width: 1180,
+          width: 1050,
           overflow: 'hidden',
           borderRadius: 8,
           background: C.ink,
@@ -278,37 +314,99 @@ const OwnedData: React.FC = () => {
       >
         <FullVideo src="quest_vr_policy_rollout.mp4" position="43% 52%" scale={1.42} />
       </div>
-      <div style={{position: 'absolute', right: 62, top: 164, width: 548, ...enter(frame, fps, 4)}}>
-        <StageTitle size={50}>Replace the source data with our own VR demonstrations</StageTitle>
-      </div>
       <div
         style={{
           position: 'absolute',
-          right: 62,
-          top: 475,
-          width: 548,
-          borderTop: `1px solid ${C.line}`,
-          paddingTop: 28,
+          right: 58,
+          top: 226,
+          bottom: 72,
+          width: 742,
+          borderRadius: 8,
+          background: C.white,
+          border: `1px solid ${C.line}`,
+          padding: '34px 40px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          ...enter(frame, fps, 8),
         }}
       >
-        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'baseline'}}>
-          <span style={{fontSize: 27, color: C.muted}}>NVIDIA-data checkpoint</span>
-          <span style={{fontSize: 58, fontWeight: 900}}>93 / 100</span>
+        <div>
+          <div style={{fontSize: 17, color: C.muted, marginBottom: 17}}>
+            Thousands of kilometres apart
+          </div>
+          {[
+            ['Meta Quest operator', 'human demonstrations'],
+            ['CloudXR + Isaac Teleop', 'interactive remote control'],
+            ['AWS L40S + Isaac Lab', 'simulation and training'],
+          ].map(([title, description], index) => (
+            <div key={title}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 16,
+                  padding: '14px 17px',
+                  borderRadius: 7,
+                  background: index === 1 ? C.blueSoft : C.surface,
+                }}
+              >
+                <div
+                  style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: 30,
+                    background: index === 1 ? C.blue : C.ink,
+                    color: C.white,
+                    display: 'grid',
+                    placeItems: 'center',
+                    fontSize: 15,
+                    fontWeight: 800,
+                  }}
+                >
+                  {index + 1}
+                </div>
+                <div>
+                  <div style={{fontSize: 22, fontWeight: 800}}>{title}</div>
+                  <div style={{fontSize: 16, color: C.muted, marginTop: 2}}>{description}</div>
+                </div>
+              </div>
+              {index < 2 ? (
+                <div style={{height: 10, width: 2, background: C.line, marginLeft: 31}} />
+              ) : null}
+            </div>
+          ))}
         </div>
         <div
           style={{
+            borderTop: `1px solid ${C.line}`,
+            paddingTop: 23,
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'baseline',
-            marginTop: 25,
-            color: C.blue,
           }}
         >
-          <span style={{fontSize: 27}}>Sim XR Quest top-50</span>
-          <span style={{fontSize: 58, fontWeight: 900}}>84 / 100</span>
+          <div>
+            <div style={{fontSize: 17, color: C.muted}}>Sim XR remote dataset</div>
+            <div style={{fontSize: 58, fontWeight: 900, color: C.blue, marginTop: 5}}>50 demos</div>
+          </div>
+          <div style={{textAlign: 'right'}}>
+            <div style={{fontSize: 17, color: C.muted}}>Matched success</div>
+            <div style={{fontSize: 58, fontWeight: 900, marginTop: 5}}>84 / 100</div>
+          </div>
         </div>
-        <div style={{fontSize: 21, color: C.muted, lineHeight: 1.4, marginTop: 34}}>
-          Fifty selected demonstrations were enough to validate the complete Sim XR data path.
+        <div
+          style={{
+            padding: '14px 18px',
+            borderRadius: 7,
+            background: C.blue,
+            color: C.white,
+            fontSize: 19,
+            fontWeight: 700,
+            textAlign: 'center',
+          }}
+        >
+          Less than one quarter of the demonstrations · same GR00T N1.7 interface
         </div>
       </div>
     </AbsoluteFill>
@@ -335,9 +433,11 @@ const MoveTask: React.FC = () => {
   ];
   return (
     <AbsoluteFill style={{opacity: fade(frame, duration), background: C.white, color: C.ink}}>
-      <Brand context="Spatial and working-side shift" />
+      <Brand context="Remote collection · new working side" />
       <div style={{position: 'absolute', left: 58, top: 118, ...enter(frame, fps)}}>
-        <StageTitle>Move the task, and the learned skill breaks</StageTitle>
+        <StageTitle size={50} maxWidth={1400}>
+          When the policy fails, collect the missing behavior
+        </StageTitle>
       </div>
       <div
         style={{
@@ -404,9 +504,9 @@ const SpatialLoop: React.FC = () => {
   ];
   return (
     <AbsoluteFill style={{opacity: fade(frame, duration), background: C.surface, color: C.ink}}>
-      <Brand context="Targeted success-filtered demonstrations" />
+      <Brand context="Measure failure → collect targeted data → fine-tune" />
       <div style={{position: 'absolute', left: 58, top: 112, ...enter(frame, fps)}}>
-        <StageTitle>Turn measured failures into targeted data</StageTitle>
+        <StageTitle>Repeat the loop exactly where failure is measured</StageTitle>
       </div>
       <div
         style={{
@@ -501,9 +601,9 @@ const MustardDesign: React.FC = () => {
   const duration = 210;
   return (
     <AbsoluteFill style={{opacity: fade(frame, duration), background: C.white, color: C.ink}}>
-      <Brand context="Oregon · new cross-body task" />
+      <Brand context="Oregon · same remote loop · new cross-body task" />
       <div style={{position: 'absolute', left: 66, top: 188, width: 625, ...enter(frame, fps)}}>
-        <StageTitle size={62}>Then we changed the task itself</StageTitle>
+        <StageTitle size={60}>Then the same loop created a new skill</StageTitle>
         <div style={{fontSize: 27, color: C.muted, lineHeight: 1.42, marginTop: 34}}>
           A visible, elongated object on the left. A destination beyond the learned left-side
           motion on the right.
@@ -583,7 +683,7 @@ const MustardData: React.FC = () => {
           padding: '26px 38px',
         }}
       >
-        <div style={{fontSize: 34, fontWeight: 700}}>One operator · four short sessions</div>
+        <div style={{fontSize: 34, fontWeight: 700}}>One remote operator · four short sessions</div>
         <div style={{fontSize: 58, fontWeight: 900, color: C.blue}}>50 successful demos</div>
       </div>
     </AbsoluteFill>
@@ -824,7 +924,7 @@ const MustardOutro: React.FC = () => {
           }}
         >
           <div style={{fontSize: 46, lineHeight: 1.08, fontWeight: 900, maxWidth: 1110}}>
-            Remote demonstrations → validated data → policy training → measured change
+          Remote operators → missing behaviors → measured policy improvement
           </div>
           <div
             style={{fontSize: 72, fontWeight: 900, color: C.green, whiteSpace: 'nowrap'}}
