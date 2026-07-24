@@ -1,17 +1,17 @@
 {
-  "voice": "Daniel",
-  "voiceId": "onwK4e9ZLuTAKqWW03F9",
+  "voice": "River",
+  "voiceId": "SAz9YHcvj6GT2YYXdXww",
   "model": "eleven_multilingual_v2",
   "blocks": [
-    "Sim XR turns VR demonstrations into robot training data.",
-    "NVIDIA published the path: Isaac Lab, LeRobot, GR00T fine-tuning, and Arena evaluation.",
-    "NVIDIA’s two-hundred-eight-demo dataset reached ninety-three percent. Our fifty-demo remote CloudXR batch reached eighty-four.",
+    "Sim XR trains humanoid robots remotely, in simulation.",
+    "NVIDIA published the pipeline: Isaac Lab, LeRobot, VLA fine-tuning, then Arena evaluation. Two hundred eight demonstrations reached ninety-three out of one hundred.",
+    "We remotely collected fifty demonstrations through CloudXR, thousands of kilometres from the AWS server. Our policy reached eighty-four out of one hundred.",
     "When the task moved to the other side, both old policies scored zero. Targeted remote demonstrations raised success to seventy-four percent.",
     "We repeated the loop on weak positions. Targeted additions raised matched success from eighty to eighty-nine point six percent.",
     "Then we changed the task itself: mustard on the left, and a wooden bowl on the right.",
     "One remote operator captured fifty successful mustard demonstrations in four short VR sessions.",
     "The apple policy scored zero out of thirty on mustard. After targeted fine-tuning, the new skill reached twenty-seven out of thirty.",
-    "We then checked the pipeline in a scanned environment, on another humanoid, and with five-finger hands. These are still simulation tests.",
-    "That is the Sim XR advantage: operators can collect the missing behavior remotely, without being inside the robot lab."
+    "Next, we’re testing scanned environments, another humanoid, and five-finger hands. We’ll share those results in the next videos.",
+    "The Sim XR advantage is simple: remote operators can collect the missing behavior without stepping into the robot lab."
   ]
 }

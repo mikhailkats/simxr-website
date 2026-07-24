@@ -27,7 +27,7 @@ const C = {
   redSoft: '#FBEAEC',
 };
 
-const sequenceStarts = [0, 150, 435, 720, 1020, 1320, 1530, 1770, 2100, 2460];
+const sequenceStarts = [0, 138, 471, 765, 1065, 1365, 1575, 1815, 2145, 2460];
 
 const fade = (frame: number, duration: number) =>
   interpolate(frame, [0, 9, duration - 9, duration], [0, 1, 1, 0], {
@@ -49,7 +49,7 @@ const enter = (frame: number, fps: number, delay = 0) => {
 };
 
 const Brand: React.FC<{context?: string; onImage?: boolean}> = ({
-  context = 'Isaac Lab-Arena · GR00T N1.7',
+  context = 'Isaac Lab-Arena · VLA fine-tuning',
   onImage = false,
 }) => (
   <div
@@ -155,7 +155,7 @@ const Intro: React.FC = () => {
             maxWidth: 1220,
           }}
         >
-          Teaching robot policies from remote VR demonstrations
+          Training humanoid robots in remote XR Teleoperation in simulation
         </div>
         <div
           style={{
@@ -195,11 +195,11 @@ const Intro: React.FC = () => {
 const Reproduce: React.FC = () => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const duration = 270;
+  const duration = 330;
   const pipeline = [
     ['01', 'Teleoperate', 'Isaac Lab'],
     ['02', 'Record + convert', 'HDF5 → LeRobot'],
-    ['03', 'Fine-tune', 'GR00T N1.7'],
+    ['03', 'VLA fine-tuning', 'NVIDIA workflow'],
     ['04', 'Evaluate', 'Isaac Lab-Arena'],
   ];
   return (
@@ -406,7 +406,7 @@ const OwnedData: React.FC = () => {
             textAlign: 'center',
           }}
         >
-          Less than one quarter of the demonstrations · same GR00T N1.7 interface
+          Less than one quarter of the demonstrations · same VLA fine-tuning pipeline
         </div>
       </div>
     </AbsoluteFill>
@@ -704,7 +704,7 @@ const MustardResult: React.FC = () => {
     },
     {
       src: 'misha_artifact/mustard_simxr_success.mp4',
-      label: 'GR00T + 50 Sim XR demos',
+      label: 'VLA fine-tuning + 50 Sim XR demos',
       value: '27 / 30',
       color: C.green,
       tint: C.greenSoft,
@@ -760,12 +760,12 @@ const MustardResult: React.FC = () => {
 
 const FollowUps: React.FC = () => {
   const frame = useCurrentFrame();
-  const duration = 360;
-  const secondHalf = frame >= 180;
-  const sectionFrame = secondHalf ? frame - 180 : frame;
+  const duration = 300;
+  const secondHalf = frame >= 150;
+  const sectionFrame = secondHalf ? frame - 150 : frame;
   const localOpacity = interpolate(
     sectionFrame,
-    [0, 10, 168, 180],
+    [0, 10, 138, 150],
     [0, 1, 1, secondHalf ? 1 : 0],
     {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'},
   );
@@ -791,7 +791,7 @@ const FollowUps: React.FC = () => {
               background: 'rgba(11,15,26,.72)',
             }}
           />
-          <Brand context="Follow-up · scanned environment" onImage />
+          <Brand context="Next experiment · scanned environment" onImage />
           <div
             style={{
               position: 'absolute',
@@ -804,14 +804,14 @@ const FollowUps: React.FC = () => {
               fontWeight: 700,
             }}
           >
-            The mustard task in a scanned-room visual domain
+            Next: the mustard task in a scanned-room visual domain
           </div>
         </AbsoluteFill>
       ) : (
         <AbsoluteFill style={{opacity: localOpacity}}>
-          <Brand context="Follow-up · embodiment acceptance tests" />
+          <Brand context="Coming next · new embodiments" />
           <div style={{position: 'absolute', left: 58, top: 116}}>
-            <StageTitle size={51}>The task pipeline also moved to new hands and robots</StageTitle>
+            <StageTitle size={51}>Next videos: new environments, hands, and robots</StageTitle>
           </div>
           <div
             style={{
@@ -976,7 +976,7 @@ const Soundtrack: React.FC = () => {
   return (
     <>
       <Audio
-        src={staticFile('audio/sim_xr_case_study_score_extended.mp3')}
+        src={staticFile('audio/sim_xr_case_study_score_continuous.mp3')}
         volume={(frame) =>
           interpolate(frame, [0, 35], [0, 0.11], {
             extrapolateLeft: 'clamp',
@@ -1003,7 +1003,7 @@ export const CaseStudy: React.FC = () => (
       <Series.Sequence durationInFrames={135} premountFor={30}>
         <Intro />
       </Series.Sequence>
-      <Series.Sequence durationInFrames={270} premountFor={30}>
+      <Series.Sequence durationInFrames={330} premountFor={30}>
         <Reproduce />
       </Series.Sequence>
       <Series.Sequence durationInFrames={300} premountFor={30}>
@@ -1024,7 +1024,7 @@ export const CaseStudy: React.FC = () => (
       <Series.Sequence durationInFrames={330} premountFor={30}>
         <MustardResult />
       </Series.Sequence>
-      <Series.Sequence durationInFrames={360} premountFor={30}>
+      <Series.Sequence durationInFrames={300} premountFor={30}>
         <FollowUps />
       </Series.Sequence>
       <Series.Sequence durationInFrames={255} premountFor={30}>

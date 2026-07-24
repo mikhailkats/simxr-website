@@ -13,16 +13,16 @@ const outputDir = path.resolve('public/audio');
 await mkdir(outputDir, {recursive: true});
 
 const narration = [
-  'Sim XR turns VR demonstrations into robot training data.',
-  'NVIDIA published the path: Isaac Lab, LeRobot, GR00T fine-tuning, and Arena evaluation.',
-  'NVIDIA’s two-hundred-eight-demo dataset reached ninety-three percent. Our fifty-demo remote CloudXR batch reached eighty-four.',
+  'Sim XR trains humanoid robots remotely, in simulation.',
+  'NVIDIA published the pipeline: Isaac Lab, LeRobot, VLA fine-tuning, then Arena evaluation. Two hundred eight demonstrations reached ninety-three out of one hundred.',
+  'We remotely collected fifty demonstrations through CloudXR, thousands of kilometres from the AWS server. Our policy reached eighty-four out of one hundred.',
   'When the task moved to the other side, both old policies scored zero. Targeted remote demonstrations raised success to seventy-four percent.',
   'We repeated the loop on weak positions. Targeted additions raised matched success from eighty to eighty-nine point six percent.',
   'Then we changed the task itself: mustard on the left, and a wooden bowl on the right.',
   'One remote operator captured fifty successful mustard demonstrations in four short VR sessions.',
   'The apple policy scored zero out of thirty on mustard. After targeted fine-tuning, the new skill reached twenty-seven out of thirty.',
-  'We then checked the pipeline in a scanned environment, on another humanoid, and with five-finger hands. These are still simulation tests.',
-  'That is the Sim XR advantage: operators can collect the missing behavior remotely, without being inside the robot lab.',
+  'Next, we’re testing scanned environments, another humanoid, and five-finger hands. We’ll share those results in the next videos.',
+  'The Sim XR advantage is simple: remote operators can collect the missing behavior without stepping into the robot lab.',
 ];
 const voiceOnlyIndex = process.env.VO_INDEX
   ? Number.parseInt(process.env.VO_INDEX, 10)
@@ -32,8 +32,8 @@ await writeFile(
   path.join(outputDir, 'voiceover-script.json'),
   `${JSON.stringify(
     {
-      voice: 'Daniel',
-      voiceId: 'onwK4e9ZLuTAKqWW03F9',
+      voice: 'River',
+      voiceId: 'SAz9YHcvj6GT2YYXdXww',
       model: 'eleven_multilingual_v2',
       blocks: narration,
     },
@@ -55,17 +55,17 @@ const streamToBuffer = async (stream) => {
 
 for (let index = 0; index < narration.length; index += 1) {
   if (voiceOnlyIndex !== null && index !== voiceOnlyIndex - 1) continue;
-  const stream = await client.textToSpeech.convert('onwK4e9ZLuTAKqWW03F9', {
+  const stream = await client.textToSpeech.convert('SAz9YHcvj6GT2YYXdXww', {
     text: narration[index],
     modelId: 'eleven_multilingual_v2',
     outputFormat: 'mp3_44100_128',
     previousText: narration[index - 1],
     nextText: narration[index + 1],
     voiceSettings: {
-      stability: 0.68,
-      similarityBoost: 0.78,
-      style: 0.12,
-      speed: 1.12,
+      stability: 0.78,
+      similarityBoost: 0.74,
+      style: 0.04,
+      speed: 1.08,
       useSpeakerBoost: true,
     },
   });
@@ -102,17 +102,15 @@ const ffmpeg = spawn(
     '-i',
     path.join(outputDir, 'sim_xr_case_study_score.mp3'),
     '-filter_complex',
-    '[0:a]atrim=start=0:end=85,asetpts=PTS-STARTPTS[main];' +
-      '[0:a]atrim=start=76:end=82.3,asetpts=PTS-STARTPTS[tail];' +
-      '[main][tail]acrossfade=d=1.3:c1=tri:c2=tri,' +
-      'afade=t=out:st=89.3:d=0.7[a]',
+    '[0:a]atrim=start=0:end=84.947551,asetpts=PTS-STARTPTS,' +
+      'atempo=0.943861678[a]',
     '-map',
     '[a]',
     '-c:a',
     'libmp3lame',
     '-b:a',
     '192k',
-    path.join(outputDir, 'sim_xr_case_study_score_extended.mp3'),
+    path.join(outputDir, 'sim_xr_case_study_score_continuous.mp3'),
   ],
   {stdio: 'inherit'},
 );
