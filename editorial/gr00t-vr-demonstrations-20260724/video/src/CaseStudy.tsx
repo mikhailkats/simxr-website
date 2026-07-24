@@ -27,7 +27,7 @@ const C = {
   redSoft: '#FBEAEC',
 };
 
-const sequenceStarts = [0, 138, 471, 765, 1065, 1365, 1575, 1815, 2145, 2460];
+const sequenceStarts = [0, 136, 468, 765, 1065, 1365, 1575, 1815, 2145, 2460];
 
 const fade = (frame: number, duration: number) =>
   interpolate(frame, [0, 9, duration - 9, duration], [0, 1, 1, 0], {

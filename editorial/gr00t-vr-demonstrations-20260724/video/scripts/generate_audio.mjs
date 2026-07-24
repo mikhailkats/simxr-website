@@ -13,8 +13,8 @@ const outputDir = path.resolve('public/audio');
 await mkdir(outputDir, {recursive: true});
 
 const narration = [
-  'Sim XR trains humanoid robots remotely, in simulation.',
-  'NVIDIA published the pipeline: Isaac Lab, LeRobot, VLA fine-tuning, then Arena evaluation. Two hundred eight demonstrations reached ninety-three out of one hundred.',
+  'Sim XR trains humanoid robots through remote XR teleoperation.',
+  'NVIDIA published the pipeline: Isaac Lab data, LeRobot conversion, VLA fine-tuning, and Arena evaluation. Its two hundred eight demonstrations reached ninety-three percent.',
   'We remotely collected fifty demonstrations through CloudXR, thousands of kilometres from the AWS server. Our policy reached eighty-four out of one hundred.',
   'When the task moved to the other side, both old policies scored zero. Targeted remote demonstrations raised success to seventy-four percent.',
   'We repeated the loop on weak positions. Targeted additions raised matched success from eighty to eighty-nine point six percent.',
@@ -32,8 +32,8 @@ await writeFile(
   path.join(outputDir, 'voiceover-script.json'),
   `${JSON.stringify(
     {
-      voice: 'River',
-      voiceId: 'SAz9YHcvj6GT2YYXdXww',
+      voice: 'Eric',
+      voiceId: 'cjVigY5qzO86Huf0OWal',
       model: 'eleven_multilingual_v2',
       blocks: narration,
     },
@@ -55,17 +55,17 @@ const streamToBuffer = async (stream) => {
 
 for (let index = 0; index < narration.length; index += 1) {
   if (voiceOnlyIndex !== null && index !== voiceOnlyIndex - 1) continue;
-  const stream = await client.textToSpeech.convert('SAz9YHcvj6GT2YYXdXww', {
+  const stream = await client.textToSpeech.convert('cjVigY5qzO86Huf0OWal', {
     text: narration[index],
     modelId: 'eleven_multilingual_v2',
     outputFormat: 'mp3_44100_128',
     previousText: narration[index - 1],
     nextText: narration[index + 1],
     voiceSettings: {
-      stability: 0.78,
-      similarityBoost: 0.74,
-      style: 0.04,
-      speed: 1.08,
+      stability: 0.66,
+      similarityBoost: 0.76,
+      style: 0.1,
+      speed: 1.1,
       useSpeakerBoost: true,
     },
   });

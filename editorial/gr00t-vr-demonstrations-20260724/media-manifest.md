@@ -11,8 +11,8 @@
 | Mustard candidate | `media/mustard-candidate-headcam.png` | Robot-head-camera frame extracted from Misha’s linked experiment artifact | Ready |
 | Mustard task scene | `media/mustard-final-scene.png` | Final mustard-to-bowl layout extracted from Misha’s linked experiment artifact | Ready |
 | Mustard follow-ups | `media/mustard-followup-environments-and-hands.png` | Scanned environment, GR1T2, and Inspire FTP frames from Misha’s linked experiment artifact | Ready |
-| Final master | `../remotion_case_study_20260724/project/out/sim_xr_gr00t_case_study_20260724_v6_voice_sync_master.mp4` | Final 90-second 16:9 Sim XR edit with the revised opening title, American narration, screen-synchronised NVIDIA and Sim XR metrics, next-video teaser, and continuous music ending | Ready and validated |
-| Final social video | `../remotion_case_study_20260724/project/out/sim_xr_gr00t_case_study_20260724_v6_voice_sync_720p.mp4` | Compressed 16:9 derivative of the final voice-and-timing revision | Ready and validated |
+| Final master | `../remotion_case_study_20260724/project/out/sim_xr_gr00t_case_study_20260724_v7_male_voice_master.mp4` | Final 90-second 16:9 Sim XR edit with the revised opening title, natural American male narration, screen-synchronised NVIDIA and Sim XR metrics, next-video teaser, and continuous music ending | Ready and validated |
+| Final social video | `../remotion_case_study_20260724/project/out/sim_xr_gr00t_case_study_20260724_v7_male_voice_720p.mp4` | Compressed 16:9 derivative of the final male-voice revision | Ready and validated |
 | NVIDIA pipeline QA still | `../remotion_case_study_20260724/project/qa/revision-05/nvidia-pipeline-v2.png` | Final pipeline explainer frame | Ready and visually checked |
 | Remote collection QA still | `../remotion_case_study_20260724/project/qa/revision-05/remote-50-demos.png` | Final 208/93 versus 50/84 remote-collection comparison | Ready and visually checked |
 | Targeted collection QA still | `../remotion_case_study_20260724/project/qa/revision-05/targeted-loop-v2.png` | Final old-policy failure versus targeted-data recovery frame | Ready and visually checked |
@@ -42,7 +42,7 @@ SSH key, so no additional frontal camera was rendered.
 ## Audio status
 
 The final master contains ten English narration blocks generated with the
-American ElevenLabs River voice and a 90-second instrumental score generated
+American ElevenLabs Eric voice and a 90-second instrumental score generated
 with ElevenLabs Music. The narration explicitly connects NVIDIA's published
 Isaac Lab → LeRobot → GR00T N1.7 → Arena recipe to Sim XR's 50-demo remote
 collection result and the targeted follow-up experiments. Spoken references

@@ -1,13 +1,13 @@
 # Sim XR GR00T case study voice-over
 
-Target: 90 seconds, English narration, River voice, ElevenLabs
+Target: 90 seconds, English narration, Eric voice, ElevenLabs
 `eleven_multilingual_v2`.
 
 | Time | Visual block | Narration |
 |---|---|---|
-| 00:00.0–00:04.9 | Sim XR introduction | Sim XR trains humanoid robots remotely, in simulation. |
-| 00:04.6–00:15.5 | Published NVIDIA pipeline | NVIDIA published the pipeline: Isaac Lab, LeRobot, VLA fine-tuning, then Arena evaluation. Two hundred eight demonstrations reached ninety-three out of one hundred. |
-| 00:15.7–00:25.2 | Sim XR remote demonstrations | We remotely collected fifty demonstrations through CloudXR, thousands of kilometres from the AWS server. Our policy reached eighty-four out of one hundred. |
+| 00:00.0–00:04.5 | Sim XR introduction | Sim XR trains humanoid robots through remote XR teleoperation. |
+| 00:04.5–00:15.5 | Published NVIDIA pipeline | NVIDIA published the pipeline: Isaac Lab data, LeRobot conversion, VLA fine-tuning, and Arena evaluation. Its two hundred eight demonstrations reached ninety-three percent. |
+| 00:15.6–00:25.5 | Sim XR remote demonstrations | We remotely collected fifty demonstrations through CloudXR, thousands of kilometres from the AWS server. Our policy reached eighty-four out of one hundred. |
 | 00:25.5–00:34.0 | Shifted working side | When the task moved to the other side, both old policies scored zero. Targeted remote demonstrations raised success to seventy-four percent. |
 | 00:35.5–00:43.0 | Targeted spatial data | We repeated the loop on weak positions. Targeted additions raised matched success from eighty to eighty-nine point six percent. |
 | 00:45.5–00:51.0 | Mustard task design | Then we changed the task itself: mustard on the left, and a wooden bowl on the right. |
