@@ -1,6 +1,6 @@
 ---
 title: "From NVIDIA’s 208 Demonstrations to a New Skill with 50 Remote VR Episodes"
-subtitle: "How Sim XR used NVIDIA’s published Isaac Lab-to-GR00T recipe to validate remote human-data infrastructure for Physical AI"
+subtitle: "How Sim XR used NVIDIA’s published pipeline to collect targeted demonstrations remotely, fine-tune a VLA, and measure the change"
 author: "Georgy Molodtsov, Sim XR"
 language: en
 status: publication-ready-draft
@@ -9,15 +9,17 @@ date: 2026-07-24
 
 # From NVIDIA’s 208 Demonstrations to a New Skill with 50 Remote VR Episodes
 
-NVIDIA published something unusually useful for the robotics community: a complete, step-by-step path from human demonstrations in Isaac Lab to a fine-tuned GR00T N1.7 vision-language-action policy and closed-loop evaluation in Isaac Lab-Arena. The release gave us more than a checkpoint to run. It gave us a reference pipeline against which we could test the part Sim XR is building: remote human-data collection.
+NVIDIA published something unusually useful for the robotics community: a complete path from human demonstrations in Isaac Lab to VLA fine-tuning and closed-loop evaluation in Isaac Lab-Arena. We used that release to test a practical question. When a policy fails on a new layout or object, can a remote operator collect enough targeted demonstrations to improve it without consuming physical robot hours?
 
-After auditing the released files, we identified 208 usable non-empty NVIDIA trajectories. A checkpoint trained from that data reached 93/100 in our matched apple evaluation. We then ran the same training and evaluation loop with only 50 selected demonstrations collected through Meta Quest, Isaac Teleop, and CloudXR. The operator and the AWS GPU server were thousands of kilometres apart; nobody needed to stand beside a physical robot or travel to the compute. That 50-demo checkpoint reached 84/100.
+We first audited NVIDIA’s released files and identified 208 usable, non-empty trajectories. A checkpoint trained from that data reached 93/100 in our matched apple evaluation. We then ran the same training and evaluation loop with 50 selected demonstrations collected through Meta Quest, Isaac Teleop, and CloudXR. The operator and the AWS GPU server were thousands of kilometres apart. That 50-demo checkpoint reached 84/100.
 
-The nine-point gap is real, but so is the leverage: less than one quarter as many demonstrations, collected remotely, produced a working policy through the same GR00T N1.7 interface. More importantly, when the apple policies later scored zero after we changed the task geometry, we could collect the missing behavior and train a new checkpoint. When we replaced the apple with a mustard bottle and changed the destination, the apple checkpoint again scored zero; 50 new remote demonstrations produced 27/30 success.
+The nine-point gap is real. So is the leverage. Less than one quarter as many demonstrations, collected remotely, produced a working policy through the same training interface. When we changed the task geometry, both old apple policies scored zero. Targeted right-side demonstrations raised success to 74/100. When we replaced the apple with a mustard bottle and changed the destination, the apple checkpoint scored 0/30. Fifty remote demonstrations produced a new checkpoint that scored 27/30.
 
-That is the central Sim XR result. We are not claiming that one policy generalized to everything. We are showing an infrastructure loop that can identify a narrow policy failure, connect a remote operator, collect the missing demonstrations, fine-tune from a controlled base, and measure what changed.
+The central result is not that one policy generalized to everything. It did not. The result is a repeatable loop: identify a bounded failure, connect a remote operator, collect the missing behavior, validate the data, fine-tune from a controlled base, and measure the change under matched conditions.
 
-![Sim XR GR00T case-study video cover](media/video-cover-v2.jpg)
+> Targeted demonstrations for measurable policy improvement, collected remotely and evaluated under matched conditions.
+
+![Sim XR title card: training humanoid robots through remote XR teleoperation in simulation](article-images/01-remote-xr-teleoperation.png)
 
 ## NVIDIA published the complete simulation-to-VLA recipe
 
@@ -31,20 +33,24 @@ We then fine-tuned GR00T N1.7 for 20,000 steps on an NVIDIA L40S and evaluated t
 
 That gave us a stable reference implementation: released demonstrations in, validated LeRobot data out, a new checkpoint, and closed-loop metrics plus video evidence.
 
+![NVIDIA reference pipeline, 208 usable demonstrations, and a 93/100 matched evaluation](article-images/02-nvidia-pipeline-208-demos-93-of-100.png)
+
 ## Fifty demonstrations, collected thousands of kilometres from the server
 
 Next, we collected the same apple-to-plate interaction through the Sim XR teleoperation stack using Meta Quest 3 hand tracking. Isaac Teleop carried the operator input, CloudXR streamed the interactive simulation, and the task ran on our AWS GPU infrastructure. The human operator was thousands of kilometres from the server. We recorded the resulting actions, robot state, camera observations, object motion, and success state without placing the operator inside a robotics laboratory.
 
 We selected the best 50 demonstrations, converted them through the same training interface, and fine-tuned a fresh GR00T N1.7 checkpoint from the same base model. On the original apple layout, using the same 100-episode evaluation seed:
 
+![Sim XR remote collection path and the 50-demonstration checkpoint’s 84/100 result](article-images/03-sim-xr-remote-50-demos-84-of-100.png)
+
 | Policy | Training source | Success | Object moved |
 |---|---|---:|---:|
 | NVIDIA-data checkpoint | 208 usable released trajectories | 93/100 | 94/100 |
 | Sim XR checkpoint | 50 selected Quest demonstrations | 84/100 | 98/100 |
 
-The nine-point gap matters, and we are not hiding it. The Sim XR policy did not match the released-data checkpoint. But 84 successes in 100 closed-loop episodes—using 50 rather than 208 demonstrations, collected through our remote VR path—validated the infrastructure from operator input to learned behavior.
+The nine-point gap matters, and we are not hiding it. The Sim XR policy did not match the released-data checkpoint. But 84 successes in 100 closed-loop episodes, using 50 rather than 208 demonstrations, validated the infrastructure from remote operator input to learned behavior.
 
-This is the commercial point behind the benchmark. The operator does not need to be co-located with the robot lab or GPU server. When a team finds a recurring policy failure, it can connect the right operator, collect a focused batch in simulation, and run the same data-to-policy loop without moving people or hardware.
+This is the product value behind the benchmark. The operator does not need to be co-located with the robot lab or GPU server. When a team finds a recurring policy failure, it can connect the right operator, collect a focused batch in simulation, and run the same data-to-policy loop without moving people or consuming additional robot hours.
 
 It also exposed a data-quality issue. The initial recording format preserved simulation steps but not full wall-clock timing. The trajectories were converted at a nominal 50 Hz, so we could not make a clean statement about the operator’s real-time cadence. That audit now informs the next collection protocol: timing must be measured, not assumed, especially when the remaining errors cluster around grasp closure and stable hold.
 
@@ -58,6 +64,8 @@ The old checkpoints failed on the new `swapped-separated` layout:
 - Our original-layout Quest checkpoint: 0/20.
 
 We collected 60 successful right-side demonstrations through the same remote teleoperation stack and trained new checkpoints. The best-50 dataset produced 72/100 success; training on all 60 produced 74/100. Both moved the apple in 100/100 attempts.
+
+![Old policies scored 0/20 on the shifted layout; targeted right-side data raised success to 74/100](article-images/04-targeted-right-side-data-0-to-74.png)
 
 That is meaningful learning, but it is not a solved task. We had set a strict continuation gate of more than 75%, and 74% did not pass. Most failures were not high-level planning errors: the hand reached and moved the object, but contact did not become a stable lift, or the apple was lifted and then dropped.
 
@@ -78,7 +86,7 @@ We selected the eight weakest cells and collected 240 additional policy attempts
 
 The matched evaluation improved from 400/500 to 448/500:
 
-![Spatial success-rate change after targeted pose augmentation](media/spatial-success-rate-delta.png)
+![Spatial success rate improved from 80.0% to 89.6% after collecting data in weak regions](article-images/05-spatial-robustness-80-to-89-6.png)
 
 | Evaluation slice | Original checkpoint | Pose-augmented checkpoint | Change |
 |---|---:|---:|---:|
@@ -86,7 +94,7 @@ The matched evaluation improved from 400/500 to 448/500:
 | Eight selected weak cells | 110/160 (68.8%) | 131/160 (81.9%) | +13.1 pp |
 | Other 17 cells | 290/340 (85.3%) | 317/340 (93.2%) | +7.9 pp |
 
-This was success-filtered behavioral cloning, or self-imitation—not classical reinforcement learning. The environment helped us decide which data to keep, but the model update remained supervised.
+This was success-filtered behavioral cloning, or self-imitation, not classical reinforcement learning. The environment helped us decide which data to keep, but the model update remained supervised.
 
 The result was also not uniformly positive. Eighteen grid cells improved, three were unchanged, and four regressed. That is precisely why we use a spatial benchmark instead of one headline number: a single aggregate can hide where robustness was gained and where it was traded away.
 
@@ -96,28 +104,28 @@ The apple experiments showed that we could reproduce and modify a published task
 
 On our Oregon server, we composed a cross-body task: a mustard bottle starts on the left, a wooden bowl sits on the right, and the instruction is “move the mustard bottle to the bowl.” The geometry matters. The bottle sits near the left arm’s working limit, while the destination is on the opposite side. The policy must carry the object across the body instead of replaying the short left-side motion learned from the apple task.
 
-The object choice came from operator experience rather than visual novelty. A lemon was too small for a stable transfer between the G1’s three-finger hands. A white box had poor contrast against the shelf. The mustard bottle was elongated enough to grasp from either end and its yellow body remained easy to see through the robot-head camera.
-
-![Mustard bottle candidate seen through the robot-head camera](media/mustard-candidate-headcam.png)
-
-![Final cross-body mustard-to-bowl scene](media/mustard-final-scene.png)
+The object choice came from operator experience rather than visual novelty. A lemon was too small for a stable transfer between the G1’s three-finger hands. A white box had poor contrast against the shelf. The mustard bottle was elongated enough to grasp from either end, and its yellow body remained easy to see through the robot-head camera.
 
 Under the same scene, seed, CPU-physics setting, and contact-sensor success definition:
 
 - the released apple checkpoint scored 0/30;
 - GR00T N1.7 fine-tuned on 50 successful Sim XR operator demonstrations scored 27/30, or 90%.
 
-The 50 demonstrations came from one VR operator in four sessions of 10–15 episodes. Every retained episode passed the environment’s success condition. Demonstrations lasted 183–318 simulation steps, with an average close to 230. The recorded HDF5 files contained the robot-head camera, 23-dimensional teleoperation commands, and the 43-dimensional joint targets produced after inverse kinematics. The same conversion path used for the apple experiment produced the LeRobot training dataset.
+The 50 demonstrations came from one remote VR operator in four short sessions. Every retained episode passed the environment’s success condition before conversion to the LeRobot training dataset.
 
-The full fine-tune ran for 20,000 steps and took approximately 5.5 hours on one L40S. The final training loss was 0.024. Because the evaluation contains 30 episodes, the raw count, 27/30, is more informative than the percentage alone; its Wilson 95% interval is approximately 74.4–96.5%.
+![One remote operator collected 50 successful mustard demonstrations in four short sessions](article-images/06-mustard-remote-operator-50-demos.png)
+
+The full fine-tune ran for 20,000 steps and took approximately 5.5 hours on one L40S. Because the evaluation contains 30 episodes, the raw count, 27/30, is more informative than the percentage alone. Its Wilson 95% interval is approximately 74.4–96.5%.
+
+![On the same mustard task, the released apple checkpoint scored 0/30 and the new checkpoint scored 27/30](article-images/07-mustard-policy-0-to-27-of-30.png)
 
 This does not demonstrate zero-shot object generalization. We post-trained the model for the new task. What it demonstrates is more useful for our current stage: we can compose a new simulation task, collect clean human demonstrations remotely, convert and validate the data, fine-tune the VLA, and produce a large improvement under a matched closed-loop protocol.
 
 The mustard task also became a practical test fixture for the infrastructure around the policy. The team rendered the task in a scanned-room environment, ported the scene and teleoperation flow to a Fourier GR1T2, and accepted a Unitree G1 configuration with five-finger Inspire FTP hands in live VR. These are follow-up simulation and teleoperation checks, not evidence that one mustard checkpoint works on every embodiment. They show that the task, camera, recording, and operator workflow can be adapted without rebuilding the entire data pipeline.
 
-![Mustard follow-up checks: scanned environment, Fourier GR1T2, and Unitree G1 with Inspire FTP hands](media/mustard-followup-environments-and-hands.png)
+![Next experiments: a scanned environment, Fourier GR1T2, and Unitree G1 with Inspire FTP hands](article-images/08-next-environments-and-embodiments.png)
 
-## What these experiments prove—and what they do not
+## What these experiments prove, and what they do not
 
 Together, the experiments validate a working Sim XR loop:
 
@@ -131,7 +139,7 @@ Together, the experiments validate a working Sim XR loop:
 
 They do not prove production reliability, real-robot deployment, or a reduced sim-to-real gap. Every result reported here is from simulation. We also do not claim that photorealism alone fixes policy transfer, or that a single trained checkpoint works across arbitrary positions, objects, or embodiments.
 
-The evidence supports a narrower and more defensible conclusion: Sim XR can connect remote operators to cloud simulation, execute the human-data loop for Physical AI, diagnose its weak points, and improve a policy through controlled data interventions. The sale is not one apple rollout or one mustard checkpoint. It is the ability to collect the next missing behavior without requiring the operator to be in the laboratory.
+The evidence supports a narrower and more defensible conclusion: Sim XR can connect remote operators to cloud simulation, execute the human-data loop for Physical AI, diagnose weak points, and improve a policy through controlled data interventions. The value is not one apple rollout or one mustard checkpoint. It is the ability to collect the next missing behavior without requiring the operator to be in the laboratory or consuming additional robot hours.
 
 ## The next gates
 

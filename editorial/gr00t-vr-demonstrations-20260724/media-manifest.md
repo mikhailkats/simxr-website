@@ -1,5 +1,23 @@
 # Media Manifest
 
+## Article image package
+
+The publication-ready article images are stored separately in `article-images/`
+and numbered in recommended reading order. Captions, alt text, placement, and
+evidence boundaries are documented in `article-image-guide.md`. A single review
+sheet is available at `article-image-contact-sheet.jpg`.
+
+The article now uses eight images:
+
+1. remote XR teleoperation title card;
+2. NVIDIA pipeline and 208-demo / 93-of-100 benchmark;
+3. Sim XR remote path and 50-demo / 84-of-100 result;
+4. targeted right-side data, 0/20 to 74/100;
+5. matched spatial robustness, 80.0% to 89.6%;
+6. mustard collection, one operator and 50 successful demonstrations;
+7. mustard policy comparison, 0/30 to 27/30;
+8. preview of the next environment and embodiment experiments.
+
 ## Publication assets
 
 | Placement | Asset | Provenance | Status |
