@@ -9,7 +9,25 @@ date: 2026-07-24
 
 # From NVIDIA’s 208 Demonstrations to a New Skill with 50 Remote VR Episodes
 
-NVIDIA published something unusually useful for the robotics community: a complete path from human demonstrations in Isaac Lab to VLA fine-tuning and closed-loop evaluation in Isaac Lab-Arena. We used that release to test a practical question. When a policy fails on a new layout or object, can a remote operator collect enough targeted demonstrations to improve it without consuming physical robot hours?
+*By Georgy Molodtsov, Founder of Sim XR*
+
+![A remote VR operator provides targeted demonstrations for a humanoid robot policy in simulation](hero-cover/hero-medium-1600x900.jpg)
+
+## Why I started Sim XR
+
+The idea for Sim XR started with a pattern I kept seeing in robotics: a team could iterate on a model quickly, yet gathering the next useful human demonstration still depended on access to a lab, a robot, and the right operator at the same time. Better hardware alone could not solve that data problem. Humanoids and vision-language-action models were becoming more capable, but collecting the right demonstrations remained expensive, geographically constrained, and difficult to repeat. Every new failure could mean another lab session and more scarce robot time.
+
+My belief was that consumer XR could change that operating model. If a person can enter a cloud simulation from a headset, demonstrate the missing behavior, and produce training-ready trajectories, then robot teams can iterate on data before using physical hardware. Remote operators become robot trainers, and simulation becomes more than a place to test policies: it becomes a place to create the human data those policies are missing.
+
+That is why we are building Sim XR: infrastructure that connects remote VR teleoperation, cloud simulation, trajectory validation, VLA fine-tuning, and matched evaluation. The goal is not to produce one impressive rollout. It is to shorten the loop from a specific policy failure to validated new data and a measured result.
+
+NVIDIA’s published Isaac Lab-to-GR00T workflow gave us a rigorous way to test that thesis. Instead of inventing a benchmark that favored our stack, we began with a public task, public data, and a documented training and evaluation pipeline. Then we replaced the source demonstrations with our own remote XR data, changed the task geometry, and finally introduced a new object and destination.
+
+The experiments below are the result.
+
+## The experiment: start with NVIDIA’s published pipeline
+
+We began with one practical question: when a policy fails on a new layout or object, can a remote operator collect enough targeted demonstrations to improve it without consuming physical robot hours?
 
 We first audited NVIDIA’s released files and identified 208 usable, non-empty trajectories. A checkpoint trained from that data reached 93/100 in our matched apple evaluation. We then ran the same training and evaluation loop with 50 selected demonstrations collected through Meta Quest, Isaac Teleop, and CloudXR. The operator and the AWS GPU server were thousands of kilometres apart. That 50-demo checkpoint reached 84/100.
 

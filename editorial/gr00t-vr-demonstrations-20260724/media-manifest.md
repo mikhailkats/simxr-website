@@ -7,22 +7,25 @@ and numbered in recommended reading order. Captions, alt text, placement, and
 evidence boundaries are documented in `article-image-guide.md`. A single review
 sheet is available at `article-image-contact-sheet.jpg`.
 
-The article now uses eight images:
+The article now uses one hero cover and eight inline images:
 
-1. remote XR teleoperation title card;
-2. NVIDIA pipeline and 208-demo / 93-of-100 benchmark;
-3. Sim XR remote path and 50-demo / 84-of-100 result;
-4. targeted right-side data, 0/20 to 74/100;
-5. matched spatial robustness, 80.0% to 89.6%;
-6. mustard collection, one operator and 50 successful demonstrations;
-7. mustard policy comparison, 0/30 to 27/30;
-8. preview of the next environment and embodiment experiments.
+1. generated remote-demonstration hero cover;
+2. remote XR teleoperation title card;
+3. NVIDIA pipeline and 208-demo / 93-of-100 benchmark;
+4. Sim XR remote path and 50-demo / 84-of-100 result;
+5. targeted right-side data, 0/20 to 74/100;
+6. matched spatial robustness, 80.0% to 89.6%;
+7. mustard collection, one operator and 50 successful demonstrations;
+8. mustard policy comparison, 0/30 to 27/30;
+9. preview of the next environment and embodiment experiments.
 
 ## Publication assets
 
 | Placement | Asset | Provenance | Status |
 |---|---|---|---|
-| Article hero | `media/video-cover-v2.jpg` | Frame from the revised Sim XR case-study video | Ready |
+| Medium hero | `hero-cover/hero-medium-1600x900.jpg` | Generated Sim XR editorial composition; deterministic logo and typography | Ready |
+| LinkedIn article cover | `hero-cover/hero-linkedin-article-1920x1080.jpg` | 16:9 export of the approved hero composition | Ready |
+| LinkedIn shared-link preview | `hero-cover/hero-linkedin-link-preview-1200x627.jpg` | Official 1.91:1 link-preview crop of the approved hero composition | Ready |
 | Spatial intervention | `media/spatial-success-rate-delta.png` | Matched 500 + 500 episode experiment | Ready |
 | Baseline overview | `media/baseline-contact-sheet.png` | Original checkpoint rollouts | Ready |
 | Augmented overview | `media/augmented-contact-sheet.png` | Pose-augmented checkpoint rollouts | Ready |

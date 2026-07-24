@@ -4,6 +4,7 @@ This package contains the publication-ready image sequence for the Sim XR articl
 
 | File | Recommended placement | Caption | Source and evidence role |
 |---|---|---|---|
+| `hero-cover/hero-medium-1600x900.jpg` | Article cover, before the founder introduction | Remote VR demonstrations become a measured humanoid policy behavior in simulation. | Generated editorial illustration with deterministic Sim XR typography. The simulation grid and trajectory traces deliberately prevent a real-robot interpretation. |
 | `article-images/01-remote-xr-teleoperation.png` | After the opening thesis | Training humanoid robots through remote XR teleoperation in simulation. | Sim XR branded title card. Establishes the subject and toolchain. |
 | `article-images/02-nvidia-pipeline-208-demos-93-of-100.png` | End of the NVIDIA reference section | NVIDIA’s published data-to-policy pipeline provided the reference implementation. After auditing the released files, we trained on 208 usable demonstrations and measured 93/100 in our matched evaluation. | Final video frame built from the validated NVIDIA-data result. |
 | `article-images/03-sim-xr-remote-50-demos-84-of-100.png` | Before the first comparison table | One remote operator, CloudXR and Isaac Teleop, and an AWS L40S: 50 selected demonstrations produced 84/100 in the matched apple evaluation. | Final video frame built from the validated Sim XR Quest result. |
@@ -16,6 +17,9 @@ This package contains the publication-ready image sequence for the Sim XR articl
 ## Publishing notes
 
 - Use the images in numeric order, but keep each image close to the claim it supports.
+- Use `hero-cover/hero-linkedin-article-1920x1080.jpg` for a LinkedIn article
+  cover and `hero-cover/hero-linkedin-link-preview-1200x627.jpg` for a
+  shared-link preview.
 - Preserve the supplied captions or equivalent factual wording.
 - Do not crop metric labels or the Sim XR mark.
 - Keep `27/30` visible whenever `90%` is mentioned.
