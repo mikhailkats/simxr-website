@@ -1,0 +1,933 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>What we do — SIM XR | We teach your robot the customer&rsquo;s job</title>
+  <meta name="description" content="SIM XR teaches existing robot models the customer-specific jobs they cannot do out of the box: teleop rig, simulation scenes from a real room, targeted VR demonstrations, post-training and measurement. Enter the loop at any step." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://simxr.tech/what-we-do/" />
+  <meta property="og:title" content="What we do — SIM XR" />
+  <meta property="og:description" content="You have the robot. We teach it the customer's job — scene, demonstrations, training and measurement, without consuming your robot-hours." />
+  <meta property="og:url" content="https://simxr.tech/what-we-do/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://simxr.tech/what-we-do/case-poster.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" type="image/svg+xml" href="/favicon-tech.svg" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600&family=Familjen+Grotesk:wght@700&family=Instrument+Sans:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+  /* ============================================================
+     SIM XR — cyanotype design system (approved 2026-08-05)
+     Craft layer per 00_strategy/SIMXR_DESIGN.md v1.
+     Closed sets only: type scale, spacing scale, tracking table.
+     Zero radii, zero shadows, zero blur. One accent tone.
+     ============================================================ */
+  :root {
+    /* — colour: cyanotype, variant 1 — */
+    --ground:      #E7E6E1;
+    --sunk:        #DEDDD7;
+    --rule:        #C6C4BC;
+    --rule-strong: #B0AEA6;
+    --ink:         #191A1D;
+    --body:        #54565A;
+    --accent:      #17596B;
+    --on-accent:   #EAF2F4;
+    --wash:        #D7E2E5;
+
+    /* — type scale: closed set, 11 values — */
+    --fs-12: 12px; --fs-14: 14px; --fs-16: 16px; --fs-20: 20px;
+    --fs-24: 24px; --fs-30: 30px; --fs-38: 38px; --fs-48: 48px;
+    --fs-60: 60px; --fs-76: 76px; --fs-96: 96px;
+
+    /* — tracking: a function of size, never a decision on the spot — */
+    --tr-12:  0em;      --tr-label: 0.14em; --tr-14: 0em;    --tr-16: 0em;
+    --tr-20: -0.005em;  --tr-24: -0.01em;   --tr-30: -0.015em;
+    --tr-38: -0.02em;   --tr-48: -0.022em;  --tr-60: -0.025em;
+    --tr-76: -0.028em;  --tr-96: -0.03em;
+
+    /* — leading: a function of size — */
+    --lh-tight: 1.03; --lh-display: 1.12; --lh-head: 1.30;
+    --lh-body: 1.60;  --lh-small: 1.45;
+
+    /* — spacing scale: closed set, 11 values — */
+    --sp-4: 4px;   --sp-8: 8px;    --sp-12: 12px;  --sp-16: 16px;
+    --sp-24: 24px; --sp-32: 32px;  --sp-48: 48px;  --sp-64: 64px;
+    --sp-96: 96px; --sp-128: 128px; --sp-192: 192px;
+
+    /* — motion — */
+    --dur-micro: 120ms; --dur-std: 180ms; --dur-large: 240ms;
+    --ease-in:  cubic-bezier(0.2, 0, 0, 1);
+    --ease-out: cubic-bezier(0.4, 0, 1, 1);
+
+    --measure: 68ch;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    font-size: var(--fs-16);
+    line-height: var(--lh-body);
+    font-optical-sizing: auto;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* — layout — */
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 0 var(--sp-32); }
+  @media (max-width: 640px) { .wrap { padding: 0 var(--sp-24); } }
+
+  section { border-top: 1px solid var(--rule); }
+  /* deliberately unequal vertical rhythm — see DESIGN.md §5 */
+  .sec-lg { padding: var(--sp-128) 0 var(--sp-96); }
+  .sec-md { padding: var(--sp-96) 0 var(--sp-64); }
+  .sec-sm { padding: var(--sp-64) 0 var(--sp-96); }
+  @media (max-width: 900px) {
+    .sec-lg { padding: var(--sp-96) 0 var(--sp-64); }
+    .sec-md { padding: var(--sp-64) 0 var(--sp-48); }
+    .sec-sm { padding: var(--sp-48) 0 var(--sp-64); }
+  }
+
+  /* — labels — */
+  .label {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 600;
+    font-size: var(--fs-12);
+    letter-spacing: var(--tr-label);
+    line-height: var(--lh-small);
+    text-transform: uppercase;
+    color: var(--accent);
+    display: block;
+    margin: 0 0 var(--sp-24);
+    /* optical centring: caps have no descenders */
+    padding-top: 1px;
+  }
+  .label-muted { color: var(--body); }
+
+  /* — headings — */
+  h1, h2, h3 { font-family: 'Archivo', sans-serif; font-weight: 600; margin: 0; color: var(--ink); }
+  h1 {
+    font-size: var(--fs-76);
+    letter-spacing: var(--tr-76);
+    line-height: var(--lh-tight);
+    max-width: 20ch;
+    margin-left: -0.035em; /* optical alignment of the cap stem */
+  }
+  h2 {
+    font-size: var(--fs-48);
+    letter-spacing: var(--tr-48);
+    line-height: var(--lh-display);
+    max-width: 22ch;
+    margin-left: -0.03em;
+  }
+  h3 {
+    font-size: var(--fs-24);
+    letter-spacing: var(--tr-24);
+    line-height: var(--lh-head);
+  }
+  @media (max-width: 1280px) { h1 { font-size: var(--fs-60); letter-spacing: var(--tr-60); } }
+  @media (max-width: 900px)  {
+    h1 { font-size: var(--fs-48); letter-spacing: var(--tr-48); line-height: var(--lh-display); }
+    h2 { font-size: var(--fs-38); letter-spacing: var(--tr-38); }
+    h3 { font-size: var(--fs-20); letter-spacing: var(--tr-20); }
+  }
+  @media (max-width: 640px) { h1 { font-size: var(--fs-38); letter-spacing: var(--tr-38); } h2 { font-size: var(--fs-30); letter-spacing: var(--tr-30); } }
+
+  p { margin: 0 0 var(--sp-16); color: var(--body); max-width: var(--measure); }
+  p:last-child { margin-bottom: 0; }
+  .lead { font-size: var(--fs-20); letter-spacing: var(--tr-20); line-height: var(--lh-body); color: var(--ink); max-width: 58ch; }
+  .small { font-size: var(--fs-14); line-height: var(--lh-small); }
+  strong { color: var(--ink); font-weight: 500; }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, video:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 3px;
+  }
+
+  /* — numbers behave like instrument readouts — */
+  .num, table, .stat {
+    font-variant-numeric: tabular-nums slashed-zero;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-optical-sizing: auto;
+  }
+
+  /* — buttons: fill or hairline frame. Nothing else. — */
+  .btn {
+    display: inline-block;
+    font-family: 'Instrument Sans', sans-serif;
+    font-weight: 500;
+    font-size: var(--fs-16);
+    letter-spacing: var(--tr-16);
+    line-height: 1;
+    padding: var(--sp-12) var(--sp-24);
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: var(--on-accent);
+    cursor: pointer;
+    text-decoration: none;
+    transition: background var(--dur-micro) var(--ease-in), color var(--dur-micro) var(--ease-in);
+  }
+  .btn > span { display: inline-block; transform: translateY(-1px); } /* optical centring */
+  .btn:hover { background: #124A59; text-decoration: none; }
+  .btn:active { background: #0E3C48; }
+  .btn:disabled { border-color: var(--rule-strong); background: var(--sunk); color: var(--rule-strong); cursor: not-allowed; }
+  .btn-line {
+    background: transparent; color: var(--accent); border: 1px solid var(--rule-strong);
+  }
+  .btn-line:hover { background: var(--wash); color: var(--accent); }
+  .cta-row { display: flex; align-items: center; gap: var(--sp-12); flex-wrap: wrap; margin-top: var(--sp-32); }
+  .cta-link {
+    font-size: var(--fs-16); text-decoration: underline; text-underline-offset: 4px;
+    text-decoration-thickness: 1px; padding: var(--sp-12) 0;
+  }
+
+  /* ================= header ================= */
+  /* Local header in the cyanotype system. Links mirror /site-header.js —
+     keep the two in sync until the whole site migrates. */
+  .site-head { border-bottom: 1px solid var(--rule); background: var(--ground); }
+  .site-head .row { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-24); padding: var(--sp-16) 0; }
+  .wordmark {
+    font-family: 'Familjen Grotesk', sans-serif; font-weight: 700;
+    font-size: var(--fs-20); letter-spacing: var(--tr-20); color: var(--ink); text-decoration: none; line-height: 1;
+  }
+  .wordmark span { color: var(--accent); }
+  .wordmark:hover { text-decoration: none; }
+  .site-nav { display: flex; align-items: center; gap: var(--sp-24); }
+  .site-nav a {
+    font-size: var(--fs-14); letter-spacing: var(--tr-14); color: var(--body); line-height: 1;
+    transition: color var(--dur-micro) var(--ease-in);
+  }
+  .site-nav a:hover { color: var(--ink); text-decoration: none; }
+  .site-nav a.here { color: var(--ink); }
+  @media (max-width: 900px) { .site-nav { display: none; } }
+  @media (max-width: 640px) { .site-head .btn { display: none; } }
+
+  /* ================= hero ================= */
+  .hero { padding: var(--sp-96) 0 var(--sp-96); }
+  @media (max-width: 900px) { .hero { padding: var(--sp-64) 0 var(--sp-48); } }
+  .hero-grid { display: grid; grid-template-columns: 7fr 4fr; gap: var(--sp-96); align-items: start; }
+  @media (max-width: 1280px) { .hero-grid { gap: var(--sp-64); } }
+  @media (max-width: 900px) { .hero-grid { grid-template-columns: 1fr; gap: var(--sp-48); } }
+  .hero .lead { margin-top: var(--sp-32); }
+
+  /* the ledger: what goes in, what comes back — same claim, stated as an instrument */
+  .ledger { margin: 0; }
+  .ledger > div { border-top: 1px solid var(--rule-strong); padding: var(--sp-16) 0 var(--sp-24); }
+  .ledger > div:last-child { border-bottom: 1px solid var(--rule-strong); }
+  .ledger dt {
+    font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600;
+    font-size: var(--fs-12); letter-spacing: var(--tr-label); text-transform: uppercase;
+    color: var(--accent); margin-bottom: var(--sp-12);
+  }
+  .ledger dd { margin: 0; font-size: var(--fs-14); line-height: var(--lh-small); color: var(--body); }
+  .ledger dd + dd { margin-top: var(--sp-8); }
+  .ledger dd b { color: var(--ink); font-weight: 500; }
+  .ledger .k-muted { color: var(--body); }
+
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+
+  /* the one element that leaves the grid — full-bleed film band */
+  .bleed { width: 100vw; margin-left: calc(50% - 50vw); background: var(--ink); }
+  .film { display: block; width: 100%; max-height: 78vh; height: auto; background: var(--ink); }
+  .film-caption {
+    display: flex; justify-content: space-between; gap: var(--sp-24); flex-wrap: wrap;
+    padding: var(--sp-12) 0 0;
+    font-family: 'Bricolage Grotesque', sans-serif; font-weight: 500;
+    font-size: var(--fs-12); letter-spacing: var(--tr-label); text-transform: uppercase; color: var(--body);
+  }
+
+  /* ================= problem trio ================= */
+  .trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-48); margin-top: var(--sp-48); }
+  @media (max-width: 900px) { .trio { grid-template-columns: 1fr; gap: var(--sp-32); } }
+  .trio > div { border-top: 1px solid var(--rule-strong); padding-top: var(--sp-16); }
+  .trio .num {
+    display: block; font-weight: 600; font-size: var(--fs-12); color: var(--accent);
+    letter-spacing: var(--tr-label); margin-bottom: var(--sp-12);
+  }
+  .trio h3 { margin-bottom: var(--sp-12); }
+  .trio p { font-size: var(--fs-16); max-width: none; }
+
+  /* ================= loop diagram ================= */
+  .loop-figure { margin: var(--sp-48) 0 0; }
+  .loop-svg { display: block; width: 100%; height: auto; }
+  @media (max-width: 900px) { .loop-svg { display: none; } }
+  .loop-list { display: none; list-style: none; margin: var(--sp-32) 0 0; padding: 0; }
+  @media (max-width: 900px) { .loop-list { display: block; } }
+  .loop-list li { border-top: 1px solid var(--rule); padding: var(--sp-16) 0; display: flex; gap: var(--sp-16); align-items: baseline; }
+  .loop-list li:last-child { border-bottom: 1px solid var(--rule); }
+  .loop-list .num { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: var(--fs-12); letter-spacing: var(--tr-label); color: var(--accent); }
+  .loop-list .t { font-family: 'Archivo', sans-serif; font-weight: 600; font-size: var(--fs-20); letter-spacing: var(--tr-20); color: var(--ink); }
+  .figcap { margin-top: var(--sp-16); font-size: var(--fs-14); line-height: var(--lh-small); color: var(--body); max-width: var(--measure); }
+
+  /* ================= capability blocks ================= */
+  .cap { border-top: 1px solid var(--rule); padding: var(--sp-48) 0; display: grid; grid-template-columns: 5fr 7fr; gap: var(--sp-64); }
+  .cap:first-of-type { border-top: 1px solid var(--rule-strong); }
+  @media (max-width: 900px) { .cap { grid-template-columns: 1fr; gap: var(--sp-24); padding: var(--sp-32) 0; } }
+  .cap-index {
+    font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-variant-numeric: tabular-nums slashed-zero;
+    font-size: var(--fs-12); letter-spacing: var(--tr-label); color: var(--accent); margin-bottom: var(--sp-12);
+  }
+  .cap h3 { margin-bottom: var(--sp-12); max-width: 18ch; }
+  .cap-claim { font-size: var(--fs-16); color: var(--body); max-width: 38ch; }
+  .cap ul { list-style: none; margin: 0; padding: 0; }
+  .cap ul li {
+    border-top: 1px solid var(--rule); padding: var(--sp-12) 0 var(--sp-12) var(--sp-24);
+    font-size: var(--fs-16); line-height: var(--lh-body); color: var(--body); position: relative;
+  }
+  .cap ul li:first-child { border-top: none; padding-top: 0; }
+  .cap ul li::before {
+    content: ''; position: absolute; left: 0; top: calc(var(--sp-12) + 0.72em); width: var(--sp-12); height: 1px; background: var(--rule-strong);
+  }
+  .cap ul li:first-child::before { top: 0.72em; }
+  .cap-foot { margin-top: var(--sp-24); border-top: 1px solid var(--rule-strong); padding-top: var(--sp-16); display: grid; gap: var(--sp-12); }
+  .cap-foot .k {
+    font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: var(--fs-12);
+    letter-spacing: var(--tr-label); text-transform: uppercase; color: var(--accent); display: block; margin-bottom: var(--sp-4);
+  }
+  .cap-foot .k-muted { color: var(--body); }
+  .cap-foot p { font-size: var(--fs-14); line-height: var(--lh-small); max-width: none; margin: 0; }
+
+  /* inverted note — the single inversion allowed per screen */
+  .note-inverse { background: var(--ink); color: var(--sunk); padding: var(--sp-32); margin-top: var(--sp-32); }
+  .note-inverse .k { color: #7FB3C0; }
+  .note-inverse p { color: var(--sunk); max-width: 62ch; margin: 0; }
+  .note-inverse p strong { color: var(--ground); font-weight: 500; }
+
+  /* ================= proof ================= */
+  .proof-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-64); margin-top: var(--sp-48); }
+  @media (max-width: 900px) { .proof-grid { grid-template-columns: 1fr; gap: var(--sp-48); } }
+  .proof-head { font-family: 'Archivo', sans-serif; font-weight: 600; font-size: var(--fs-30); letter-spacing: var(--tr-30); line-height: var(--lh-head); color: var(--ink); margin: 0 0 var(--sp-16); }
+  .proof-head .accent { color: var(--accent); }
+
+  table.jitter { width: 100%; border-collapse: collapse; margin-top: var(--sp-24); font-size: var(--fs-14); }
+  table.jitter caption {
+    text-align: left; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600;
+    font-size: var(--fs-12); letter-spacing: var(--tr-label); text-transform: uppercase;
+    color: var(--body); padding-bottom: var(--sp-12);
+  }
+  table.jitter th, table.jitter td { text-align: left; padding: var(--sp-12) 0; border-top: 1px solid var(--rule); }
+  table.jitter thead th { border-top: 1px solid var(--rule-strong); color: var(--body); font-weight: 500; font-size: var(--fs-12); letter-spacing: var(--tr-label); text-transform: uppercase; }
+  table.jitter tbody th { font-weight: 500; color: var(--ink); width: 40%; }
+  table.jitter td.v { color: var(--ink); font-weight: 600; width: 20%; }
+  table.jitter td.bar { width: 40%; }
+  table.jitter .bar i { display: block; height: 8px; background: var(--accent); }
+  table.jitter tbody tr:last-child th, table.jitter tbody tr:last-child td { border-bottom: 1px solid var(--rule); }
+
+  /* ================= start / engagement ================= */
+  .start { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: var(--sp-48); border-top: 1px solid var(--rule-strong); }
+  @media (max-width: 900px) { .start { grid-template-columns: 1fr; } }
+  .start > div { padding: var(--sp-32) var(--sp-32) var(--sp-32) 0; border-right: 1px solid var(--rule); }
+  .start > div + div { padding-left: var(--sp-32); }
+  .start > div:last-child { border-right: none; background: var(--sunk); padding-right: var(--sp-32); }
+  @media (max-width: 900px) {
+    .start > div { border-right: none; border-bottom: 1px solid var(--rule); padding: var(--sp-24) 0; }
+    .start > div + div { padding-left: 0; }
+    .start > div:last-child { padding: var(--sp-24); }
+  }
+  .start .cap-index { margin-bottom: var(--sp-16); }
+  .start h3 { margin-bottom: var(--sp-12); }
+  .start p { font-size: var(--fs-14); line-height: var(--lh-small); max-width: none; }
+  .start .btn-line, .start .cta-link { margin-top: var(--sp-16); }
+
+  /* ================= stack ================= */
+  .stack-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-48) var(--sp-48); margin-top: var(--sp-48); }
+  @media (max-width: 900px) { .stack-grid { grid-template-columns: 1fr; gap: var(--sp-32); } }
+  .stack-grid dt {
+    font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: var(--fs-12);
+    letter-spacing: var(--tr-label); text-transform: uppercase; color: var(--accent);
+    border-top: 1px solid var(--rule-strong); padding-top: var(--sp-12); margin-bottom: var(--sp-12);
+  }
+  .stack-grid dd { margin: 0; font-size: var(--fs-14); line-height: var(--lh-small); color: var(--body); }
+  .stack-grid dd b { color: var(--ink); font-weight: 500; }
+  .badges {
+    margin-top: var(--sp-48); display: flex; flex-wrap: wrap; gap: var(--sp-32);
+    border-top: 1px solid var(--rule); padding-top: var(--sp-16);
+    font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600;
+    font-size: var(--fs-12); letter-spacing: var(--tr-label); text-transform: uppercase; color: var(--body);
+  }
+
+  /* ================= form ================= */
+  .form-wrap { display: grid; grid-template-columns: 5fr 7fr; gap: var(--sp-64); margin-top: var(--sp-48); align-items: start; }
+  @media (max-width: 900px) { .form-wrap { grid-template-columns: 1fr; gap: var(--sp-32); } }
+  form.inquiry { display: grid; gap: var(--sp-24); }
+  .field label {
+    display: block; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600;
+    font-size: var(--fs-12); letter-spacing: var(--tr-label); text-transform: uppercase;
+    color: var(--body); margin-bottom: var(--sp-8);
+  }
+  .field label .opt { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--rule-strong); }
+  .field input, .field textarea, .field select {
+    width: 100%; font-family: 'Instrument Sans', sans-serif; font-size: var(--fs-16);
+    color: var(--ink); background: transparent;
+    border: none; border-bottom: 1px solid var(--rule-strong);
+    padding: var(--sp-8) 0; line-height: var(--lh-body);
+    transition: border-color var(--dur-micro) var(--ease-in);
+  }
+  .field textarea { resize: vertical; min-height: 64px; }
+  .field input::placeholder, .field textarea::placeholder { color: var(--rule-strong); }
+  .field input:hover, .field textarea:hover, .field select:hover { border-bottom-color: var(--body); }
+  .field input:focus, .field textarea:focus, .field select:focus { outline: none; border-bottom-color: var(--accent); border-bottom-width: 1px; }
+  .field select { appearance: none; border-bottom: 1px solid var(--rule-strong); }
+  .form-note { font-size: var(--fs-12); letter-spacing: var(--tr-12); color: var(--body); line-height: var(--lh-small); }
+
+  /* ================= footer ================= */
+  footer { background: var(--ink); color: var(--sunk); padding: var(--sp-64) 0 var(--sp-32); }
+  footer .row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--sp-16); }
+  footer .wordmark { color: var(--ground); }
+  footer .wordmark span { color: #7FB3C0; }
+  footer .links { display: flex; gap: var(--sp-24); flex-wrap: wrap; }
+  footer .links a { color: var(--sunk); font-size: var(--fs-14); }
+  footer .links a:hover { color: var(--ground); }
+  footer .bottom {
+    margin-top: var(--sp-32); padding-top: var(--sp-16); border-top: 1px solid #34363A;
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--sp-8);
+    font-size: var(--fs-12); letter-spacing: var(--tr-12); color: var(--rule-strong);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  }
+  </style>
+</head>
+<body>
+
+  <header class="site-head">
+    <div class="wrap row">
+      <a class="wordmark" href="/">SIM <span>XR.</span></a>
+      <nav class="site-nav" aria-label="Main">
+        <a href="/what-we-do/" class="here" aria-current="page">What we do</a>
+        <a href="/sprint/">Sprint</a>
+        <a href="/packs/">Asset Packs</a>
+        <a href="/network/">Hire Operators</a>
+        <a href="/operator/">For Operators</a>
+        <a href="/about">About</a>
+      </nav>
+      <a href="#inquiry" class="btn"><span>Bring us a failing job</span></a>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ══════════════ HERO ══════════════ -->
+    <div class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <span class="label">What we do</span>
+          <h1>You have the robot. We teach it the customer&rsquo;s job.</h1>
+          <p class="lead">
+            A robot model is a starting point, not a deployment. One real customer job &mdash; reach it,
+            grip it, carry it, place it, close the door &mdash; contains dozens of workplace-specific skills
+            that are not in the box. SIM&nbsp;XR teaches those skills to the model you already run, and
+            measures whether they actually worked.
+          </p>
+
+          <div class="cta-row">
+            <a href="#inquiry" class="btn"><span>Bring us a failing job</span></a>
+            <a href="#proof" class="cta-link">Watch the 90-second case</a>
+          </div>
+        </div>
+
+        <dl class="ledger">
+          <div>
+            <dt>You hand us</dt>
+            <dd>One job the robot fails, with the success criteria you actually care about.</dd>
+            <dd>A phone walkthrough of the room and photographs of the objects.</dd>
+            <dd>Your checkpoint &mdash; optional. Plenty of teams only want the data.</dd>
+          </div>
+          <div>
+            <dt>You get back</dt>
+            <dd><b>Validated demonstrations</b> in the robot&rsquo;s own action space, LeRobot-ready.</dd>
+            <dd><b>A post-trained model</b>, if you want us to train it.</dd>
+            <dd><b>A before-and-after number</b> on one protocol, with the failures decomposed.</dd>
+          </div>
+          <div>
+            <dt class="k-muted">Robot-hours it costs you</dt>
+            <dd><b>None.</b> Collection runs off-robot, in parallel copies of the scene, with instant resets.</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+
+    <!-- ══════════════ THE PROBLEM ══════════════ -->
+    <section class="sec-md">
+      <div class="wrap">
+        <span class="label">Where this stalls</span>
+        <h2>Three places the work gets stuck.</h2>
+        <div class="trio">
+          <div>
+            <span class="num">01</span>
+            <h3>Every customer is a new skill.</h3>
+            <p>
+              Your model generalises across a category, not across a workplace. Every deployment adds
+              steps nobody trained for, and every one of them needs demonstrations. Collecting those
+              demonstrations costs robot-hours you would rather spend shipping.
+            </p>
+          </div>
+          <div>
+            <span class="num">02</span>
+            <h3>The world the robot must learn in does not exist yet.</h3>
+            <p>
+              Training in simulation needs the customer&rsquo;s room, their objects, their clutter and
+              their lighting. Scans come back noisy, meshes are not physics-ready, and rebuilding all
+              of it by hand is nobody&rsquo;s favourite sprint.
+            </p>
+          </div>
+          <div>
+            <span class="num">03</span>
+            <h3>The policy fails and nobody can say why.</h3>
+            <p>
+              A deployed policy misses and the default answer is &ldquo;collect more data&rdquo;.
+              Sometimes that is right. Often the real cause is a missing input, a training recipe or the
+              inference loop &mdash; and more data buys nothing at all.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ THE LOOP ══════════════ -->
+    <section class="sec-lg">
+      <div class="wrap">
+        <span class="label">How it works</span>
+        <h2>One loop. Enter at any step.</h2>
+        <p class="lead" style="margin-top: var(--sp-24)">
+          We run the whole chain, and we run any part of it. Some teams hand us a failing job and take
+          back a measured policy. Some hand us a phone walkthrough and take back a scene. Some send
+          nothing but rollouts and take back a diagnosis. All three are normal.
+        </p>
+
+        <figure class="loop-figure" style="margin:var(--sp-48) 0 0">
+          <svg class="loop-svg" viewBox="0 0 1216 300" role="img" aria-labelledby="loopTitle loopDesc">
+            <title id="loopTitle">The SIM XR loop</title>
+            <desc id="loopDesc">Five steps in sequence: teleop rig, scene and assets, demonstrations, training, measurement. Measurement feeds back into demonstrations. A customer can enter at any step.</desc>
+            <g font-family="Bricolage Grotesque, sans-serif" font-size="12" font-weight="600" letter-spacing="1.68" fill="#17596B">
+              <text x="0" y="14">ENTER AT ANY STEP</text>
+            </g>
+            <!-- entry ticks -->
+            <g stroke="#B0AEA6" stroke-width="1">
+              <path d="M52 34 v26 M292 34 v26 M532 34 v26 M772 34 v26 M1012 34 v26"/>
+            </g>
+            <g fill="#B0AEA6">
+              <path d="M48 58 l4 8 l4 -8 Z"/><path d="M288 58 l4 8 l4 -8 Z"/><path d="M528 58 l4 8 l4 -8 Z"/>
+              <path d="M768 58 l4 8 l4 -8 Z"/><path d="M1008 58 l4 8 l4 -8 Z"/>
+            </g>
+
+            <!-- spine -->
+            <line x1="0" y1="88" x2="1216" y2="88" stroke="#C6C4BC" stroke-width="1"/>
+
+            <!-- nodes -->
+            <g>
+              <rect x="48" y="82" width="12" height="12" fill="#17596B"/>
+              <rect x="288" y="82" width="12" height="12" fill="#17596B"/>
+              <rect x="528" y="82" width="12" height="12" fill="#17596B"/>
+              <rect x="768" y="82" width="12" height="12" fill="#17596B"/>
+              <rect x="1008" y="82" width="12" height="12" fill="#17596B"/>
+            </g>
+
+            <!-- indices -->
+            <g font-family="Bricolage Grotesque, sans-serif" font-size="12" font-weight="600" letter-spacing="1.68" fill="#17596B">
+              <text x="0" y="126">01</text><text x="240" y="126">02</text><text x="480" y="126">03</text>
+              <text x="720" y="126">04</text><text x="960" y="126">05</text>
+            </g>
+            <!-- titles -->
+            <g font-family="Archivo, sans-serif" font-size="24" font-weight="600" letter-spacing="-0.24" fill="#191A1D">
+              <text x="0" y="158">Teleop rig</text>
+              <text x="240" y="158">Scene &amp; assets</text>
+              <text x="480" y="158">Demonstrations</text>
+              <text x="720" y="158">Training</text>
+              <text x="960" y="158">Measurement</text>
+            </g>
+            <!-- captions -->
+            <g font-family="Instrument Sans, sans-serif" font-size="14" fill="#54565A">
+              <text x="0" y="184">Your robot becomes</text><text x="0" y="204">drivable in VR.</text>
+              <text x="240" y="184">The customer&#8217;s room</text><text x="240" y="204">becomes a training world.</text>
+              <text x="480" y="184">Remote operators record</text><text x="480" y="204">the missing skill.</text>
+              <text x="720" y="184">Your checkpoint is</text><text x="720" y="204">post-trained on them.</text>
+              <text x="960" y="184">Before and after,</text><text x="960" y="204">on one protocol.</text>
+            </g>
+
+            <!-- feedback arc: measurement → demonstrations, broken around its own label -->
+            <path d="M1014 216 V252 C1014 261, 1007 268, 998 268 H558 C549 268, 542 261, 542 252 V227"
+                  fill="none" stroke="#17596B" stroke-width="1" stroke-dasharray="3 4"/>
+            <path d="M538 229 l4 -9 l4 9 Z" fill="#17596B"/>
+            <g font-family="Bricolage Grotesque, sans-serif" font-size="12" font-weight="600" letter-spacing="1.68" fill="#17596B">
+              <text x="778" y="290" text-anchor="middle">MEASURED FAILURES BECOME THE NEXT DEMONSTRATIONS</text>
+            </g>
+          </svg>
+
+          <ul class="loop-list">
+            <li><span class="num">01</span><span><span class="t">Teleop rig</span><br>Your robot becomes drivable in VR.</span></li>
+            <li><span class="num">02</span><span><span class="t">Scene &amp; assets</span><br>The customer&rsquo;s room becomes a training world.</span></li>
+            <li><span class="num">03</span><span><span class="t">Demonstrations</span><br>Remote operators record the missing skill.</span></li>
+            <li><span class="num">04</span><span><span class="t">Training</span><br>Your checkpoint is post-trained on them.</span></li>
+            <li><span class="num">05</span><span><span class="t">Measurement</span><br>Before and after, on one protocol &mdash; and measured failures become the next demonstrations.</span></li>
+          </ul>
+
+          <figcaption class="figcap">
+            Nothing in this loop consumes your robot-hours. Collection runs off-robot, in simulation, in
+            parallel copies of the scene &mdash; which is why adding a tenth operator costs a headset
+            rather than a tenth robot.
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ══════════════ CAPABILITIES ══════════════ -->
+    <section class="sec-md">
+      <div class="wrap">
+        <span class="label">Capabilities</span>
+        <h2>What we actually do.</h2>
+
+        <!-- 01 -->
+        <article class="cap">
+          <div>
+            <div class="cap-index">01 &mdash; Teleop rig</div>
+            <h3>We make your robot drivable in VR.</h3>
+            <p class="cap-claim">Most robots are not built to be demonstrated on. Getting a human&rsquo;s hands onto a specific embodiment cleanly enough that the recording is trainable is its own engineering job.</p>
+          </div>
+          <div>
+            <ul>
+              <li>Retargeting from consumer hand-tracking to your embodiment &mdash; absolute or relative, with joint limits and clamps that hold under fast motion</li>
+              <li>Grip and contact handling on hands and grippers that were never designed for teleoperation</li>
+              <li>Automatic episode segmentation, so a session becomes clean labelled trajectories instead of one long recording</li>
+              <li>Reliability instrumentation: pose-freshness gauges, stop-latch detection, session recovery when an operator drops</li>
+              <li>A reproduction kit that brings the whole thing up with a single command</li>
+            </ul>
+            <div class="cap-foot">
+              <div><span class="k">Proof</span><p>In a pilot we stood up a customer&rsquo;s entire stack on our own infrastructure and returned three defects in their teleoperation &mdash; including one where a continuous signal was being read as an event and latched the emergency stop.</p></div>
+              <div><span class="k k-muted">From you</span><p>A robot description and your action / observation schema. Nothing else.</p></div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 02 -->
+        <article class="cap">
+          <div>
+            <div class="cap-index">02 &mdash; Scene &amp; assets</div>
+            <h3>We rebuild the workplace the robot has to work in.</h3>
+            <p class="cap-claim">A skill learned on a clean grey table does not survive contact with a real kitchen, a real shelf or a real bench. The scene is part of the skill.</p>
+          </div>
+          <div>
+            <ul>
+              <li>3D reconstruction of a real room from an ordinary phone walkthrough</li>
+              <li>Physics-ready assets built from photographs of the customer&rsquo;s actual objects</li>
+              <li>Repair of broken or unusable meshes &mdash; collision geometry, grasp affordances, scale and mass</li>
+              <li>Parallel scene instances with instant reset, so operators never wait for a human to tidy the table</li>
+            </ul>
+            <div class="cap-foot">
+              <div><span class="k">Proof</span><p>A trained policy was moved into a 3D scan of a real room and kept working with no new demonstrations &mdash; in simulation.</p></div>
+              <div><span class="k k-muted">From you</span><p>A walkthrough video of the space and photographs of the objects. CAD if you happen to have it; we do not need it.</p></div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 03 -->
+        <article class="cap">
+          <div>
+            <div class="cap-index">03 &mdash; Demonstrations</div>
+            <h3>Our operators record the missing skill.</h3>
+            <p class="cap-claim">Not blanket hours. Demonstrations aimed at the failure modes the measurement actually found.</p>
+          </div>
+          <div>
+            <ul>
+              <li>Recorded in the robot&rsquo;s own action space through VR teleoperation &mdash; not retargeted from human video</li>
+              <li>Targeted at measured failure states rather than sold as volume</li>
+              <li>Accept / reject gates and replay validation on every single trajectory. Rejects are our cost, not yours</li>
+              <li>Delivered as LeRobot v2.1, or in your own schema</li>
+            </ul>
+            <div class="cap-foot">
+              <div><span class="k">Proof</span><p>Our export passed a customer&rsquo;s own validator with no errors &mdash; including the ordering of all 51 joints.</p></div>
+              <div><span class="k k-muted">From you</span><p>Nothing. No robot time is required for collection.</p></div>
+            </div>
+            <div class="note-inverse">
+              <span class="k">Why this scales differently</span>
+              <p><strong>Physical teleoperation adds capacity by buying another robot and another station.</strong> Our next operator needs a headset. More than twenty million consumer VR headsets have already shipped; our operators connect from home, and their sessions run in parallel against copies of the same scene.</p>
+            </div>
+          </div>
+        </article>
+
+        <!-- 04 -->
+        <article class="cap">
+          <div>
+            <div class="cap-index">04 &mdash; Training</div>
+            <h3>We post-train the model you already run.</h3>
+            <p class="cap-claim">We are not asking you to switch architectures. The foundation model is the starting point; we close the deployment-specific gap on top of it.</p>
+          </div>
+          <div>
+            <ul>
+              <li>Fine-tuning of your existing checkpoint on the targeted demonstrations &mdash; GR00T-family models, other VLA families, or your own architecture</li>
+              <li>GPU infrastructure in the EU and the US, so this does not queue behind your own research team</li>
+              <li>Or no training at all: take the validated dataset and train it yourself</li>
+            </ul>
+            <div class="cap-foot">
+              <div><span class="k">Proof</span><p>We have run the loop across two fundamentally different model types and multiple robot, hand and gripper configurations &mdash; including a model family released days before we ran it through.</p></div>
+              <div><span class="k k-muted">From you</span><p>A checkpoint &mdash; or nothing, if you only want the data.</p></div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 05 -->
+        <article class="cap">
+          <div>
+            <div class="cap-index">05 &mdash; Measurement</div>
+            <h3>We tell you what actually changed.</h3>
+            <p class="cap-claim">Evaluation decides the next intervention. Sometimes the answer is more demonstrations. Sometimes it is a missing input, a recipe or the inference loop &mdash; and we would rather tell you that than sell you hours.</p>
+          </div>
+          <div>
+            <ul>
+              <li>Before and after on one protocol and identical initial states &mdash; your baseline against the retrained model</li>
+              <li>Failure decomposition: where along the path each attempt exits, how far failures get, whether a drop is terminal, and where in space the failures cluster</li>
+              <li>Attempt economics &mdash; what the policy is worth at one attempt and at N, because a robot that can retry is a different business from one that cannot</li>
+              <li>The honest version of the number: the confidence interval at your sample size, and what the result does when the starting pose is allowed to vary</li>
+            </ul>
+            <div class="cap-foot">
+              <div><span class="k">Proof</span><p>This runs on your rollouts alone &mdash; object poses and success labels. We never need your data or your weights, which is why we also sell it on its own.</p></div>
+              <div><span class="k k-muted">From you</span><p>Rollouts.</p></div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ══════════════ PROOF ══════════════ -->
+    <section class="sec-lg" id="proof">
+      <div class="wrap">
+        <span class="label">Proof</span>
+        <h2>Two things we can show you.</h2>
+      </div>
+
+      <div class="bleed" style="margin-top: var(--sp-48)">
+        <video class="film" controls preload="none" playsinline poster="/what-we-do/case-poster.jpg">
+          <source src="/what-we-do/case-90s.mp4" type="video/mp4" />
+          Your browser cannot play this video. <a href="/what-we-do/case-90s.mp4">Download the 90-second case (4&nbsp;MB).</a>
+        </video>
+      </div>
+      <div class="wrap">
+        <div class="film-caption">
+          <span>90 seconds &middot; end-to-end case, run in our simulation pipeline</span>
+          <span>Sound on</span>
+        </div>
+      </div>
+
+      <div class="wrap">
+        <div class="proof-grid">
+          <div>
+            <p class="proof-head">0 &rarr; <span class="accent">9 out of 10</span>, in simulation.</p>
+            <p>
+              GR00T&nbsp;N1.7 &mdash; fine-tuned by NVIDIA for its own G1 benchmark task &mdash; scored
+              <strong>0%</strong> on a structurally new task. One person at home recorded
+              <strong>50 VR demonstrations</strong> through simxr.app. Trained on those demonstrations,
+              the model succeeded in <strong>9 out of 10 trials</strong>, in simulation, from a fixed
+              starting configuration.
+            </p>
+
+            <table class="jitter">
+              <caption>Same policy, same protocol, in simulation &mdash; only the starting pose moves</caption>
+              <thead>
+                <tr><th scope="col">Start-pose jitter</th><th scope="col">Success</th><th scope="col"><span class="visually-hidden">Scale</span></th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">0 cm &mdash; fixed</th><td class="v">90%</td><td class="bar"><i style="width:90%"></i></td></tr>
+                <tr><th scope="row">&plusmn;2 cm</th><td class="v">73.3%</td><td class="bar"><i style="width:73.3%"></i></td></tr>
+                <tr><th scope="row">&plusmn;5 cm</th><td class="v">50%</td><td class="bar"><i style="width:50%"></i></td></tr>
+              </tbody>
+            </table>
+            <p class="small" style="margin-top: var(--sp-16)">
+              We publish the curve, not only the headline. Knowing exactly where a skill stops holding is
+              the difference between a demo and a deployment &mdash; and finding that edge is the part of
+              the work we sell.
+            </p>
+          </div>
+
+          <div>
+            <p class="proof-head">Someone else&rsquo;s stack, running on ours, in days.</p>
+            <p>
+              A pilot customer &mdash; under NDA, so not named here &mdash; handed us their full
+              teleoperation and training stack. We stood it up on our own infrastructure, found and
+              returned three defects in their pipeline, recorded VR teleoperation with automatic episode
+              slicing, and delivered <strong>LeRobot v2.1 that passed their own validator with no
+              errors</strong>, together with a kit that reproduces the entire run with one command.
+            </p>
+            <p>
+              The point is not that we are good guests. It is that the integration risk of working with
+              us is measured in days, and the first thing we produced was a bug report against our own
+              customer&rsquo;s code rather than an invoice for episodes.
+            </p>
+            <figure style="margin: var(--sp-32) 0 0">
+              <img src="/what-we-do/scene-3dgs.jpg" alt="A pair of robot arms operating in a photorealistic reconstruction of a real room, rebuilt from a phone walkthrough." style="display:block;width:100%;height:auto" />
+              <figcaption class="figcap">A real room, reconstructed and made physics-ready, with the robot working inside it &mdash; in simulation.</figcaption>
+            </figure>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ WAYS TO START ══════════════ -->
+    <section class="sec-md">
+      <div class="wrap">
+        <span class="label">Ways to start</span>
+        <h2>Three doors, in order of commitment.</h2>
+        <div class="start">
+          <div>
+            <div class="cap-index">01</div>
+            <h3>Offline diagnostic</h3>
+            <p>
+              Send rollouts, get a failure decomposition. No data, no weights, no integration &mdash;
+              object poses and success labels are enough. You get where the policy exits, how far its
+              failures get, what your number is actually worth at your sample size, and what we would
+              fix first.
+            </p>
+          </div>
+          <div>
+            <div class="cap-index">02</div>
+            <h3>Scene and data package</h3>
+            <p>
+              We build the world and record the demonstrations. You train. For teams with their own
+              training expertise and not enough hands for scenes or collection.
+            </p>
+          </div>
+          <div>
+            <div class="cap-index">03</div>
+            <h3>Policy Improvement Sprint</h3>
+            <p>
+              One failing task or a bounded failure distribution, at a fixed project price. Demonstrations,
+              validation and the evaluation report always included. The success protocol is agreed before
+              the first session.
+            </p>
+            <a href="/sprint/" class="btn btn-line"><span>See the sprint</span></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ STACK ══════════════ -->
+    <section class="sec-sm">
+      <div class="wrap">
+        <span class="label">Stack</span>
+        <h2>Where this plugs in.</h2>
+        <dl class="stack-grid">
+          <div>
+            <dt>Your model</dt>
+            <dd><b>GR00T-family models, other VLA families, or your own architecture.</b> We improve what you already run &mdash; we are not building a competing foundation model, and we are not asking you to switch.</dd>
+          </div>
+          <div>
+            <dt>Your robot</dt>
+            <dd><b>Humanoids, dual-arm cells, parallel grippers and dexterous hands.</b> Demonstrations are recorded in the robot&rsquo;s own action space, not retargeted from human video.</dd>
+          </div>
+          <div>
+            <dt>Simulation &amp; export</dt>
+            <dd><b>NVIDIA Isaac Sim, Isaac Lab, Isaac Teleop.</b> CloudXR streaming. Export in <b>LeRobot format</b> or your own schema. Compatible with your simulator and training code where integration permits.</dd>
+          </div>
+          <div>
+            <dt>Operators &amp; headsets</dt>
+            <dd>Quest&nbsp;2, Quest&nbsp;3, Pico and Apple Vision Pro, plus motion capture where the task needs it. Operators connect from home across Europe and the United States; sessions run in parallel.</dd>
+          </div>
+          <div>
+            <dt>Infrastructure</dt>
+            <dd>Our own GPU servers in the <b>EU and the US</b>, so this does not queue behind your research team. Scenes reset instantly and run in parallel copies &mdash; which is what makes targeted collection cheap enough to aim.</dd>
+          </div>
+          <div>
+            <dt>Delivery</dt>
+            <dd>Every trajectory replay-validated before it reaches you. <b>Rejects are our cost, not yours.</b> A reproduction kit brings the whole run back up with one command.</dd>
+          </div>
+        </dl>
+        <div class="badges">
+          <span>NVIDIA Inception member</span>
+          <span>AWS Activate member</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ INQUIRY ══════════════ -->
+    <section class="sec-md" id="inquiry">
+      <div class="wrap">
+        <div class="form-wrap">
+          <div>
+            <span class="label">Talk to us</span>
+            <h2>Show us the job the robot fails.</h2>
+            <p>
+              Describe the task and where it breaks. We come back with what we would do first, what it
+              needs from you, and what it does not.
+            </p>
+            <p class="form-note">One reply, from the team. No mailing list, no drip sequence.</p>
+          </div>
+
+          <form class="inquiry" name="what-we-do-inquiry" method="POST" action="/what-we-do/thanks" data-netlify="true" data-netlify-honeypot="bot-field">
+            <input type="hidden" name="form-name" value="what-we-do-inquiry" />
+            <p style="display:none"><label>Do not fill this out: <input name="bot-field" /></label></p>
+
+            <div class="field">
+              <label for="f-name">Name</label>
+              <input id="f-name" name="name" required autocomplete="name" placeholder="Your name" />
+            </div>
+            <div class="field">
+              <label for="f-email">Work email</label>
+              <input id="f-email" name="email" type="email" required autocomplete="email" placeholder="you@company.example" />
+            </div>
+            <div class="field">
+              <label for="f-company">Company or lab</label>
+              <input id="f-company" name="company" required autocomplete="organization" placeholder="Team or organisation" />
+            </div>
+            <div class="field">
+              <label for="f-start">Where would you like to start?</label>
+              <select id="f-start" name="start">
+                <option>Not sure yet &mdash; tell me what you would do first</option>
+                <option>Offline diagnostic &mdash; I can send rollouts</option>
+                <option>Scene and data package &mdash; we train ourselves</option>
+                <option>Policy Improvement Sprint &mdash; one failing task, fixed price</option>
+                <option>Teleop rig for our robot</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="f-task">Which job is failing? <span class="opt">(what the robot should do, and where it breaks)</span></label>
+              <textarea id="f-task" name="task" required placeholder="e.g. bimanual handover of deformable items — the policy drops the object on transfer"></textarea>
+            </div>
+            <div class="field">
+              <label for="f-stack">Robot and stack <span class="opt">(embodiment, model, simulator if any)</span></label>
+              <textarea id="f-stack" name="stack" placeholder="e.g. Unitree G1, GR00T fine-tune, Isaac Lab"></textarea>
+            </div>
+            <div>
+              <button type="submit" class="btn"><span>Send it over</span></button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div class="row">
+        <a href="/" class="wordmark">SIM <span>XR.</span></a>
+        <div class="links">
+          <a href="/">Home</a>
+          <a href="/sprint/">Sprint</a>
+          <a href="/packs/">Asset Packs</a>
+          <a href="/network/">Hire Operators</a>
+          <a href="/operator/">For Operators</a>
+          <a href="/about">About</a>
+        </div>
+      </div>
+      <div class="bottom">
+        <span>&copy; 2026 SIM XR &middot; The training layer for Physical AI</span>
+        <span>California &middot; Paris &middot; Tel Aviv</span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

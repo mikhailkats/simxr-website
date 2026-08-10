@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thank you — SIM XR</title>
+  <meta name="robots" content="noindex,follow" />
+  <link rel="icon" type="image/svg+xml" href="/favicon-tech.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600&family=Bricolage+Grotesque:opsz,wght@12..96,600&family=Familjen+Grotesk:wght@700&family=Instrument+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ground: #E7E6E1; --rule: #C6C4BC; --rule-strong: #B0AEA6;
+      --ink: #191A1D; --body: #54565A; --accent: #17596B; --on-accent: #EAF2F4;
+      --fs-12: 12px; --fs-14: 14px; --fs-16: 16px; --fs-20: 20px; --fs-48: 48px;
+      --sp-8: 8px; --sp-12: 12px; --sp-16: 16px; --sp-24: 24px; --sp-32: 32px;
+      --sp-48: 48px; --sp-96: 96px; --sp-192: 192px;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: var(--ground); color: var(--ink);
+      font-family: 'Instrument Sans', system-ui, sans-serif; font-size: var(--fs-16);
+      line-height: 1.6; font-optical-sizing: auto; -webkit-font-smoothing: antialiased;
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+    .wrap { max-width: 1280px; margin: 0 auto; padding: 0 var(--sp-32); width: 100%; }
+    .site-head { border-bottom: 1px solid var(--rule); }
+    .site-head .row { display: flex; align-items: center; justify-content: space-between; padding: var(--sp-16) 0; }
+    .wordmark { font-family: 'Familjen Grotesk', sans-serif; font-weight: 700; font-size: var(--fs-20); letter-spacing: -0.005em; color: var(--ink); text-decoration: none; line-height: 1; }
+    .wordmark span { color: var(--accent); }
+    main { flex: 1; padding: var(--sp-192) 0 var(--sp-96); }
+    .label {
+      font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: var(--fs-12);
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent);
+      display: block; margin-bottom: var(--sp-24);
+    }
+    h1 { font-family: 'Archivo', sans-serif; font-weight: 600; font-size: var(--fs-48); letter-spacing: -0.022em; line-height: 1.12; margin: 0 0 var(--sp-24); max-width: 20ch; }
+    p { color: var(--body); max-width: 62ch; margin: 0 0 var(--sp-16); }
+    .btn {
+      display: inline-block; font-weight: 500; font-size: var(--fs-16); line-height: 1;
+      padding: var(--sp-12) var(--sp-24); border: 1px solid var(--rule-strong);
+      background: transparent; color: var(--accent); text-decoration: none;
+      transition: background 120ms cubic-bezier(0.2,0,0,1);
+      margin-top: var(--sp-32);
+    }
+    .btn span { display: inline-block; transform: translateY(-1px); }
+    .btn:hover { background: #D7E2E5; }
+    .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    footer { background: var(--ink); color: #DEDDD7; padding: var(--sp-48) 0 var(--sp-24); font-size: var(--fs-14); }
+    footer .row { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--sp-16); }
+    footer a { color: #DEDDD7; text-decoration: none; }
+    footer a:hover { color: var(--ground); text-decoration: underline; }
+    @media (max-width: 640px) { .wrap { padding: 0 var(--sp-24); } main { padding: var(--sp-96) 0 var(--sp-48); } h1 { font-size: 30px; letter-spacing: -0.015em; } }
+    @media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; } }
+  </style>
+</head>
+<body>
+  <header class="site-head">
+    <div class="wrap row">
+      <a class="wordmark" href="/">SIM <span>XR.</span></a>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+      <span class="label">Received</span>
+      <h1>Thank you &mdash; it&rsquo;s with the team.</h1>
+      <p>
+        We read every one of these ourselves. You&rsquo;ll get one reply from a person, usually within
+        a working day, with what we would do first, what it needs from you, and what it does not.
+      </p>
+      <p>
+        If it helps in the meantime, the 90-second case on the previous page shows the whole loop
+        end to end &mdash; scene, demonstrations, training and the before-and-after measurement.
+      </p>
+      <a href="/what-we-do/" class="btn"><span>Back to what we do</span></a>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap row">
+      <span>&copy; 2026 SIM XR &middot; The training layer for Physical AI</span>
+      <a href="/">simxr.tech</a>
+    </div>
+  </footer>
+</body>
+</html>
