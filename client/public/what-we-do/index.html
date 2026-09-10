@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>What we do — SIM XR | We teach your robot the customer&rsquo;s job</title>
+  <title>What we do — SIM XR | We teach robots the jobs they cannot do yet</title>
   <meta name="description" content="SIM XR teaches existing robot models the customer-specific jobs they cannot do out of the box: teleop rig, simulation scenes from a real room, targeted VR demonstrations, post-training and measurement. Enter the loop at any step." />
   <meta name="robots" content="index,follow" />
   <link rel="canonical" href="https://simxr.tech/what-we-do/" />
   <meta property="og:title" content="What we do — SIM XR" />
-  <meta property="og:description" content="You have the robot. We teach it the customer's job — scene, demonstrations, training and measurement, without consuming your robot-hours." />
+  <meta property="og:description" content="We teach robots the jobs they cannot do yet — scene, VR demonstrations, augmentation, post-training and measurement in simulation — and measure that they can, without consuming your robot-hours." />
   <meta property="og:url" content="https://simxr.tech/what-we-do/" />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="https://simxr.tech/what-we-do/case-poster.jpg" />
@@ -271,6 +271,177 @@
   .loop-list .t { font-family: 'Archivo', sans-serif; font-weight: 600; font-size: var(--fs-20); letter-spacing: var(--tr-20); color: var(--ink); }
   .figcap { margin-top: var(--sp-16); font-size: var(--fs-14); line-height: var(--lh-small); color: var(--body); max-width: var(--measure); }
 
+  /* ================= how it works: vertical loop ================= */
+  .hw { margin-top: var(--sp-48); display: grid; grid-template-columns: 148px 1fr 56px; grid-auto-flow: row; align-items: stretch; }
+  .hw > .hw-lbl { grid-column: 1; }
+  .hw > .hw-railcell { grid-column: 3; }
+  .hw > .hw-io, .hw > .hw-down, .hw > .hw-cards, .hw > .hw-loop-label, .hw > .hw-panel { grid-column: 2; }
+  .hw-lbl { padding-top: var(--sp-24); padding-right: var(--sp-24); }
+  .hw-lbl .label { margin: 0; }
+  .hw-railcell { position: relative; }
+  .hw-ico { width: 28px; height: 28px; fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-linecap: butt; stroke-linejoin: miter; flex: none; }
+  .hw-index { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-variant-numeric: tabular-nums slashed-zero; font-size: var(--fs-12); letter-spacing: var(--tr-label); color: var(--accent); display: block; }
+
+  /* input / output / beyond rows */
+  .hw-io { display: flex; gap: var(--sp-24); align-items: flex-start; border: 1px solid var(--rule-strong); padding: var(--sp-24) var(--sp-32); }
+  .hw-io > div { min-width: 0; }
+  .hw-io-t { font-family: 'Archivo', sans-serif; font-weight: 600; font-size: var(--fs-24); letter-spacing: var(--tr-24); line-height: var(--lh-head); color: var(--ink); display: block; }
+  .hw-io-s { display: block; font-size: var(--fs-16); color: var(--body); margin-top: var(--sp-4); max-width: var(--measure); }
+  .hw-chips { list-style: none; margin: var(--sp-16) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--sp-8); }
+  .hw-chips li { border: 1px solid var(--rule-strong); padding: var(--sp-4) var(--sp-12); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: var(--fs-12); letter-spacing: var(--tr-label); text-transform: uppercase; line-height: var(--lh-small); color: var(--body); }
+  .hw-io { position: relative; }
+  .hw-tag { position: absolute; top: var(--sp-16); right: var(--sp-16); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: var(--fs-12); letter-spacing: var(--tr-label); text-transform: uppercase; line-height: var(--lh-small); color: var(--body); }
+  .hw-out .hw-tag { color: var(--accent); }
+  /* the input is not our work: recessed, no accent anywhere */
+  .hw-in { background: var(--sunk); border: 1px solid var(--rule); }
+  .hw-in .hw-ico { stroke: var(--body); }
+  .hw-in .hw-io-t { color: var(--body); }
+  .hw-in .hw-chips li { border-color: var(--rule); border-style: dashed; color: var(--body); background: var(--ground); }
+  .hw-out { background: var(--wash); border-color: var(--accent); }
+  .hw-out .hw-chips li { border-color: var(--accent); color: var(--accent); }
+  .hw-beyond { border-style: dashed; }
+  .hw-beyond .hw-ico { stroke: var(--body); }
+  .hw-beyond .hw-io-t { color: var(--body); }
+
+  /* vertical connectors, centred on the content column */
+  .hw-down { display: flex; justify-content: center; padding: var(--sp-8) 0; }
+  .hw-down svg { width: 14px; height: 24px; fill: none; stroke: var(--rule-strong); stroke-width: 1.5; }
+  .hw-down-dashed svg { stroke-dasharray: 3 3; }
+
+  /* stage illustrations */
+  .hw-art { display: block; width: 100%; max-width: 280px; height: auto; margin: 0 0 var(--sp-8) calc(-1 * var(--sp-8)); }
+  .hw-art-beyond { width: 200px; max-width: 40%; flex: none; margin: calc(-1 * var(--sp-12)) 0 calc(-1 * var(--sp-12)) calc(-1 * var(--sp-8)); }
+  /* stage cards */
+  .hw-cards { display: grid; border: 1px solid var(--rule-strong); }
+  .hw-cards-3 { grid-template-columns: repeat(3, 1fr); }
+  .hw-cards-2 { grid-template-columns: repeat(2, 1fr); }
+  .hw-node {
+    position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-8);
+    padding: var(--sp-24); min-width: 0; text-align: left; cursor: pointer;
+    background: transparent; border: 0; border-left: 1px solid var(--rule); color: var(--ink);
+    font-family: 'Instrument Sans', system-ui, sans-serif; font-size: var(--fs-16); line-height: var(--lh-small);
+    transition: background var(--dur-std) var(--ease-in);
+  }
+  .hw-node:first-child { border-left: 0; }
+  .hw-node:hover, .hw-node:focus-visible { background: var(--sunk); outline: none; }
+  .hw-node:focus-visible { box-shadow: inset 0 0 0 1px var(--accent); }
+  .hw-node.is-open { box-shadow: inset 0 -3px 0 0 var(--accent); }
+  .hw-node-eval { background: var(--wash); }
+  .hw-node-eval:hover { background: var(--wash); }
+  /* step arrow between adjacent cards: a chevron sitting on the shared rule */
+  .hw-node + .hw-node::before {
+    content: ''; position: absolute; left: -7px; top: 140px; width: 12px; height: 12px;
+    border-top: 1.5px solid var(--accent); border-right: 1.5px solid var(--accent); transform: rotate(45deg);
+    background: var(--ground); z-index: 1;
+  }
+  .hw-t { font-family: 'Archivo', sans-serif; font-weight: 600; font-size: var(--fs-24); letter-spacing: var(--tr-24); line-height: var(--lh-head); color: var(--ink); display: block; }
+  .hw-claim { font-size: var(--fs-16); line-height: var(--lh-small); color: var(--ink); display: block; margin: 0; }
+  .hw-hi { list-style: none; margin: var(--sp-8) 0 0; padding: 0; width: 100%; }
+  .hw-hi li { border-top: 1px solid var(--rule); padding: var(--sp-8) 0 var(--sp-8) var(--sp-16); font-size: var(--fs-14); line-height: var(--lh-small); color: var(--body); position: relative; }
+  .hw-hi li::before { content: ''; position: absolute; left: 0; top: calc(var(--sp-8) + 0.62em); width: var(--sp-8); height: 1px; background: var(--rule-strong); }
+  .hw-more { margin-top: auto; padding-top: var(--sp-12); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: var(--fs-12); letter-spacing: var(--tr-label); text-transform: uppercase; color: var(--accent); }
+  .hw-more::before { content: '+ '; }
+  .hw-node.is-open .hw-more::before { content: '\2212  '; }
+
+  /* feedback rail: from Evaluation up into the data row */
+  .hw-rail-a { grid-row: span 2; }
+  .hw-rail::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; border-left: 1px dashed var(--accent); }
+  .hw-rail-a::before { top: 50%; }
+  .hw-rail-a::after { content: ''; position: absolute; left: 10px; right: 50%; top: 50%; border-top: 1px dashed var(--accent); }
+  .hw-rail-a .hw-tip { position: absolute; left: 1px; top: 50%; width: 0; height: 0; margin-top: -5px; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-right: 8px solid var(--accent); }
+  .hw-rail-b::before { bottom: 50%; }
+  .hw-rail-b::after { content: ''; position: absolute; left: 0; right: 50%; top: 50%; border-top: 1px dashed var(--accent); }
+  .hw-loop-label { margin: var(--sp-12) 0 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: var(--fs-12); letter-spacing: var(--tr-label); text-transform: uppercase; line-height: var(--lh-small); color: var(--accent); max-width: none; }
+
+  /* details panel */
+  .hw-panel[hidden], .hw-detail[hidden] { display: none; }
+  .hw-panel { margin-top: var(--sp-16); border: 1px solid var(--accent); padding: var(--sp-24) var(--sp-32) var(--sp-32); }
+  .hw-detail { display: grid; grid-template-columns: 4fr 8fr; gap: var(--sp-48); }
+  .hw-detail-h h3 { font-size: var(--fs-24); letter-spacing: var(--tr-24); line-height: var(--lh-head); margin: var(--sp-8) 0; }
+  .hw-detail .hw-claim { color: var(--body); max-width: 32ch; }
+  .hw-detail ul { list-style: none; margin: 0; padding: 0; column-count: 2; column-gap: var(--sp-32); }
+  .hw-detail ul li { break-inside: avoid; border-top: 1px solid var(--rule); padding: var(--sp-8) 0 var(--sp-8) var(--sp-16); font-size: var(--fs-14); line-height: var(--lh-small); color: var(--body); position: relative; }
+  .hw-detail ul li::before { content: ''; position: absolute; left: 0; top: calc(var(--sp-8) + 0.62em); width: var(--sp-8); height: 1px; background: var(--rule-strong); }
+
+  /* what we bring */
+  .hw-bring { border-top: 1px solid var(--rule-strong); padding: var(--sp-24) 0 0; display: grid; grid-template-columns: 148px 1fr 56px; margin-top: var(--sp-48); }
+  .hw-bring .hw-lbl { padding-top: 0; }
+  .hw-us-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-32); font-size: var(--fs-14); line-height: var(--lh-small); color: var(--body); }
+  .hw-us-grid b { display: block; color: var(--ink); font-weight: 500; font-size: var(--fs-16); margin-bottom: var(--sp-4); }
+
+  @media (max-width: 1000px) {
+    .hw, .hw-bring { grid-template-columns: 1fr; }
+    .hw > .hw-lbl, .hw > .hw-io, .hw > .hw-down, .hw > .hw-cards, .hw > .hw-loop-label, .hw > .hw-panel { grid-column: 1; }
+    .hw-lbl { padding: 0 0 var(--sp-12); }
+    .hw-lbl:empty { display: none; }
+    .hw-railcell { display: none; }
+    .hw-cards-3, .hw-cards-2 { grid-template-columns: 1fr; }
+    .hw-node { border-left: 0; border-top: 1px solid var(--rule); }
+    .hw-node:first-child { border-top: 0; }
+    .hw-node + .hw-node::before { left: calc(var(--sp-24) + 8px); top: -7px; transform: rotate(135deg); }
+    .hw-io { flex-direction: column; gap: var(--sp-12); padding: var(--sp-24); }
+    .hw-detail { grid-template-columns: 1fr; gap: var(--sp-16); }
+    .hw-detail ul { column-count: 1; }
+    .hw-panel { padding: var(--sp-16) var(--sp-24) var(--sp-24); }
+    .hw-us-grid { grid-template-columns: 1fr; }
+  }
+
+
+  /* ================= page illustrations (cyanotype set) ================= */
+  .hero { position: relative; }
+  .hero::before { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='37' viewBox='0 0 64 37'%3E%3Cpath d='M0 18.5 32 0l32 18.5L32 37z' fill='none' stroke='%23C6C4BC' stroke-width='1'/%3E%3C/svg%3E");
+    background-size: 64px 37px; opacity: .55;
+    -webkit-mask-image: radial-gradient(ellipse 60% 80% at 82% 45%, #000 0%, transparent 70%); mask-image: radial-gradient(ellipse 60% 80% at 82% 45%, #000 0%, transparent 70%); }
+  .hero .wrap { position: relative; z-index: 1; }
+  .hero-side { display: grid; gap: var(--sp-24); }
+  .hero-art { display: block; width: 100%; max-width: 440px; height: auto; margin: 0 0 0 auto; }
+  .trio-art { display: block; height: 180px; width: auto; max-width: 100%; margin: 0 0 var(--sp-16) calc(-1 * var(--sp-8)); }
+  .start-art { display: block; height: 150px; width: auto; max-width: 100%; margin: 0 0 var(--sp-16) calc(-1 * var(--sp-8)); }
+  .stack-grid > div { display: grid; grid-template-columns: 56px 1fr; grid-template-rows: auto auto; column-gap: var(--sp-16); align-items: start; }
+  .stack-ico { grid-row: 1 / span 2; width: 56px; height: 56px; object-fit: contain; margin-top: 2px; }
+  .stack-grid > div > dt, .stack-grid > div > dd { grid-column: 2; }
+  .hw-us-art { display: block; height: 110px; width: auto; max-width: 100%; margin: 0 0 var(--sp-12) calc(-1 * var(--sp-8)); }
+  @media (max-width: 900px) { .hero::before { display: none; } .hero-art { max-width: 320px; margin-left: 0; } .trio-art { height: 150px; } }
+
+  .hero-proof { margin: var(--sp-24) 0 0; font-size: var(--fs-14); line-height: var(--lh-small); color: var(--body); max-width: 60ch; }
+  .hero-proof a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--rule-strong); }
+  .hero-proof a:hover { border-bottom-color: var(--accent); }
+  .hero-proof b { font-weight: 600; color: var(--ink); }
+  /* ================= cases ================= */
+  .cases { display: grid; grid-template-columns: 1fr 1fr; margin-top: var(--sp-48); border: 1px solid var(--rule-strong); }
+  .case { padding: var(--sp-32); display: flex; flex-direction: column; gap: var(--sp-16); min-width: 0; }
+  .case + .case { border-left: 1px solid var(--rule); }
+  .case-pilot { background: var(--wash); }
+  .case-eyebrow { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: var(--fs-12); letter-spacing: var(--tr-label); text-transform: uppercase; color: var(--accent); }
+  .case h3 { font-size: var(--fs-30); letter-spacing: var(--tr-30); line-height: var(--lh-head); max-width: 20ch; }
+  .case p { margin: 0; font-size: var(--fs-16); color: var(--body); max-width: none; }
+  .case-stats { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--rule-strong); border-bottom: 1px solid var(--rule); }
+  .case-stats > div { padding: var(--sp-16) var(--sp-16) var(--sp-16) 0; display: grid; gap: var(--sp-4); align-content: start; }
+  .case-stats > div + div { border-left: 1px solid var(--rule); padding-left: var(--sp-16); }
+  .case-n { font-family: 'Archivo', sans-serif; font-weight: 600; font-size: var(--fs-30); letter-spacing: var(--tr-30); line-height: var(--lh-tight); color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .case-n small { font-size: 0.6em; font-weight: 600; }
+  .case-l { font-size: var(--fs-12); line-height: var(--lh-small); color: var(--body); }
+  .case-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--sp-8); }
+  .case-chips li { border: 1px solid var(--accent); padding: var(--sp-4) var(--sp-12); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: var(--fs-12); letter-spacing: var(--tr-label); text-transform: uppercase; line-height: var(--lh-small); color: var(--accent); }
+  .case-media { margin: var(--sp-8) 0 0; display: grid; gap: var(--sp-8); }
+  .case-film, .case-media img { display: block; width: 100%; height: auto; background: var(--ink); }
+  .case-caption { font-size: var(--fs-12); line-height: var(--lh-small); color: var(--body); }
+  .partners { margin-top: var(--sp-32); display: grid; grid-template-columns: auto 1fr; gap: var(--sp-32); align-items: center; border-top: 1px solid var(--rule); padding-top: var(--sp-24); }
+  .case-ledger { margin: var(--sp-8) 0 0; display: grid; }
+  .case-ledger > div { display: grid; grid-template-columns: 9em 1fr; gap: var(--sp-16); padding: var(--sp-8) 0; border-top: 1px solid var(--rule); font-size: var(--fs-14); line-height: var(--lh-small); }
+  .case-ledger dt { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: var(--fs-12); letter-spacing: var(--tr-label); text-transform: uppercase; color: var(--accent); padding-top: 2px; }
+  .case-ledger dd { margin: 0; color: var(--ink); }
+  .partners img { height: 50px; width: auto; display: block; background: #fff; padding: var(--sp-8) var(--sp-12); border: 1px solid var(--rule); box-sizing: content-box; }
+  .partners p { margin: 0; font-size: var(--fs-14); color: var(--body); max-width: 70ch; }
+  @media (max-width: 900px) {
+    .cases { grid-template-columns: 1fr; }
+    .case + .case { border-left: 0; border-top: 1px solid var(--rule); }
+    .case-stats { grid-template-columns: 1fr; }
+    .case-stats > div + div { border-left: 0; border-top: 1px solid var(--rule); padding-left: 0; }
+    .partners { grid-template-columns: 1fr; gap: var(--sp-16); }
+  }
+
   /* ================= capability blocks ================= */
   .cap { border-top: 1px solid var(--rule); padding: var(--sp-48) 0; display: grid; grid-template-columns: 5fr 7fr; gap: var(--sp-64); }
   .cap:first-of-type { border-top: 1px solid var(--rule-strong); }
@@ -426,20 +597,23 @@
       <div class="wrap hero-grid">
         <div>
           <span class="label">What we do</span>
-          <h1>You have the robot. We teach it the customer&rsquo;s job.</h1>
+          <h1>We teach robots the jobs they cannot do yet &mdash; and measure that they can.</h1>
           <p class="lead">
-            A robot model is a starting point, not a deployment. One real customer job &mdash; reach it,
-            grip it, carry it, place it, close the door &mdash; contains dozens of workplace-specific skills
-            that are not in the box. SIM&nbsp;XR teaches those skills to the model you already run, and
-            measures whether they actually worked.
+            Bring the task and the model you already run. We rebuild the job in simulation, collect human
+            demonstrations in VR, scale them into training data, post-train your policy and return it with a
+            before-and-after number on a protocol you can rerun yourself &mdash; without spending an hour of
+            your robot&rsquo;s time.
           </p>
 
           <div class="cta-row">
             <a href="#inquiry" class="btn"><span>Bring us a failing job</span></a>
             <a href="#proof" class="cta-link">Watch the 90-second case</a>
           </div>
+          <p class="hero-proof"><a href="#proof"><b>0 &rarr; 65&nbsp;%</b> across four tasks for a humanoid manufacturer &middot; <b>0 &rarr; 90&nbsp;%</b> from fifty VR demonstrations &mdash; in simulation, on protocols you can rerun.</a></p>
         </div>
 
+        <div class="hero-side">
+          <img class="hero-art" src="/what-we-do/art/hero-failing-job.png" alt="A humanoid robot at a kitchen counter misses a bottle, which tips over beside the bowl" loading="eager">
         <dl class="ledger">
           <div>
             <dt>You hand us</dt>
@@ -458,18 +632,20 @@
             <dd><b>None.</b> Collection runs off-robot, in parallel copies of the scene, with instant resets.</dd>
           </div>
         </dl>
+        </div>
       </div>
     </div>
 
     <!-- ══════════════ THE PROBLEM ══════════════ -->
     <section class="sec-md">
       <div class="wrap">
-        <span class="label">Where this stalls</span>
-        <h2>Three places the work gets stuck.</h2>
+        <span class="label">Why it stalls</span>
+        <h2>Why the next job is never free.</h2>
         <div class="trio">
           <div>
+            <img class="trio-art" src="/what-we-do/art/pain-01-new-skill.png" alt="The same robot in a kitchen, at a warehouse shelf and at a workbench" loading="lazy">
             <span class="num">01</span>
-            <h3>Every customer is a new skill.</h3>
+            <h3>Every new job is a new skill.</h3>
             <p>
               Your model generalises across a category, not across a workplace. Every deployment adds
               steps nobody trained for, and every one of them needs demonstrations. Collecting those
@@ -477,6 +653,7 @@
             </p>
           </div>
           <div>
+            <img class="trio-art" src="/what-we-do/art/pain-02-world-missing.png" alt="A half-built room: one half finished, the other dissolving into wireframe with missing patches" loading="lazy">
             <span class="num">02</span>
             <h3>The world the robot must learn in does not exist yet.</h3>
             <p>
@@ -486,6 +663,7 @@
             </p>
           </div>
           <div>
+            <img class="trio-art" src="/what-we-do/art/pain-03-fails-why.png" alt="A robot has dropped the bottle; a magnifying glass over the failure point and three empty checkboxes" loading="lazy">
             <span class="num">03</span>
             <h3>The policy fails and nobody can say why.</h3>
             <p>
@@ -499,278 +677,319 @@
     </section>
 
     <!-- ══════════════ THE LOOP ══════════════ -->
-    <section class="sec-lg">
+    <section class="sec-lg" id="how">
       <div class="wrap">
         <span class="label">How it works</span>
-        <h2>One loop. Enter at any step.</h2>
-        <p class="lead" style="margin-top: var(--sp-24)">
-          We run the whole chain, and we run any part of it. Some teams hand us a failing job and take
-          back a measured policy. Some hand us a phone walkthrough and take back a scene. Some send
-          nothing but rollouts and take back a diagnosis. All three are normal.
-        </p>
+        <h2>One loop. Your job goes in, a working policy comes out.</h2>
 
-        <figure class="loop-figure" style="margin:var(--sp-48) 0 0">
-          <svg class="loop-svg" viewBox="0 0 1216 300" role="img" aria-labelledby="loopTitle loopDesc">
-            <title id="loopTitle">The SIM XR loop</title>
-            <desc id="loopDesc">Five steps in sequence: teleop rig, scene and assets, demonstrations, training, measurement. Measurement feeds back into demonstrations. A customer can enter at any step.</desc>
-            <g font-family="Bricolage Grotesque, sans-serif" font-size="12" font-weight="600" letter-spacing="1.68" fill="#17596B">
-              <text x="0" y="14">ENTER AT ANY STEP</text>
-            </g>
-            <!-- entry ticks -->
-            <g stroke="#B0AEA6" stroke-width="1">
-              <path d="M52 34 v26 M292 34 v26 M532 34 v26 M772 34 v26 M1012 34 v26"/>
-            </g>
-            <g fill="#B0AEA6">
-              <path d="M48 58 l4 8 l4 -8 Z"/><path d="M288 58 l4 8 l4 -8 Z"/><path d="M528 58 l4 8 l4 -8 Z"/>
-              <path d="M768 58 l4 8 l4 -8 Z"/><path d="M1008 58 l4 8 l4 -8 Z"/>
-            </g>
+        <div class="hw" id="hw">
 
-            <!-- spine -->
-            <line x1="0" y1="88" x2="1216" y2="88" stroke="#C6C4BC" stroke-width="1"/>
-
-            <!-- nodes -->
-            <g>
-              <rect x="48" y="82" width="12" height="12" fill="#17596B"/>
-              <rect x="288" y="82" width="12" height="12" fill="#17596B"/>
-              <rect x="528" y="82" width="12" height="12" fill="#17596B"/>
-              <rect x="768" y="82" width="12" height="12" fill="#17596B"/>
-              <rect x="1008" y="82" width="12" height="12" fill="#17596B"/>
-            </g>
-
-            <!-- indices -->
-            <g font-family="Bricolage Grotesque, sans-serif" font-size="12" font-weight="600" letter-spacing="1.68" fill="#17596B">
-              <text x="0" y="126">01</text><text x="240" y="126">02</text><text x="480" y="126">03</text>
-              <text x="720" y="126">04</text><text x="960" y="126">05</text>
-            </g>
-            <!-- titles -->
-            <g font-family="Archivo, sans-serif" font-size="24" font-weight="600" letter-spacing="-0.24" fill="#191A1D">
-              <text x="0" y="158">Teleop rig</text>
-              <text x="240" y="158">Scene &amp; assets</text>
-              <text x="480" y="158">Demonstrations</text>
-              <text x="720" y="158">Training</text>
-              <text x="960" y="158">Measurement</text>
-            </g>
-            <!-- captions -->
-            <g font-family="Instrument Sans, sans-serif" font-size="14" fill="#54565A">
-              <text x="0" y="184">Your robot becomes</text><text x="0" y="204">drivable in VR.</text>
-              <text x="240" y="184">The customer&#8217;s room</text><text x="240" y="204">becomes a training world.</text>
-              <text x="480" y="184">Remote operators record</text><text x="480" y="204">the missing skill.</text>
-              <text x="720" y="184">Your checkpoint is</text><text x="720" y="204">post-trained on them.</text>
-              <text x="960" y="184">Before and after,</text><text x="960" y="204">on one protocol.</text>
-            </g>
-
-            <!-- feedback arc: measurement → demonstrations, broken around its own label -->
-            <path d="M1014 216 V252 C1014 261, 1007 268, 998 268 H558 C549 268, 542 261, 542 252 V227"
-                  fill="none" stroke="#17596B" stroke-width="1" stroke-dasharray="3 4"/>
-            <path d="M538 229 l4 -9 l4 9 Z" fill="#17596B"/>
-            <g font-family="Bricolage Grotesque, sans-serif" font-size="12" font-weight="600" letter-spacing="1.68" fill="#17596B">
-              <text x="778" y="290" text-anchor="middle">MEASURED FAILURES BECOME THE NEXT DEMONSTRATIONS</text>
-            </g>
-          </svg>
-
-          <ul class="loop-list">
-            <li><span class="num">01</span><span><span class="t">Teleop rig</span><br>Your robot becomes drivable in VR.</span></li>
-            <li><span class="num">02</span><span><span class="t">Scene &amp; assets</span><br>The customer&rsquo;s room becomes a training world.</span></li>
-            <li><span class="num">03</span><span><span class="t">Demonstrations</span><br>Remote operators record the missing skill.</span></li>
-            <li><span class="num">04</span><span><span class="t">Training</span><br>Your checkpoint is post-trained on them.</span></li>
-            <li><span class="num">05</span><span><span class="t">Measurement</span><br>Before and after, on one protocol &mdash; and measured failures become the next demonstrations.</span></li>
-          </ul>
-
-          <figcaption class="figcap">
-            Nothing in this loop consumes your robot-hours. Collection runs off-robot, in simulation, in
-            parallel copies of the scene &mdash; which is why adding a tenth operator costs a headset
-            rather than a tenth robot.
-          </figcaption>
-        </figure>
-      </div>
-    </section>
-
-    <!-- ══════════════ CAPABILITIES ══════════════ -->
-    <section class="sec-md">
-      <div class="wrap">
-        <span class="label">Capabilities</span>
-        <h2>What we actually do.</h2>
-
-        <!-- 01 -->
-        <article class="cap">
-          <div>
-            <div class="cap-index">01 &mdash; Teleop rig</div>
-            <h3>We make your robot drivable in VR.</h3>
-            <p class="cap-claim">Most robots are not built to be demonstrated on. Getting a human&rsquo;s hands onto a specific embodiment cleanly enough that the recording is trainable is its own engineering job.</p>
-          </div>
-          <div>
-            <ul>
-              <li>Retargeting from consumer hand-tracking to your embodiment &mdash; absolute or relative, with joint limits and clamps that hold under fast motion</li>
-              <li>Grip and contact handling on hands and grippers that were never designed for teleoperation</li>
-              <li>Automatic episode segmentation, so a session becomes clean labelled trajectories instead of one long recording</li>
-              <li>Reliability instrumentation: pose-freshness gauges, stop-latch detection, session recovery when an operator drops</li>
-              <li>A reproduction kit that brings the whole thing up with a single command</li>
-            </ul>
-            <div class="cap-foot">
-              <div><span class="k">Proof</span><p>In a pilot we stood up a customer&rsquo;s entire stack on our own infrastructure and returned three defects in their teleoperation &mdash; including one where a continuous signal was being read as an event and latched the emergency stop.</p></div>
-              <div><span class="k k-muted">From you</span><p>A robot description and your action / observation schema. Nothing else.</p></div>
+          <!-- row: input -->
+          <div class="hw-lbl"><span class="label label-muted">You bring</span></div>
+          <div class="hw-io hw-in">
+            <span class="hw-tag">From you</span>
+            <svg class="hw-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17"/><path d="M9 4V2h6v2M9 10h6M9 14h4"/></svg>
+            <div>
+              <span class="hw-io-t">A job the robot cannot do yet</span>
+              <span class="hw-io-s">And whatever you already have. We build what is missing.</span>
+              <ul class="hw-chips">
+                <li>one scene or many</li><li>one task per scene or many</li><li>your robot description</li><li>scene &amp; objects, if you have them</li><li>success criteria &mdash; written together</li>
+              </ul>
             </div>
           </div>
-        </article>
+          <div class="hw-railcell"></div>
 
-        <!-- 02 -->
-        <article class="cap">
-          <div>
-            <div class="cap-index">02 &mdash; Scene &amp; assets</div>
-            <h3>We rebuild the workplace the robot has to work in.</h3>
-            <p class="cap-claim">A skill learned on a clean grey table does not survive contact with a real kitchen, a real shelf or a real bench. The scene is part of the skill.</p>
+          <!-- row: connector -->
+          <div class="hw-lbl"></div>
+          <div class="hw-down" aria-hidden="true"><svg viewBox="0 0 14 24"><path d="M7 0v22M1 16l6 6 6-6"/></svg></div>
+          <div class="hw-railcell"></div>
+
+          <!-- row: stages 1–3 -->
+          <div class="hw-lbl"><span class="label label-muted">Build the data</span></div>
+          <div class="hw-cards hw-cards-3">
+            <button class="hw-node" type="button" data-stage="1" aria-expanded="false" aria-controls="hw-panel">
+              <img class="hw-art" src="/what-we-do/stage-01-environment.png" alt="Isometric drawing of a humanoid robot at a table inside a simulated workcell being assembled" loading="lazy">
+              <span class="hw-index">01</span>
+              <span class="hw-t">Environment</span>
+              <span class="hw-claim">The world the job lives in, rebuilt in simulation.</span>
+              <ul class="hw-hi">
+                <li>Robot, scene and objects made physics-ready &mdash; from CAD, a walkthrough, or photographs</li>
+                <li>Success criteria agreed with you and written into the environment</li>
+                <li>Parallel copies of the scene with instant reset</li>
+              </ul>
+              <span class="hw-more">Inside this stage</span>
+            </button>
+            <button class="hw-node" type="button" data-stage="2" aria-expanded="false" aria-controls="hw-panel">
+              <img class="hw-art" src="/what-we-do/stage-02-demonstrations.png" alt="A person in a VR headset at home, and a robot repeating the same hand pose over a table" loading="lazy">
+              <span class="hw-index">02</span>
+              <span class="hw-t">Demonstrations</span>
+              <span class="hw-claim">Human skill, recorded in VR in the robot&rsquo;s own action space.</span>
+              <ul class="hw-hi">
+                <li>Our operators &mdash; onboarded, qualified, working in parallel from home</li>
+                <li>Retargeting and grip tuned to your embodiment</li>
+                <li>Quality gates on every episode; start-state spread designed for training</li>
+              </ul>
+              <span class="hw-more">Inside this stage</span>
+            </button>
+            <button class="hw-node" type="button" data-stage="3" aria-expanded="false" aria-controls="hw-panel">
+              <img class="hw-art" src="/what-we-do/stage-03-augmentation.png" alt="One robot demonstration multiplied into many copies of the scene" loading="lazy">
+              <span class="hw-index">03</span>
+              <span class="hw-t">Augmentation</span>
+              <span class="hw-claim">Hundreds of demonstrations become thousands of episodes.</span>
+              <ul class="hw-hi">
+                <li>The strongest demonstrations selected to seed generation</li>
+                <li>Generation tuned per task, on compute sized to the deadline</li>
+                <li>Every episode replay-validated; exported in your schema</li>
+              </ul>
+              <span class="hw-more">Inside this stage</span>
+            </button>
           </div>
-          <div>
-            <ul>
-              <li>3D reconstruction of a real room from an ordinary phone walkthrough</li>
-              <li>Physics-ready assets built from photographs of the customer&rsquo;s actual objects</li>
-              <li>Repair of broken or unusable meshes &mdash; collision geometry, grasp affordances, scale and mass</li>
-              <li>Parallel scene instances with instant reset, so operators never wait for a human to tidy the table</li>
-            </ul>
-            <div class="cap-foot">
-              <div><span class="k">Proof</span><p>A trained policy was moved into a 3D scan of a real room and kept working with no new demonstrations &mdash; in simulation.</p></div>
-              <div><span class="k k-muted">From you</span><p>A walkthrough video of the space and photographs of the objects. CAD if you happen to have it; we do not need it.</p></div>
+          <div class="hw-railcell hw-rail hw-rail-a" aria-hidden="true"><i class="hw-tip"></i></div>
+
+          <!-- row: connector -->
+          <div class="hw-lbl"></div>
+          <div class="hw-down" aria-hidden="true"><svg viewBox="0 0 14 24"><path d="M7 0v22M1 16l6 6 6-6"/></svg></div>
+
+          <!-- row: stages 4–5 -->
+          <div class="hw-lbl"><span class="label label-muted">Teach and prove</span></div>
+          <div class="hw-cards hw-cards-2">
+            <button class="hw-node" type="button" data-stage="4" aria-expanded="false" aria-controls="hw-panel">
+              <img class="hw-art" src="/what-we-do/stage-04-post-training.png" alt="Data cards flowing into a processor chip and a single policy card coming out" loading="lazy">
+              <span class="hw-index">04</span>
+              <span class="hw-t">Post-training</span>
+              <span class="hw-claim">The model you already run, taught the job.</span>
+              <ul class="hw-hi">
+                <li>Model-agnostic: the policy family you already use, or your own architecture</li>
+                <li>Training recipe from measured runs, not from defaults</li>
+                <li>Compute sized for cost and speed; checkpoints at every milestone</li>
+              </ul>
+              <span class="hw-more">Inside this stage</span>
+            </button>
+            <button class="hw-node hw-node-eval" type="button" data-stage="5" aria-expanded="false" aria-controls="hw-panel">
+              <img class="hw-art" src="/what-we-do/stage-05-evaluation.png" alt="A robot at a table next to a clipboard with a before/after bar chart and pass/fail marks" loading="lazy">
+              <span class="hw-index">05</span>
+              <span class="hw-t">Evaluation</span>
+              <span class="hw-claim">Before and after on one protocol. Honest numbers.</span>
+              <ul class="hw-hi">
+                <li>Fixed layouts, paired runs, sample sizes matched to the claim</li>
+                <li>Failures decomposed by stage of the task, with video</li>
+                <li>Levers ranked by cost &mdash; and the decision where the loop re-enters</li>
+              </ul>
+              <span class="hw-more">Inside this stage</span>
+            </button>
+          </div>
+          <div class="hw-railcell hw-rail hw-rail-b" aria-hidden="true"></div>
+
+          <!-- row: loop label -->
+          <div class="hw-lbl"></div>
+          <p class="hw-loop-label">Measured failures go back into the loop &mdash; demonstrations, spread or recipe &mdash; until the number holds.</p>
+          <div class="hw-railcell"></div>
+
+          <!-- row: details panel -->
+          <div class="hw-lbl"></div>
+          <div class="hw-panel" id="hw-panel" hidden>
+            <div class="hw-detail" data-stage="1">
+              <div class="hw-detail-h"><span class="hw-index">01</span><h3>Environment</h3><p class="hw-claim">The world the job lives in, in simulation.</p></div>
+              <ul>
+                <li>Your robot made drivable and physics-ready</li>
+                <li>The scene &mdash; from your assets, CAD, or a phone walkthrough</li>
+                <li>Objects rebuilt from photographs: collision, mass, grasp</li>
+                <li>Task and success criteria, agreed and written in code</li>
+                <li>One scene or several; one task per scene or many</li>
+                <li>Parallel copies with instant reset</li>
+              </ul>
+            </div>
+            <div class="hw-detail" data-stage="2">
+              <div class="hw-detail-h"><span class="hw-index">02</span><h3>Demonstrations</h3><p class="hw-claim">Human skill, recorded in the robot&rsquo;s own action space.</p></div>
+              <ul>
+                <li>Retargeting, clamps and grip tuned to your embodiment</li>
+                <li>A server fleet sized to the deadline, close to the operators</li>
+                <li>Our operators &mdash; onboarded, qualified, working in parallel</li>
+                <li>Live quality control: signal freshness, episode slicing, accept / reject</li>
+                <li>Start-state spread designed for training, not left to chance</li>
+                <li>Champion selection: the few demonstrations worth multiplying</li>
+                <li>Delivered in your data contract &mdash; the same files your validator accepts</li>
+              </ul>
+            </div>
+            <div class="hw-detail" data-stage="3">
+              <div class="hw-detail-h"><span class="hw-index">03</span><h3>Augmentation</h3><p class="hw-claim">Hundreds of demonstrations become thousands of episodes.</p></div>
+              <ul>
+                <li>Only the strongest demonstrations seed the generator, annotated into subtasks</li>
+                <li>Generation parameters set per task &mdash; the failure modes are catalogued</li>
+                <li>Parallel generation on a fleet, with seeds and shards under control</li>
+                <li>Every episode replay-validated; rejects are our cost</li>
+                <li>Export in LeRobot format or your own schema, validator-clean</li>
+              </ul>
+            </div>
+            <div class="hw-detail" data-stage="4">
+              <div class="hw-detail-h"><span class="hw-index">04</span><h3>Post-training</h3><p class="hw-claim">The model you already run, taught the job.</p></div>
+              <ul>
+                <li>Conversion to the model&rsquo;s data contract</li>
+                <li>Recipe from measured runs: batch, steps, cameras, horizon</li>
+                <li>Model-agnostic: the policy family you already use, or your own</li>
+                <li>Compute sized for cost and speed; checkpoints at every milestone</li>
+                <li>The best checkpoint chosen on the evaluation protocol, not on training loss</li>
+                <li>Reproducible: environment manifest and a rerun that brings the whole run back</li>
+              </ul>
+            </div>
+            <div class="hw-detail" data-stage="5">
+              <div class="hw-detail-h"><span class="hw-index">05</span><h3>Evaluation</h3><p class="hw-claim">One protocol. Honest numbers.</p></div>
+              <ul>
+                <li>Fixed layouts, paired runs, seeds shared with you</li>
+                <li>Sample sizes matched to the claim, with confidence intervals</li>
+                <li>Failures decomposed by stage of the task, with video</li>
+                <li>Levers ranked by cost: horizon, chunking, start pose, cameras</li>
+                <li>The decision: which stage the loop re-enters</li>
+              </ul>
             </div>
           </div>
-        </article>
+          <div class="hw-railcell"></div>
 
-        <!-- 03 -->
-        <article class="cap">
-          <div>
-            <div class="cap-index">03 &mdash; Demonstrations</div>
-            <h3>Our operators record the missing skill.</h3>
-            <p class="cap-claim">Not blanket hours. Demonstrations aimed at the failure modes the measurement actually found.</p>
-          </div>
-          <div>
-            <ul>
-              <li>Recorded in the robot&rsquo;s own action space through VR teleoperation &mdash; not retargeted from human video</li>
-              <li>Targeted at measured failure states rather than sold as volume</li>
-              <li>Accept / reject gates and replay validation on every single trajectory. Rejects are our cost, not yours</li>
-              <li>Delivered as LeRobot v2.1, or in your own schema</li>
-            </ul>
-            <div class="cap-foot">
-              <div><span class="k">Proof</span><p>Our export passed a customer&rsquo;s own validator with no errors &mdash; including the ordering of all 51 joints.</p></div>
-              <div><span class="k k-muted">From you</span><p>Nothing. No robot time is required for collection.</p></div>
-            </div>
-            <div class="note-inverse">
-              <span class="k">Why this scales differently</span>
-              <p><strong>Physical teleoperation adds capacity by buying another robot and another station.</strong> Our next operator needs a headset. More than twenty million consumer VR headsets have already shipped; our operators connect from home, and their sessions run in parallel against copies of the same scene.</p>
+          <!-- row: connector -->
+          <div class="hw-lbl"></div>
+          <div class="hw-down" aria-hidden="true"><svg viewBox="0 0 14 24"><path d="M7 0v22M1 16l6 6 6-6"/></svg></div>
+          <div class="hw-railcell"></div>
+
+          <!-- row: output -->
+          <div class="hw-lbl"><span class="label">You get</span></div>
+          <div class="hw-io hw-out">
+            <span class="hw-tag">From us</span>
+            <svg class="hw-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>
+            <div>
+              <span class="hw-io-t">A policy that does the job it could not do before</span>
+              <span class="hw-io-s">Measured in simulation, before and after, on one protocol you can rerun yourself.</span>
+              <ul class="hw-chips">
+                <li>the checkpoint</li><li>the validated dataset</li><li>the evaluation protocol, with seeds</li><li>zero robot-hours spent</li>
+              </ul>
             </div>
           </div>
-        </article>
+          <div class="hw-railcell"></div>
 
-        <!-- 04 -->
-        <article class="cap">
-          <div>
-            <div class="cap-index">04 &mdash; Training</div>
-            <h3>We post-train the model you already run.</h3>
-            <p class="cap-claim">We are not asking you to switch architectures. The foundation model is the starting point; we close the deployment-specific gap on top of it.</p>
-          </div>
-          <div>
-            <ul>
-              <li>Fine-tuning of your existing checkpoint on the targeted demonstrations &mdash; GR00T-family models, other VLA families, or your own architecture</li>
-              <li>GPU infrastructure in the EU and the US, so this does not queue behind your own research team</li>
-              <li>Or no training at all: take the validated dataset and train it yourself</li>
-            </ul>
-            <div class="cap-foot">
-              <div><span class="k">Proof</span><p>We have run the loop across two fundamentally different model types and multiple robot, hand and gripper configurations &mdash; including a model family released days before we ran it through.</p></div>
-              <div><span class="k k-muted">From you</span><p>A checkpoint &mdash; or nothing, if you only want the data.</p></div>
+          <!-- row: dashed connector -->
+          <div class="hw-lbl"></div>
+          <div class="hw-down hw-down-dashed" aria-hidden="true"><svg viewBox="0 0 14 24"><path d="M7 0v22M1 16l6 6 6-6"/></svg></div>
+          <div class="hw-railcell"></div>
+
+          <!-- row: beyond -->
+          <div class="hw-lbl"><span class="label label-muted">Beyond the loop</span></div>
+          <div class="hw-io hw-beyond">
+            <img class="hw-art hw-art-beyond" src="/what-we-do/stage-06-sim-to-real.png" alt="A wireframe robot in simulation and a solid robot in the real world, with a dashed arrow between them" loading="lazy">
+            <div>
+              <span class="hw-io-t">Sim-to-real, on your robot</span>
+              <span class="hw-io-s">The step after the loop: the same policy and the same protocol on your hardware &mdash; planned with you from the first session.</span>
             </div>
           </div>
-        </article>
+          <div class="hw-railcell"></div>
+        </div>
 
-        <!-- 05 -->
-        <article class="cap">
-          <div>
-            <div class="cap-index">05 &mdash; Measurement</div>
-            <h3>We tell you what actually changed.</h3>
-            <p class="cap-claim">Evaluation decides the next intervention. Sometimes the answer is more demonstrations. Sometimes it is a missing input, a recipe or the inference loop &mdash; and we would rather tell you that than sell you hours.</p>
+        <!-- what we bring -->
+        <div class="hw-bring">
+          <div class="hw-lbl"><span class="label">We bring</span></div>
+          <div class="hw-us-grid">
+            <div><img class="hw-us-art" src="/what-we-do/art/bring-01-compute.png" alt="Two server racks on a floor grid linked to a cloud" loading="lazy"><b>Compute that is ours.</b> GPU fleets in the EU and the US, up in hours and down to zero after &mdash; nothing queues behind your research team.</div>
+            <div><img class="hw-us-art" src="/what-we-do/art/bring-02-operators.png" alt="Five houses with VR headsets above them, all linked to one robot at a table" loading="lazy"><b>Operators who are ours.</b> Onboarded, qualified, connecting from home; the next operator costs a headset, not a robot.</div>
+            <div><img class="hw-us-art" src="/what-we-do/art/bring-03-recipes.png" alt="An open notebook with two measured curves and error brackets" loading="lazy"><b>Recipes that are measured.</b> Every stage above has run end-to-end on customer tasks &mdash; several tasks across several scenes, every delivery accepted by the customer&rsquo;s own validator.</div>
           </div>
-          <div>
-            <ul>
-              <li>Before and after on one protocol and identical initial states &mdash; your baseline against the retrained model</li>
-              <li>Failure decomposition: where along the path each attempt exits, how far failures get, whether a drop is terminal, and where in space the failures cluster</li>
-              <li>Attempt economics &mdash; what the policy is worth at one attempt and at N, because a robot that can retry is a different business from one that cannot</li>
-              <li>The honest version of the number: the confidence interval at your sample size, and what the result does when the starting pose is allowed to vary</li>
-            </ul>
-            <div class="cap-foot">
-              <div><span class="k">Proof</span><p>This runs on your rollouts alone &mdash; object poses and success labels. We never need your data or your weights, which is why we also sell it on its own.</p></div>
-              <div><span class="k k-muted">From you</span><p>Rollouts.</p></div>
-            </div>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <!-- ══════════════ PROOF ══════════════ -->
-    <section class="sec-lg" id="proof">
-      <div class="wrap">
-        <span class="label">Proof</span>
-        <h2>Two things we can show you.</h2>
-      </div>
-
-      <div class="bleed" style="margin-top: var(--sp-48)">
-        <video class="film" controls preload="none" playsinline poster="/what-we-do/case-poster.jpg">
-          <source src="/what-we-do/case-90s.mp4" type="video/mp4" />
-          Your browser cannot play this video. <a href="/what-we-do/case-90s.mp4">Download the 90-second case (4&nbsp;MB).</a>
-        </video>
-      </div>
-      <div class="wrap">
-        <div class="film-caption">
-          <span>90 seconds &middot; end-to-end case, run in our simulation pipeline</span>
-          <span>Sound on</span>
         </div>
       </div>
 
+      <script>
+      (function () {
+        var root = document.getElementById('hw'); if (!root) return;
+        var nodes = root.querySelectorAll('.hw-node');
+        var panel = document.getElementById('hw-panel');
+        var details = panel.querySelectorAll('.hw-detail');
+        function show(stage) {
+          var open = null;
+          nodes.forEach(function (n) {
+            var on = n.getAttribute('data-stage') === stage;
+            n.setAttribute('aria-expanded', on ? 'true' : 'false');
+            n.classList.toggle('is-open', on);
+            if (on) open = n;
+          });
+          details.forEach(function (d) { d.hidden = d.getAttribute('data-stage') !== stage; });
+          panel.hidden = !open;
+          if (open) {
+            var r = panel.getBoundingClientRect();
+            if (r.bottom > window.innerHeight) panel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          }
+        }
+        nodes.forEach(function (n) {
+          n.addEventListener('click', function () {
+            var s = n.getAttribute('data-stage');
+            show(n.getAttribute('aria-expanded') === 'true' ? null : s);
+          });
+        });
+        details.forEach(function (d) { d.hidden = true; });
+      })();
+      </script>
+    </section>
+
+    <!-- ══════════════ CASES ══════════════ -->
+    <section class="sec-lg" id="proof">
       <div class="wrap">
-        <div class="proof-grid">
-          <div>
-            <p class="proof-head">0 &rarr; <span class="accent">9 out of 10</span>, in simulation.</p>
-            <p>
-              GR00T&nbsp;N1.7 &mdash; fine-tuned by NVIDIA for its own G1 benchmark task &mdash; scored
-              <strong>0%</strong> on a structurally new task. One person at home recorded
-              <strong>50 VR demonstrations</strong> through simxr.app. Trained on those demonstrations,
-              the model succeeded in <strong>9 out of 10 trials</strong>, in simulation, from a fixed
-              starting configuration.
-            </p>
+        <span class="label">Cases</span>
+        <h2>Two jobs the robot could not do. Two numbers.</h2>
 
-            <table class="jitter">
-              <caption>Same policy, same protocol, in simulation &mdash; only the starting pose moves</caption>
-              <thead>
-                <tr><th scope="col">Start-pose jitter</th><th scope="col">Success</th><th scope="col"><span class="visually-hidden">Scale</span></th></tr>
-              </thead>
-              <tbody>
-                <tr><th scope="row">0 cm &mdash; fixed</th><td class="v">90%</td><td class="bar"><i style="width:90%"></i></td></tr>
-                <tr><th scope="row">&plusmn;2 cm</th><td class="v">73.3%</td><td class="bar"><i style="width:73.3%"></i></td></tr>
-                <tr><th scope="row">&plusmn;5 cm</th><td class="v">50%</td><td class="bar"><i style="width:50%"></i></td></tr>
-              </tbody>
-            </table>
-            <p class="small" style="margin-top: var(--sp-16)">
-              We publish the curve, not only the headline. Knowing exactly where a skill stops holding is
-              the difference between a demo and a deployment &mdash; and finding that edge is the part of
-              the work we sell.
+        <div class="cases">
+          <article class="case">
+            <span class="case-eyebrow">Case 01 &middot; Pilot</span>
+            <h3>A new skill from fifty VR demonstrations.</h3>
+            <div class="case-stats">
+              <div><span class="case-n">0 &rarr; 90<small>%</small></span><span class="case-l">success, 27 of 30 paired trials</span></div>
+              <div><span class="case-n">50</span><span class="case-l">VR demonstrations</span></div>
+              <div><span class="case-n">1</span><span class="case-l">operator, from home</span></div>
+            </div>
+            <p>
+              GR00T&nbsp;N1.7 &mdash; fine-tuned by NVIDIA for its own benchmark task &mdash; scored zero on a
+              structurally new pick-and-place task in our scene. One operator recorded fifty demonstrations in VR
+              through simxr.app. Post-trained on them, the same model completed the task in 27 of 30 paired
+              trials on a fixed protocol &mdash; in simulation.
             </p>
-          </div>
+            <ul class="case-chips">
+              <li>post-trained checkpoint</li><li>validated dataset</li><li>evaluation protocol</li><li>90-second video</li>
+            </ul>
+            <div class="case-media">
+              <video class="case-film" controls preload="none" playsinline poster="/what-we-do/case-poster.jpg">
+                <source src="/what-we-do/case-90s.mp4" type="video/mp4" />
+                Your browser cannot play this video. <a href="/what-we-do/case-90s.mp4">Download the 90-second case (4&nbsp;MB).</a>
+              </video>
+              <span class="case-caption">90 seconds &middot; the full loop on one task &middot; sound on</span>
+            </div>
+          </article>
 
-          <div>
-            <p class="proof-head">Someone else&rsquo;s stack, running on ours, in days.</p>
+          <article class="case case-pilot">
+            <span class="case-eyebrow">Case 02 &middot; Full project</span>
+            <h3>Four tasks in two scenes for a humanoid manufacturer.</h3>
+            <div class="case-stats">
+              <div><span class="case-n">0 &rarr; 65<small>%</small></span><span class="case-l">success across all four tasks, customer&rsquo;s criterion</span></div>
+              <div><span class="case-n">~1,500</span><span class="case-l">successful demonstrations from ~20 operator-hours</span></div>
+              <div><span class="case-n">~10,000</span><span class="case-l">generated episodes, every batch accepted</span></div>
+            </div>
             <p>
-              A pilot customer &mdash; under NDA, so not named here &mdash; handed us their full
-              teleoperation and training stack. We stood it up on our own infrastructure, found and
-              returned three defects in their pipeline, recorded VR teleoperation with automatic episode
-              slicing, and delivered <strong>LeRobot v2.1 that passed their own validator with no
-              errors</strong>, together with a kit that reproduces the entire run with one command.
+              The customer brought their own robot, two scenes and a strict data contract. We made the robot
+              drivable in VR, rebuilt the scenes, recorded the demonstrations across four tasks with our
+              operators, multiplied them into validated episodes and delivered every batch in the
+              customer&rsquo;s own format &mdash; each one accepted by their validator. Post-trained on that data, a policy that scored zero on every task
+              reached 65&nbsp;% success across all four under the customer&rsquo;s own criterion, in simulation
+              &mdash; and 80&ndash;85&nbsp;% once the acceptance-side defects we reported are corrected.
             </p>
-            <p>
-              The point is not that we are good guests. It is that the integration risk of working with
-              us is measured in days, and the first thing we produced was a bug report against our own
-              customer&rsquo;s code rather than an invoice for episodes.
-            </p>
-            <figure style="margin: var(--sp-32) 0 0">
-              <img src="/what-we-do/scene-3dgs.jpg" alt="A pair of robot arms operating in a photorealistic reconstruction of a real room, rebuilt from a phone walkthrough." style="display:block;width:100%;height:auto" />
-              <figcaption class="figcap">A real room, reconstructed and made physics-ready, with the robot working inside it &mdash; in simulation.</figcaption>
-            </figure>
-          </div>
+            <ul class="case-chips">
+              <li>4 accepted deliveries</li><li>customer-format data</li><li>post-trained checkpoint</li><li>evaluation protocol</li>
+            </ul>
+            <dl class="case-ledger">
+              <div><dt>Robot and scenes</dt><dd>Theirs &mdash; made drivable and physics-ready by us</dd></div>
+              <div><dt>Demonstrations</dt><dd>~1,500 successful, four tasks, our operators</dd></div>
+              <div><dt>Generated episodes</dt><dd>~10,000, replay-validated, in the customer&rsquo;s format</dd></div>
+              <div><dt>Deliveries</dt><dd>4 of 4 accepted by the customer&rsquo;s validator</dd></div>
+              <div><dt>Post-training</dt><dd>0&nbsp;% &rarr; 65&nbsp;% across four tasks, customer&rsquo;s criterion, in simulation; 80&ndash;85&nbsp;% with acceptance-side defects corrected</dd></div>
+            </dl>
+          </article>
+        </div>
+
+        <div class="partners">
+          <img src="/images/partner-badges-white.png" alt="NVIDIA Inception member and Powered by AWS badges" loading="lazy">
+          <p>Member of NVIDIA Inception. AWS Activate credits issued through the NVIDIA Inception programme. Our stack runs on NVIDIA Isaac Sim, Isaac Lab and CloudXR, on our own GPU fleets in the EU and the US.</p>
         </div>
       </div>
     </section>
@@ -782,6 +1001,7 @@
         <h2>Three doors, in order of commitment.</h2>
         <div class="start">
           <div>
+            <img class="start-art" src="/what-we-do/art/door-01-diagnostic.png" alt="Data cards with check and cross marks going into a clipboard, a report with a bar chart coming out" loading="lazy">
             <div class="cap-index">01</div>
             <h3>Offline diagnostic</h3>
             <p>
@@ -792,6 +1012,7 @@
             </p>
           </div>
           <div>
+            <img class="start-art" src="/what-we-do/art/door-02-package.png" alt="An open crate holding a miniature scene and a stack of data cards" loading="lazy">
             <div class="cap-index">02</div>
             <h3>Scene and data package</h3>
             <p>
@@ -800,6 +1021,7 @@
             </p>
           </div>
           <div>
+            <img class="start-art" src="/what-we-do/art/door-03-sprint.png" alt="A timeline with a loop of dashed arrows around a small robot, ending in a checked card" loading="lazy">
             <div class="cap-index">03</div>
             <h3>Policy Improvement Sprint</h3>
             <p>
@@ -820,26 +1042,32 @@
         <h2>Where this plugs in.</h2>
         <dl class="stack-grid">
           <div>
+            <img class="stack-ico" src="/what-we-do/art/stack-01-model.png" alt="" loading="lazy">
             <dt>Your model</dt>
             <dd><b>GR00T-family models, other VLA families, or your own architecture.</b> We improve what you already run &mdash; we are not building a competing foundation model, and we are not asking you to switch.</dd>
           </div>
           <div>
+            <img class="stack-ico" src="/what-we-do/art/stack-02-robot.png" alt="" loading="lazy">
             <dt>Your robot</dt>
             <dd><b>Humanoids, dual-arm cells, parallel grippers and dexterous hands.</b> Demonstrations are recorded in the robot&rsquo;s own action space, not retargeted from human video.</dd>
           </div>
           <div>
+            <img class="stack-ico" src="/what-we-do/art/stack-03-sim.png" alt="" loading="lazy">
             <dt>Simulation &amp; export</dt>
             <dd><b>NVIDIA Isaac Sim, Isaac Lab, Isaac Teleop.</b> CloudXR streaming. Export in <b>LeRobot format</b> or your own schema. Compatible with your simulator and training code where integration permits.</dd>
           </div>
           <div>
+            <img class="stack-ico" src="/what-we-do/art/stack-04-headset.png" alt="" loading="lazy">
             <dt>Operators &amp; headsets</dt>
             <dd>Quest&nbsp;2, Quest&nbsp;3, Pico and Apple Vision Pro, plus motion capture where the task needs it. Operators connect from home across Europe and the United States; sessions run in parallel.</dd>
           </div>
           <div>
+            <img class="stack-ico" src="/what-we-do/art/stack-05-infra.png" alt="" loading="lazy">
             <dt>Infrastructure</dt>
             <dd>Our own GPU servers in the <b>EU and the US</b>, so this does not queue behind your research team. Scenes reset instantly and run in parallel copies &mdash; which is what makes targeted collection cheap enough to aim.</dd>
           </div>
           <div>
+            <img class="stack-ico" src="/what-we-do/art/stack-06-delivery.png" alt="" loading="lazy">
             <dt>Delivery</dt>
             <dd>Every trajectory replay-validated before it reaches you. <b>Rejects are our cost, not yours.</b> A reproduction kit brings the whole run back up with one command.</dd>
           </div>
