@@ -944,7 +944,7 @@ export function useCloudXRSession(
           glBinding: xrBinding,
           telemetry: {
             enabled: true,
-            appInfo: { version: "6.1.0", product: "simxr.app" },
+            appInfo: { version: "6.3.0", product: "simxr.app" },
           },
         },
         {

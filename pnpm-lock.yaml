@@ -26,8 +26,8 @@ importers:
         specifier: ^5.2.2
         version: 5.2.2(react-hook-form@7.64.0(react@19.2.1))
       '@nvidia/cloudxr':
-        specifier: file:./vendor/nvidia-cloudxr-6.1.0.tgz
-        version: file:vendor/nvidia-cloudxr-6.1.0.tgz(gl-matrix@3.4.4)(long@5.3.2)
+        specifier: file:./vendor/nvidia-cloudxr-6.3.0.tgz
+        version: file:vendor/nvidia-cloudxr-6.3.0.tgz(gl-matrix@3.4.4)(long@5.3.2)
       '@radix-ui/react-accordion':
         specifier: ^1.2.12
         version: 1.2.12(@types/react-dom@19.2.1(@types/react@19.2.1))(@types/react@19.2.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
@@ -1071,12 +1071,12 @@ packages:
   '@mermaid-js/parser@0.6.3':
     resolution: {integrity: sha512-lnjOhe7zyHjc+If7yT4zoedx2vo4sHaTmtkl1+or8BRTnCtDmcTpAjpzDSfCZrshM5bCoz0GyidzadJAH1xobA==}
 
-  '@nvidia/cloudxr@file:vendor/nvidia-cloudxr-6.1.0.tgz':
-    resolution: {integrity: sha512-JKqQeaOCy88n4sxGY5DjVDVVDYoPJAoAqDMKTM6wQG59AaG0zKIQIHUsVcDcPgmLwZZXSuuh56A+j0y0V5BXpA==, tarball: file:vendor/nvidia-cloudxr-6.1.0.tgz}
-    version: 6.1.0
+  '@nvidia/cloudxr@file:vendor/nvidia-cloudxr-6.3.0.tgz':
+    resolution: {integrity: sha512-RtoU0sAt302ZVj5bAgzi/QbJDhps8PWbZXV9Jj2Tz740ASVjqrAIZdqUSI8oYP8CnsIMVUgs+vnAKSi1qdKLgg==, tarball: file:vendor/nvidia-cloudxr-6.3.0.tgz}
+    version: 6.3.0
     engines: {node: '>=20.19.0'}
     peerDependencies:
-      gl-matrix: ^3.4.3
+      gl-matrix: ^3.4.4
       long: ^5.3.2
 
   '@radix-ui/number@1.1.1':
@@ -5264,7 +5264,7 @@ snapshots:
     dependencies:
       langium: 3.3.1
 
-  '@nvidia/cloudxr@file:vendor/nvidia-cloudxr-6.1.0.tgz(gl-matrix@3.4.4)(long@5.3.2)':
+  '@nvidia/cloudxr@file:vendor/nvidia-cloudxr-6.3.0.tgz(gl-matrix@3.4.4)(long@5.3.2)':
     dependencies:
       gl-matrix: 3.4.4
       long: 5.3.2
