@@ -863,7 +863,7 @@ export function useCloudXRSession(
       // instead of opening VR onto a stream the server can't give us.
       if (healthz.scene_state === "busy" || healthz.session_state === "streaming") {
         setError(
-          "Another operator just started on this server. Try the other server, or wait a minute and try again.",
+          "This server is busy right now — another operator is recording, or your previous session is still closing (that takes ~15 seconds). Try again shortly, or use the other server.",
         );
         setState("error");
         return;
