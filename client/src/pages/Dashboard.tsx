@@ -27,6 +27,15 @@ import {
   type SimxrServer,
 } from "@/lib/servers";
 import { useCloudXRSession, type UiSessionState } from "@/lib/useCloudXRSession";
+import { detectDevice, type DeviceInfo } from "@/lib/device";
+import {
+  HowItWorks,
+  loadLastSession,
+  ResultCard,
+  saveLastSession,
+  ServerSlots,
+  type LastSession,
+} from "@/components/OperatorPanels";
 import { SCENE_ASSETS, robotLabel, skillTag, type SceneAsset } from "@/lib/scene_assets";
 import {
   fetchRecordings,
@@ -350,19 +359,39 @@ function DashboardInner() {
   // history from the box that actually recorded the session.
   const lastServerRef = useRef<SimxrServer | null>(null);
 
+  // Operator MVP (2026-10-04): after VR the operator stays on this page and
+  // sees what was saved (ResultCard) instead of being sent to /recordings.
+  const [lastSession, setLastSession] = useState<LastSession | null>(() => loadLastSession());
   const session = useCloudXRSession({
     // Fleet poll below covers live-state; disable the hook's own
     // single-server healthz poll so we don't double-poll api.simxr.app.
     healthPollMs: 0,
-    onSessionEnded: (taskId) => {
-      const params = new URLSearchParams();
-      if (taskId) params.set("fresh", taskId);
-      if (lastServerRef.current) params.set("srv", lastServerRef.current.id);
-      const qs = params.toString();
-      setLocation(qs ? `/recordings?${qs}` : "/recordings");
+    onSessionEnded: (_taskId, info) => {
+      const srv = info?.server ?? lastServerRef.current;
+      const next: LastSession = {
+        token: info?.token ?? null,
+        serverId: srv?.id ?? null,
+        serverLabel: srv?.label ?? "SIM XR",
+        host: srv?.host ?? null,
+        endedAt: Date.now(),
+        lastStatus: info?.lastStatus ?? null,
+      };
+      saveLastSession(next);
+      setLastSession(next);
+      if (view !== "tasks") {
+        setView("tasks");
+        setLocation("/");
+      }
+      window.scrollTo({ top: 0 });
     },
     getDomOverlayRoot: () => overlayRef.current,
   });
+  const emulating =
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("emulate") === "1";
+  const device: DeviceInfo = useMemo(() => {
+    const d = detectDevice();
+    return emulating ? { ...d, label: "Emulated Quest 3 (test mode)", supported: true, note: undefined } : d;
+  }, [emulating]);
   const { snapshots, scenesByServer, latencyHistory } = useFleet(5000);
 
   // Fleet-derived aggregates. `reachable` keeps its old meaning for the
@@ -447,22 +476,35 @@ function DashboardInner() {
   const [recordingsResp, setRecordingsResp] =
     useState<RecordingsResponse | null>(null);
   const [recordingsError, setRecordingsError] = useState<string | null>(null);
+  // Operator MVP: one list across the fleet (each server publishes its own
+  // operator sessions); a server that is down just contributes nothing.
   useEffect(() => {
     let cancelled = false;
-    fetchRecordings(apiBaseOf(recordingsServer))
-      .then((r) => {
-        if (cancelled) return;
-        setRecordingsResp(r);
-        setRecordingsError(null);
-      })
-      .catch((e: Error) => {
-        if (cancelled) return;
-        setRecordingsError(e.message);
-      });
+    void Promise.allSettled(
+      SERVERS.map((srv) =>
+        fetchRecordings(apiBaseOf(srv)).then((r): Recording[] =>
+          r.recordings.map((rec) => ({ ...rec, server_label: rec.server_label ?? srv.label })),
+        ),
+      ),
+    ).then((results) => {
+      if (cancelled) return;
+      const ok = results.filter(
+        (r): r is PromiseFulfilledResult<Recording[]> => r.status === "fulfilled",
+      );
+      if (ok.length === 0) {
+        setRecordingsError("No recording server is reachable right now.");
+        return;
+      }
+      const merged = ok
+        .flatMap((r) => r.value)
+        .sort((a, b) => (b.recorded_at || "").localeCompare(a.recorded_at || ""));
+      setRecordingsResp({ recordings: merged, ts: new Date().toISOString() });
+      setRecordingsError(null);
+    });
     return () => {
       cancelled = true;
     };
-  }, [recordingsRefreshKey, recordingsServer]);
+  }, [recordingsRefreshKey]);
   const refreshRecordings = () =>
     setRecordingsRefreshKey((k) => k + 1);
   const recordingsCount = recordingsResp?.recordings.length ?? null;
@@ -558,31 +600,18 @@ function DashboardInner() {
     onlineSnaps[0] ||
     null;
 
-  // Stats values — all derived from the fleet poll
-  const liveSceneShortName =
-    liveEntries.length === 0
-      ? "None"
-      : liveEntries.length === 1
-        ? liveEntries[0].scene.name
-        : `${liveEntries.length} scenes live`;
-  const sessionStateLabel =
-    onlineSnaps.length === 0
-      ? "—"
-      : onlineSnaps
-          .map((s) => `${s.server.id.toUpperCase()} ${s.health?.session_state}`)
-          .join(" · ");
-  const totalClients = onlineSnaps.reduce(
-    (sum, s) => sum + (s.health?.active_clients ?? 0),
-    0,
-  );
-  const sessionStateMeta =
-    onlineSnaps.length > 0
-      ? `${totalClients} active client${totalClients === 1 ? "" : "s"}`
-      : "no server contact";
+  // Scene name/description for a server's live (or starting) scene: that
+  // server's own scenes.json first, the base catalog second, a bare-id stub last.
+  const sceneFor = (server: SimxrServer, sceneId: string | null | undefined): Scene | null => {
+    if (!sceneId) return null;
+    return (
+      scenesByServer[server.id]?.find((s) => s.id === sceneId) ??
+      scenes?.find((s) => s.id === sceneId) ??
+      ({ id: sceneId, name: sceneId, status: "available" } as Scene)
+    );
+  };
+
   const scenesCount = scenes?.length ?? 0;
-  const scenesMeta = scenes
-    ? `${scenes.filter((s) => s.status === "available").length} ready · ${scenes.filter((s) => s.status === "broken").length} in repair`
-    : "—";
 
   const lastPollHHMMSS = (() => {
     const ts = onlineSnaps
@@ -623,14 +652,6 @@ function DashboardInner() {
               <span>Tasks</span>
               <span className="badge">{scenesCount || "—"}</span>
             </a>
-            <a className="nav-item disabled">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                <circle cx="12" cy="12" r="9"/>
-                <polygon points="10 8 16 12 10 16" fill="currentColor"/>
-              </svg>
-              <span>Live session</span>
-              <span className="soon">soon</span>
-            </a>
             <a
               className={`nav-item ${view === "recordings" ? "active" : ""}`}
               onClick={() => switchView("recordings")}
@@ -644,32 +665,15 @@ function DashboardInner() {
                 {recordingsCount ?? "—"}
               </span>
             </a>
-            <a className="nav-item disabled">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                <circle cx="12" cy="8" r="4"/>
-                <path d="M4 21c0-4 4-7 8-7s8 3 8 7"/>
-              </svg>
-              <span>Profile</span>
-              <span className="soon">soon</span>
-            </a>
-
-            <div className="nav-section-label">Library</div>
-            <a className="nav-item disabled">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                <path d="M2 20h20M6 20V10M11 20V4M16 20v-8M21 20v-5"/>
-              </svg>
-              <span>Stats</span>
-              <span className="soon">soon</span>
-            </a>
-            <a className="nav-item disabled">
+            <div className="nav-section-label">Help</div>
+            <a className="nav-item" href="/quickstart/" target="_blank" rel="noopener">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
                 <line x1="16" y1="13" x2="8" y2="13"/>
                 <line x1="16" y1="17" x2="8" y2="17"/>
               </svg>
-              <span>Docs</span>
-              <span className="soon">soon</span>
+              <span>Operator guide</span>
             </a>
           </nav>
 
@@ -677,19 +681,15 @@ function DashboardInner() {
             <div className="device-card">
               <div className="device-header">
                 <span className="device-label">DEVICE</span>
-                <span className="device-status">
+                <span className={`device-status ${device.supported === false ? "bad" : ""}`}>
                   <span className="dot" />
-                  DETECTED
+                  {device.supported === false ? "NOT SUPPORTED" : device.isHeadset || emulating ? "READY" : "—"}
                 </span>
               </div>
               <div className="device-row">
-                <span>Quest 3</span>
-                <span className="dot" />
+                <span>{device.label}</span>
+                <span className={`dot ${device.supported === false ? "bad" : ""}`} />
               </div>
-            </div>
-            <div className="user-pill">
-              <div className="user-avatar">MK</div>
-              <div className="user-name">Mike K.</div>
             </div>
           </div>
         </aside>
@@ -698,7 +698,7 @@ function DashboardInner() {
         <main className="main">
           <div className="topbar">
             <div>
-              <div className="welcome">Welcome back, Mike.</div>
+              <div className="welcome">Operator console</div>
               <div className="welcome-date">{datetime}</div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -792,12 +792,12 @@ function DashboardInner() {
               <>
               <div className="page-header">
                 <div className="eyebrow">
-                  Live demo ·{" "}
+                  Teleoperation ·{" "}
                   {onlineSnaps.length > 0
                     ? onlineSnaps.map((s) => s.server.label).join(" + ")
-                    : "no servers online"}
+                    : "connecting to servers…"}
                 </div>
-                <h1>Choose a scene to step into.</h1>
+                <h1>Step into the robot. Teach it the task.</h1>
               </div>
 
               {session.error && (
@@ -808,82 +808,39 @@ function DashboardInner() {
                     <line x1="12" y1="16" x2="12.01" y2="16"/>
                   </svg>
                   <div>
-                    <div className="label">Connect failed</div>
+                    <div className="label">Couldn't connect</div>
                     <div className="text">{session.error}</div>
                   </div>
                 </div>
               )}
 
-              {/* STATS ROW */}
-              <div className="stats-row">
-                <div className="stat-card">
-                  <div className="label">Live scene</div>
-                  <div className={`value small ${liveSceneShortName === "None" ? "muted" : ""}`}>
-                    {liveSceneShortName}
-                  </div>
-                  <div className={`meta ${liveEntries.length > 0 ? "success" : ""}`}>
-                    {liveEntries.length > 0
-                      ? liveEntries
-                          .map((e) =>
-                            e.state === "live-ready"
-                              ? `${e.server.id.toUpperCase()} ready`
-                              : `${e.server.id.toUpperCase()} in session`,
-                          )
-                          .join(" · ")
-                      : "No scene currently loaded"}
-                  </div>
-                </div>
-                <div className="stat-card">
-                  <div className="label">Session state</div>
-                  <div className="value small">{sessionStateLabel}</div>
-                  <div className="meta">{sessionStateMeta}</div>
-                </div>
-                <div className="stat-card">
-                  <div className="label">Scenes available</div>
-                  <div className="value tabular">{scenesCount || "—"}</div>
-                  <div className="meta">{scenesMeta}</div>
-                </div>
-                <div className="stat-card">
-                  <div className="label">Servers</div>
-                  <div className="value small">{`${onlineSnaps.length}/${SERVERS.length} online`}</div>
-                  <div className="meta">
-                    {onlineSnaps.length > 0
-                      ? onlineSnaps.map((s) => s.server.region).join(" · ")
-                      : "all offline"}
-                  </div>
-                </div>
-              </div>
-
-              {/* LIVE SCENE BANNERS — one per online server with a loaded
-                  scene (both servers live → both banners), placeholder when
-                  no server has a scene up. */}
-              {liveEntries.length > 0 ? (
-                liveEntries.map((entry) => (
-                  <LiveSceneBanner
-                    key={entry.server.id}
-                    scene={entry.scene}
-                    serverLabel={entry.server.label}
-                    asset={SCENE_ASSETS[entry.scene.id]}
-                    sessionState={session.state}
-                    sessionInFlight={sessionInFlight}
-                    onConnect={() => connectTo(entry.scene, entry.server)}
-                  />
-                ))
-              ) : (
-                <div className="live-banner no-live">
-                  <div className="image" style={{ display: "flex", alignItems: "center", justifyContent: "center", color: "#6B7280", fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                    No live scene
-                  </div>
-                  <div className="body">
-                    <div className="eyebrow">
-                      {onlineSnaps.length > 0 ? "Servers idle" : "Servers offline"}
-                    </div>
-                    <h2>No scene currently loaded.</h2>
-                    <p>{scenesError ? `Server unreachable: ${scenesError}` : "When an operator launches a scene on any fleet server, it will appear here ready to enter."}</p>
-                  </div>
-                </div>
+              {lastSession && !sessionInFlight && (
+                <ResultCard
+                  key={`${lastSession.token ?? "none"}-${lastSession.endedAt}`}
+                  last={lastSession}
+                  onDismiss={() => {
+                    saveLastSession(null);
+                    setLastSession(null);
+                  }}
+                />
               )}
 
+              <ServerSlots
+                snapshots={snapshots}
+                sceneFor={sceneFor}
+                device={device}
+                sessionState={session.state}
+                sessionInFlight={sessionInFlight}
+                activeServerId={lastServerRef.current?.id ?? null}
+                onConnect={(scene, server) => connectTo(scene, server)}
+              />
+
+              <HowItWorks device={device} />
+
+              <details className="op-catalog">
+                <summary>
+                  Scene library · {scenes ? scenes.length : "…"} scenes — only the live scenes above can be joined
+                </summary>
               {/* CATALOG HEADER */}
               <div className="catalog-header">
                 <div>
@@ -937,6 +894,7 @@ function DashboardInner() {
                   />
                 ))}
               </div>
+              </details>
               </>
               )}
 
@@ -1013,13 +971,15 @@ function DashboardInner() {
           </div>
           <div className="xr-overlay-stats">
             <div className="stat">
+              <span className="stat-label">Saved demos</span>
+              <span className="stat-value success">{session.liveStatus?.demos ?? 0}</span>
+            </div>
+            <div className="stat">
               <span className="stat-label">Latency</span>
               <span
                 className={`stat-value ${
                   activeSnap?.latencyMs == null
                     ? ""
-                    : activeSnap.latencyMs > 500
-                    ? "warn"
                     : activeSnap.latencyMs > 200
                     ? "warn"
                     : "success"
@@ -1028,49 +988,28 @@ function DashboardInner() {
                 {activeSnap?.latencyMs != null ? `~${activeSnap.latencyMs}ms` : "—"}
               </span>
             </div>
-            <div className="stat">
-              <span className="stat-label">Session</span>
-              <span className="stat-value">
-                {activeSnap?.health?.session_state ?? "—"}
-              </span>
-            </div>
           </div>
           <div className="xr-overlay-actions">
+            {/* Operator runtime (2026-10-04): the server starts teleop by
+                itself; the operator only needs to reset a spoiled attempt
+                (same as holding B) and to leave. */}
+            <button
+              type="button"
+              className="xr-overlay-btn"
+              onClick={() => session.sendSimxrCommand("reset")}
+              disabled={session.state !== "streaming" && session.state !== "connected"}
+            >
+              <span className="xr-overlay-btn-icon">⟳</span>
+              Reset scene
+            </button>
             <button
               type="button"
               className="xr-overlay-btn primary"
-              onClick={() => session.sendTeleopCommand("start teleop")}
-              disabled={
-                session.state !== "streaming" &&
-                session.state !== "connected"
-              }
-            >
-              <span className="xr-overlay-btn-icon">▶</span>
-              Start
-            </button>
-            <button
-              type="button"
-              className="xr-overlay-btn"
-              onClick={() => session.sendTeleopCommand("reset teleop")}
-              disabled={
-                session.state !== "streaming" &&
-                session.state !== "connected"
-              }
-            >
-              <span className="xr-overlay-btn-icon">⟳</span>
-              Recenter
-            </button>
-            <button
-              type="button"
-              className="xr-overlay-btn"
-              onClick={() => session.sendTeleopCommand("stop teleop")}
-              disabled={
-                session.state !== "streaming" &&
-                session.state !== "connected"
-              }
+              onClick={() => void session.disconnect()}
+              disabled={session.state !== "streaming" && session.state !== "connected"}
             >
               <span className="xr-overlay-btn-icon">■</span>
-              Stop
+              Finish
             </button>
           </div>
         </div>
@@ -1678,6 +1617,12 @@ function RecordingsView({
                       <span>{robotLabel(r.task_id)}</span>
                       <span className="pipe">·</span>
                       <span>{skillTag(r.task_id)}</span>
+                      {typeof r.server_label === "string" && (
+                        <>
+                          <span className="pipe">·</span>
+                          <span>{r.server_label}</span>
+                        </>
+                      )}
                     </div>
                     <div className="when">
                       {date.primary}{" "}

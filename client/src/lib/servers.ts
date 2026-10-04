@@ -36,6 +36,8 @@ export interface SimxrServer {
 
 export const SERVERS: SimxrServer[] = [
   {
+    // the box reports its real location in healthz.server_label; this is the
+    // offline fallback
     id: "eu",
     label: "EU · Frankfurt",
     region: "eu-central-1",

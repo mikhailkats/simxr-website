@@ -81,6 +81,12 @@ export const SCENE_ASSETS: Record<string, SceneAsset> = {
     type: "video",
     src: "/operator/videos/nutpour-haos-space.mp4",
   },
+  "SimXR-Courtyard-Static-G1-Jam-Salon-v0": {
+    // Operator test scene (2026-10-04): G1 at the salon table, jam jar ->
+    // breakfast tray, 3DGS chateau salon. Frame from the 27.09 montage.
+    type: "image",
+    src: "/operator/images/scene-courtyard-jam-salon.jpg",
+  },
   "Isaac-NutPour-GR1T2-Pink-IK-3DGS-CoworkingMorning-Abs-v0": {
     // GR1T2 NutPour in the CoworkingMorning Modern Kitchen 3DGS env
     // with default NutPour assets (no object swap). Preview clip
@@ -100,6 +106,7 @@ export function robotLabel(id: string): string {
 
 // Skill / variant label derived from scene id — tag chip on cards.
 export function skillTag(id: string): string {
+  if (id.includes("Courtyard")) return "Pick & place · 3DGS salon";
   if (id.includes("NutPour")) return "Pink-IK · Pour";
   if (id.includes("ExhaustPipe")) return "Assembly";
   if (id.includes("Locomanipulation")) return "Locomanipulation";

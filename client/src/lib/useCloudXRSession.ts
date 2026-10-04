@@ -205,6 +205,66 @@ async function loadSdk(): Promise<typeof CloudXR> {
   return mod.default ?? mod;
 }
 
+// ─── Headset emulation (testing only) ──────────────────────────────────────
+// `?emulate=1` installs Meta's IWER WebXR emulator (Quest 3 profile) when the
+// browser has no immersive-vr, exactly like NVIDIA's Isaac Teleop client does
+// for its `oobEnable` mode (same pinned versions + SRI hashes). Lets us drive
+// the whole operator flow from a desktop browser: the CloudXR stream renders
+// into the page, and `window.xrDevice` exposes the emulated controllers
+// (e.g. `xrDevice.controllers.right.updateButtonValue('b-button', 1)`).
+// Never loaded without the flag — real operators never fetch it.
+const IWER_VERSION = "2.3.0";
+const IWER_SRI = "sha384-m8Xcl9WwdP6j/5Fv7MAs7IvvW3PmWCbNZlbF8IsJAnujyeMZi0/xgUE4mM7Tbm/j";
+
+function emulationRequested(): boolean {
+  if (typeof window === "undefined") return false;
+  return new URLSearchParams(window.location.search).get("emulate") === "1";
+}
+
+let iwerInstall: Promise<boolean> | null = null;
+
+async function ensureEmulatedXr(): Promise<boolean> {
+  if (!emulationRequested()) return false;
+  if (iwerInstall) return iwerInstall;
+  iwerInstall = (async () => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const native = await (navigator as any).xr?.isSessionSupported?.("immersive-vr");
+      if (native) return false;
+    } catch {
+      /* fall through to IWER */
+    }
+    await new Promise<void>((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = `https://unpkg.com/iwer@${IWER_VERSION}/build/iwer.min.js`;
+      s.integrity = IWER_SRI;
+      s.crossOrigin = "anonymous";
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error("IWER failed to load"));
+      document.head.appendChild(s);
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const w = window as any;
+    const IWER = w.IWER;
+    if (!IWER) return false;
+    const device = new IWER.XRDevice(IWER.metaQuest3);
+    await device.installRuntime({ forceInstall: true });
+    w.xrDevice = device;
+    // eslint-disable-next-line no-console
+    console.info("[simxr] IWER headset emulation installed (Quest 3 profile)");
+    return true;
+  })();
+  return iwerInstall;
+}
+
+function newSessionToken(): string {
+  const c = (typeof crypto !== "undefined" ? crypto : null) as Crypto | null;
+  if (c?.randomUUID) return c.randomUUID();
+  const bytes = new Uint8Array(16);
+  c?.getRandomValues?.(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 export type UiSessionState =
   | "idle"
   | "preflight"      // fetching IP / health before opening WebXR
@@ -230,10 +290,46 @@ export type UiSessionState =
  */
 export type TeleopCommand = "start teleop" | "stop teleop" | "reset teleop";
 
+/**
+ * Operator-runtime commands (servers with healthz `operator_api: 1`,
+ * 2026-10-04). Sent on the same teleop channel as `TeleopCommand`, as
+ * `{"type":"teleop_command","message":{"command":"simxr <cmd>"}}`; the
+ * server takes them off the channel before IsaacTeleop parses start/stop/
+ * reset (box: simxr_operator_record.py install_command_hook).
+ *   hello <token> — this browser's session token (the operator's result is
+ *                   published at /api/sessions/<token>.json)
+ *   ping          — 5 s heartbeat while streaming
+ *   reset         — reset the scene, recording continues (= hold B)
+ *   bye           — the operator is leaving: seal the session now
+ */
+export type SimxrCommand = "ping" | "reset" | "bye" | `hello ${string}`;
+
+/** Live counter pushed by the server (`{"type":"simxr_status"}` messages). */
+export interface LiveStatus {
+  state: string;
+  sid: string | null;
+  demos: number;
+  resets: number;
+}
+
+/** Passed to `onSessionEnded` — what the dashboard needs to show the result. */
+export interface SessionEndInfo {
+  taskId: string | null;
+  /** Random token this browser sent with `simxr hello`; null on pre-v2 servers. */
+  token: string | null;
+  server: SimxrServer | null;
+  /** Last counter the server pushed during the session (may lag the final file). */
+  lastStatus: LiveStatus | null;
+}
+
 export interface UseCloudXRSessionResult {
   state: UiSessionState;
   health: Healthz | null;
   error: string | null;
+  /** Counter pushed by the server while streaming; null before the first push. */
+  liveStatus: LiveStatus | null;
+  /** Send a `simxr ...` command (in-VR Reset button). False if the channel isn't Ready. */
+  sendSimxrCommand: (command: SimxrCommand) => boolean;
   /**
    * Open the WebXR + CloudXR session for the given scene. Pass the gym
    * task_id (e.g. "Isaac-PickPlace-Locomanipulation-G1-3DGS-BrightLivingRoom-Abs-v0")
@@ -276,9 +372,11 @@ export interface UseCloudXRSessionOptions {
    *
    * Fires AFTER the hook has already cleaned up the WebXR session and set
    * state to "idle" / "error", so the callback can safely navigate without
-   * racing with hook teardown.
+   * racing with hook teardown. The second argument (operator runtime,
+   * 2026-10-04) carries the session token + server so the caller can show
+   * the operator what was saved.
    */
-  onSessionEnded?: (taskId: string | null) => void;
+  onSessionEnded?: (taskId: string | null, info?: SessionEndInfo) => void;
   /**
    * Lazy getter for the DOM element passed as WebXR's `domOverlay.root`.
    * When Quest 3 Browser grants the `dom-overlay` feature, the headset
@@ -303,6 +401,14 @@ export function useCloudXRSession(
   const [state, setState] = useState<UiSessionState>("idle");
   const [health, setHealth] = useState<Healthz | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [liveStatus, setLiveStatus] = useState<LiveStatus | null>(null);
+  const liveStatusRef = useRef<LiveStatus | null>(null);
+  // Operator-session plumbing (2026-10-04): the token of the current connect,
+  // the server it went to, the 5 s ping timer and the receive-loop switch.
+  const tokenRef = useRef<string | null>(null);
+  const serverRef = useRef<SimxrServer | null>(null);
+  const pingTimerRef = useRef<number | null>(null);
+  const receiveLoopRef = useRef<boolean>(false);
   const sessionRef = useRef<CloudXR.Session | null>(null);
   const xrSessionRef = useRef<XRSession | null>(null);
   // Tracked for cleanup on disconnect/unmount. Quest WebXR needs the WebGL2
@@ -378,6 +484,8 @@ export function useCloudXRSession(
   // Cleanup on unmount.
   useEffect(() => {
     return () => {
+      if (pingTimerRef.current != null) window.clearInterval(pingTimerRef.current);
+      receiveLoopRef.current = false;
       // Cancel rAF first so the SDK doesn't try to draw into a dead XR layer.
       if (rafHandleRef.current && xrSessionRef.current) {
         try { xrSessionRef.current.cancelAnimationFrame(rafHandleRef.current); } catch { /* ignore */ }
@@ -532,6 +640,121 @@ export function useCloudXRSession(
     [],
   );
 
+  // ─── Operator-runtime channel helpers (2026-10-04) ─────────────────────
+  // Same channel + Ready-before-send rule as the auto-arm below (sending on
+  // a NotInitialized channel re-opens it and floods the signaling path), but
+  // never retried: a dropped ping or bye is covered by the server's own
+  // encoder-based detection.
+  const readyTeleopChannel = useCallback(() => {
+    const channels = sessionRef.current?.availableMessageChannels;
+    if (!Array.isArray(channels)) return null;
+    const ch = findChannelByUuid(channels, TELEOP_CHANNEL_UUID);
+    if (!ch || (ch as { status?: string }).status !== "Ready") return null;
+    return ch;
+  }, []);
+
+  const sendSimxrCommand = useCallback(
+    (command: SimxrCommand): boolean => {
+      const ch = readyTeleopChannel();
+      if (!ch) return false;
+      try {
+        const payload = { type: "teleop_command", message: { command: `simxr ${command}` } };
+        return !!ch.sendServerMessage(new TextEncoder().encode(JSON.stringify(payload)));
+      } catch {
+        return false;
+      }
+    },
+    [readyTeleopChannel],
+  );
+
+  const stopOperatorPlumbing = useCallback(() => {
+    if (pingTimerRef.current != null) {
+      window.clearInterval(pingTimerRef.current);
+      pingTimerRef.current = null;
+    }
+    receiveLoopRef.current = false;
+  }, []);
+
+  /** After the stream is up and the channel is Ready: hello, 5 s ping, receive loop. */
+  const startOperatorPlumbing = useCallback(() => {
+    const token = tokenRef.current;
+    if (token) sendSimxrCommand(`hello ${token}`);
+    if (pingTimerRef.current == null) {
+      pingTimerRef.current = window.setInterval(() => {
+        // re-send hello now and then: harmless, and it re-attaches the token
+        // if the server opened a new session after a stream hiccup
+        sendSimxrCommand("ping");
+        if (tokenRef.current) sendSimxrCommand(`hello ${tokenRef.current}`);
+      }, 5000);
+    }
+    if (receiveLoopRef.current) return;
+    const ch = readyTeleopChannel() as
+      | (ReturnType<typeof readyTeleopChannel> & { receiveMessage?: () => Promise<Uint8Array | null> })
+      | null;
+    if (!ch?.receiveMessage) {
+      // eslint-disable-next-line no-console
+      console.warn("[simxr] teleop channel has no receiveMessage(); no live counter");
+      return;
+    }
+    receiveLoopRef.current = true;
+    // eslint-disable-next-line no-console
+    console.info("[simxr] operator plumbing up: hello sent, ping every 5 s, listening for simxr_status");
+    void (async () => {
+      while (receiveLoopRef.current) {
+        let data: Uint8Array | null = null;
+        try {
+          data = await ch.receiveMessage!();
+        } catch {
+          break;
+        }
+        if (data == null) break;
+        // eslint-disable-next-line no-console
+        console.info("[simxr] server message:", new TextDecoder().decode(data).slice(0, 200));
+        try {
+          const msg = JSON.parse(new TextDecoder().decode(data)) as {
+            type?: string;
+            message?: Partial<LiveStatus>;
+          };
+          if (msg.type === "simxr_status" && msg.message) {
+            const st: LiveStatus = {
+              state: String(msg.message.state ?? ""),
+              sid: msg.message.sid ?? null,
+              demos: Number(msg.message.demos ?? 0),
+              resets: Number(msg.message.resets ?? 0),
+            };
+            liveStatusRef.current = st;
+            setLiveStatus(st);
+          }
+        } catch {
+          /* not ours (e.g. NVIDIA system_notice) */
+        }
+      }
+      receiveLoopRef.current = false;
+    })();
+  }, [readyTeleopChannel, sendSimxrCommand]);
+
+  /**
+   * Wait (up to 30 s) for the teleop channel to report Ready, then start the
+   * plumbing. Independent of the start-teleop auto-arm: the channel was
+   * measured to appear >6 s after onStreamStarted (2026-10-04), past the
+   * auto-arm's window, and the server starts teleop by itself anyway.
+   */
+  const armOperatorPlumbing = useCallback(() => {
+    const t0 = Date.now();
+    const poll = () => {
+      if (!sessionRef.current) return; // session gone
+      if (readyTeleopChannel()) {
+        startOperatorPlumbing();
+        return;
+      }
+      if (Date.now() - t0 < 30_000) window.setTimeout(poll, 250);
+      // eslint-disable-next-line no-console
+      else console.warn("[simxr] teleop channel never became Ready; session result will come from the server's own detection");
+    };
+    poll();
+  }, [readyTeleopChannel, startOperatorPlumbing]);
+
+
   const connect = useCallback(async (taskId?: string, server?: SimxrServer) => {
     if (state !== "idle" && state !== "error") return;
     setError(null);
@@ -555,6 +778,15 @@ export function useCloudXRSession(
     // onSessionEnded; without this flag they'd double-fire and Dashboard
     // would navigate to /recordings twice.
     sessionEndedFiredRef.current = false;
+    // Operator runtime: a fresh token per connect; the server publishes this
+    // operator's result under it (/api/sessions/<token>.json).
+    tokenRef.current = newSessionToken();
+    serverRef.current = server ?? null;
+    const connectToken: string = tokenRef.current;
+    const connectServer: SimxrServer | null = server ?? null;
+    liveStatusRef.current = null;
+    setLiveStatus(null);
+    stopOperatorPlumbing();
 
     // Mock mode — simulate the lifecycle without touching WebXR or the SDK.
     // Set ?mock=1 in the URL to enable. ?mock=1&error=connect simulates a
@@ -585,6 +817,7 @@ export function useCloudXRSession(
     // desktop browser, the second variant's "check VR is enabled" hint is
     // misleading — desktop visitors should just be pointed at a real VR
     // headset, not told to fix nonexistent settings.
+    await ensureEmulatedXr(); // no-op unless ?emulate=1 (testing without a headset)
     if (!("xr" in navigator) || !navigator.xr) {
       setError(
         "WebXR isn't supported in this browser. Open simxr.app from a Quest 3, Apple Vision Pro, or Pico headset to enter the VR demo.",
@@ -615,6 +848,7 @@ export function useCloudXRSession(
     setState("preflight");
     let mediaAddress: string;
     let mediaPort: number;
+    let operatorApi = false;
     try {
       const [ip, healthz] = await Promise.all([
         server ? fetchMediaIpFrom(apiBaseOf(server)) : fetchMediaIp(),
@@ -624,6 +858,16 @@ export function useCloudXRSession(
       // healthz.media_port is required per the locked schema — but defend
       // against an older server that hasn't shipped the field yet.
       mediaPort = healthz.media_port ?? 47998;
+      operatorApi = (healthz.operator_api ?? 0) >= 1;
+      // Someone took the slot between the dashboard poll and this tap: say so
+      // instead of opening VR onto a stream the server can't give us.
+      if (healthz.scene_state === "busy" || healthz.session_state === "streaming") {
+        setError(
+          "Another operator just started on this server. Try the other server, or wait a minute and try again.",
+        );
+        setState("error");
+        return;
+      }
     } catch (e) {
       setError(
         `Server didn't respond on pre-flight. The demo runtime may be offline. (${(e as Error).message})`,
@@ -649,6 +893,14 @@ export function useCloudXRSession(
     const canvas = document.createElement("canvas");
     canvas.style.cssText =
       "position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; left:0; top:0";
+    if (emulationRequested()) {
+      // IWER draws the emulated headset view into this canvas: make it the
+      // whole window so a tester sees the stream (and the in-headset text).
+      canvas.style.cssText =
+        "position:fixed; inset:0; width:100vw; height:100vh; z-index:40; background:#000; pointer-events:none";
+      canvas.width = Math.round(window.innerWidth * (window.devicePixelRatio || 1));
+      canvas.height = Math.round(window.innerHeight * (window.devicePixelRatio || 1));
+    }
     document.body.appendChild(canvas);
     canvasRef.current = canvas;
     let gl: WebGL2RenderingContext;
@@ -753,6 +1005,13 @@ export function useCloudXRSession(
           taskId: connectTaskId,
         });
 
+        // 0. Operator runtime: tell the server the operator is leaving so it
+        //    seals the session at once (it would also notice the stream is
+        //    gone ~4 s later). The CloudXR teardown below is delayed a beat
+        //    when the bye went out, or it can leave with the connection.
+        const byeSent = sendSimxrCommand("bye");
+        stopOperatorPlumbing();
+
         // 1. Cancel rAF — without this, a final requestAnimationFrame
         //    callback would try to draw into a torn-down XR layer.
         if (rafHandleRef.current) {
@@ -771,9 +1030,15 @@ export function useCloudXRSession(
         //    and 952a77d — needed in EVERY place that chains .catch()
         //    after disconnect()/end()/dispose() calls.
         if (sessionRef.current) {
-          void sessionRef.current.disconnect()?.catch(() => {});
-          sessionRef.current.dispose?.();
+          const cxrToClose = sessionRef.current;
           sessionRef.current = null;
+          window.setTimeout(
+            () => {
+              void cxrToClose.disconnect()?.catch(() => {});
+              cxrToClose.dispose?.();
+            },
+            byeSent ? 250 : 0,
+          );
         }
         // 3. Detach the off-screen WebGL2 canvas from step 3a so it
         //    doesn't leak across re-connects.
@@ -792,7 +1057,12 @@ export function useCloudXRSession(
         // 5. Fire the consumer's session-end callback exactly once.
         if (!sessionEndedFiredRef.current) {
           sessionEndedFiredRef.current = true;
-          optsRef.current.onSessionEnded?.(connectTaskId);
+          optsRef.current.onSessionEnded?.(connectTaskId, {
+            taskId: connectTaskId,
+            token: operatorApi ? connectToken : null,
+            server: connectServer,
+            lastStatus: liveStatusRef.current,
+          });
         }
       });
 
@@ -868,7 +1138,17 @@ export function useCloudXRSession(
         );
       }
 
-      xrBinding = new XRWebGLBinding(xrSession, gl);
+      // XRWebGLBinding is only needed for XRProjectionLayer; with the
+      // XRWebGLLayer above the SDK reads viewports from the layer. Under the
+      // IWER emulator (?emulate=1) the native binding rejects the polyfilled
+      // session, so fall back to none instead of failing the connect.
+      try {
+        xrBinding = new XRWebGLBinding(xrSession, gl);
+      } catch (bindErr) {
+        // eslint-disable-next-line no-console
+        console.warn("[simxr] XRWebGLBinding unavailable, continuing without it:", bindErr);
+        xrBinding = undefined as unknown as typeof xrBinding;
+      }
     } catch (e) {
       void xrSession.end()?.catch(() => {});
       xrSessionRef.current = null;
@@ -955,6 +1235,9 @@ export function useCloudXRSession(
           onWebGLStateChangeEnd: () => {},
           onStreamStarted: () => {
             setState("streaming");
+            // Operator runtime: token hello + 5 s ping + counter receive loop,
+            // as soon as the teleop channel is Ready (own 30 s window).
+            if (operatorApi) armOperatorPlumbing();
             // ──────────────────────────────────────────────────────────
             // Auto-arm 'start teleop' with retry loop (added 2026-05-08).
             // ──────────────────────────────────────────────────────────
@@ -1047,6 +1330,14 @@ export function useCloudXRSession(
                         `[simxr] auto-arm 'start teleop' delivered on attempt ${attempts} ` +
                           `(${(attempts - 1) * intervalMs}ms after onStreamStarted, channel.status=Ready)`,
                       );
+                      if (operatorApi) {
+                        // Operator runtime: the server resets the scene and
+                        // starts teleop itself when the session opens; a
+                        // client "reset teleop" here would PAUSE it again
+                        // (channel resets are operator resets). hello/ping
+                        // are armed separately in onStreamStarted.
+                        return;
+                      }
                       // Also send 'reset teleop' to re-anchor HMD pose to
                       // scene XrCfg.anchor_pos. Without this, the camera
                       // sits at whatever HMD pose was current at session
@@ -1121,6 +1412,7 @@ export function useCloudXRSession(
             tryStart();
           },
           onStreamStopped: (err) => {
+            stopOperatorPlumbing();
             // 1. End the WebXR session so Quest exits immersive mode and
             //    lands the user back on the browser tab. Without this, the
             //    headset stays in VR after the server-side stream stops —
@@ -1157,7 +1449,12 @@ export function useCloudXRSession(
             //    onSessionEnded path).
             if (!sessionEndedFiredRef.current) {
               sessionEndedFiredRef.current = true;
-              optsRef.current.onSessionEnded?.(lastTaskIdRef.current);
+              optsRef.current.onSessionEnded?.(lastTaskIdRef.current, {
+                taskId: lastTaskIdRef.current,
+                token: operatorApi ? connectToken : null,
+                server: connectServer,
+                lastStatus: liveStatusRef.current,
+              });
             }
           },
           onMetrics: () => {
@@ -1216,7 +1513,7 @@ export function useCloudXRSession(
       setError(`CloudXR connect failed: ${(e as Error).message}`);
       setState("error");
     }
-  }, [state, host, port]);
+  }, [state, host, port, sendSimxrCommand, stopOperatorPlumbing, armOperatorPlumbing]);
 
   const disconnect = useCallback(async () => {
     setState("disconnecting");
@@ -1225,6 +1522,9 @@ export function useCloudXRSession(
       setState("idle");
       return;
     }
+    // Operator runtime: "I'm done" before the stream goes (see the 'end' listener).
+    if (sendSimxrCommand("bye")) await new Promise((r) => setTimeout(r, 250));
+    stopOperatorPlumbing();
     // Cancel rAF first so the SDK doesn't redraw into a tearing-down layer.
     if (rafHandleRef.current && xrSessionRef.current) {
       try { xrSessionRef.current.cancelAnimationFrame(rafHandleRef.current); } catch { /* ignore */ }
@@ -1249,7 +1549,27 @@ export function useCloudXRSession(
       canvasRef.current = null;
     }
     setState("idle");
+  }, [sendSimxrCommand, stopOperatorPlumbing]);
+
+  // ?emulate=1: install the headset emulator on load so the page behaves like
+  // it would on a Quest (navigator.xr present before the first tap), and give
+  // the tester handles on the session internals.
+  useEffect(() => {
+    void ensureEmulatedXr();
+    if (emulationRequested()) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).__simxr = { sessionRef, tokenRef, liveStatusRef, receiveLoopRef, pingTimerRef };
+    }
   }, []);
 
-  return { state, health, error, connect, disconnect, sendTeleopCommand };
+  return {
+    state,
+    health,
+    error,
+    liveStatus,
+    connect,
+    disconnect,
+    sendTeleopCommand,
+    sendSimxrCommand,
+  };
 }

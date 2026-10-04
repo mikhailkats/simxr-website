@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Operator Quick Start — SIM XR</title>
-  <meta name="description" content="Teleoperate a humanoid robot from your own VR headset in two minutes. No account, no app install — open simxr.app in the headset browser and connect." />
+  <title>Operator Guide — SIM XR</title>
+  <meta name="description" content="Record robot demonstrations from your own VR headset: open simxr.app on a Quest 3, connect, and bring the jam jar to the breakfast tray. No account, no install." />
   <meta name="robots" content="index,follow" />
   <link rel="canonical" href="https://simxr.app/quickstart/" />
-  <meta property="og:title" content="Operator Quick Start — SIM XR" />
-  <meta property="og:description" content="Teleoperate a humanoid robot from your own VR headset in two minutes. No account, no install." />
+  <meta property="og:title" content="Operator Guide — SIM XR" />
+  <meta property="og:description" content="Record robot demonstrations from your own VR headset. No account, no install." />
   <meta property="og:url" content="https://simxr.app/quickstart/" />
   <meta property="og:type" content="website" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -242,17 +242,17 @@
       <div class="container">
         <a href="https://simxr.app" class="page-wordmark">SIM <span>XR.</span></a>
         <div style="height: 2.2rem;"></div>
-        <span class="label-tag">Operator quick start</span>
-        <h1>Teleoperate a humanoid robot in two minutes.</h1>
+        <span class="label-tag">Operator guide</span>
+        <h1>Record robot demos from your VR headset.</h1>
         <p>
-          You'll remotely operate a humanoid robot (Unitree G1) inside a photorealistic
-          simulated living room, streamed live to your headset from our US cloud server.
-          <strong>No account, no app install, no downloads</strong> — everything runs in the
-          headset's built-in browser.
+          You control a humanoid robot (Unitree G1) inside a photorealistic 3D scan of a French
+          château salon, streamed live to your headset from our cloud servers. Every clean attempt
+          is saved as a training demonstration for a robot-learning model.
+          <strong>No account, no app, no downloads</strong> — the headset's browser is all you need.
         </p>
         <div class="cta-row">
           <a class="btn-primary" href="https://simxr.app">Open simxr.app in your headset →</a>
-          <span class="cta-note">works best on Meta Quest 3 / 3S</span>
+          <span class="cta-note">Meta Quest 3 / 3S</span>
         </div>
       </div>
     </section>
@@ -260,47 +260,41 @@
     <section>
       <div class="container">
         <div class="scene-block">
-          <span class="label-tag">● Live right now</span>
-          <h2>The scene you'll step into.</h2>
+          <span class="label-tag">● The task</span>
+          <h2>Bring the jam to the breakfast tray.</h2>
           <p>
-            Right now the server is running <strong>“Bright Living Room”</strong> — a photorealistic
-            3D-Gaussian-Splat reconstruction of a real living room, with a Unitree&nbsp;G1 humanoid
-            robot standing at the table. Your headset streams this scene live, and your own hand
-            movements drive the robot's hands in real time.
+            The robot stands at a table with a jar of jam on the right and a breakfast tray with a
+            baguette on the left. Your hands move the robot's hands; you see through the robot's eyes.
           </p>
 
           <div class="scene-shots">
             <div class="shot">
-              <img src="/quickstart/img/dashboard-card.jpg" alt="The Live scene card on simxr.app with a Connect button" />
-              <div class="cap">1 · simxr.app — the Live card, tap Connect</div>
+              <img src="/quickstart/img/operator-dashboard.jpg" alt="simxr.app with the two server cards, one Ready with a Connect button" />
+              <div class="cap">1 · simxr.app — pick a server that says Ready and tap Connect</div>
             </div>
             <div class="shot">
-              <video src="/quickstart/img/scene-view.mp4" poster="/quickstart/img/scene-view.jpg" autoplay muted loop playsinline preload="metadata"></video>
-              <div class="cap">2 · Inside VR — a real successful episode</div>
+              <img src="/quickstart/img/jam-scene-vr.jpg" alt="View from inside VR: the château salon, the robot's arms and the Saved demos counter" />
+              <div class="cap">2 · Inside VR — the counter on the left shows your saved demos</div>
             </div>
-          </div>
-
-          <div class="scene-callout">
-            <strong>If you're sitting, stand up.</strong> The robot stands at the table, so stand up
-            too — that puts your eyes and hands at the robot's level and makes everything reach naturally.
           </div>
 
           <div class="task-flow">
-            <h3>Your task</h3>
-            <p style="margin-bottom: 0.5rem;">
-              As soon as you're in, hand-tracking is already active — no setup. Then, calmly:
-            </p>
+            <h3>One demo, step by step</h3>
             <ol class="task-steps">
-              <li>Pick up the <strong>steering wheel</strong> from the table with your <strong>left hand</strong>.</li>
-              <li>Pass it across to your <strong>right hand</strong>.</li>
-              <li>Place it into the <strong>basket</strong>.</li>
-              <li>Done cleanly? The scene <strong>resets to its starting state</strong> on its own — ready to try again.</li>
+              <li><strong>Stand up</strong> — the robot is standing, so your hands reach like its hands.</li>
+              <li>Reach for the <strong>jam jar with your right hand</strong>. Hold it <strong>around the middle</strong>
+                and close the hand: squeeze the <strong>trigger and the grip</strong> button on the right controller.</li>
+              <li>Lift it, carry it over the tray and <strong>stand it upright on the tray</strong>.</li>
+              <li><strong>Open the hand</strong> (let go of trigger and grip) and <strong>pull your hand back</strong> about 25&nbsp;cm.</li>
+              <li>That is one demo: it is <strong>saved automatically</strong>, the <em>Saved demos</em> counter goes up
+                and the table resets for the next one. Record as many as you like.</li>
             </ol>
-            <p style="margin-top: 1.25rem; font-size: 0.94rem;">
-              Move slowly and smoothly — the first few reaches feel unfamiliar, and within a minute
-              your hands and the robot's hands click into sync. There's nothing to break: take your
-              time and get a feel for it.
-            </p>
+          </div>
+
+          <div class="scene-callout">
+            <strong>Something went wrong?</strong> The jar fell over, the grip slipped, you knocked the tray —
+            <strong>hold B on the right controller for one second</strong>. The table resets and that attempt is
+            simply not saved. Only successful attempts are ever recorded.
           </div>
         </div>
       </div>
@@ -312,15 +306,15 @@
         <div class="need-grid">
           <div class="need-card">
             <div class="big">Meta Quest 3 or 3S</div>
-            <p>The tested and recommended headset. Other devices are not verified yet.</p>
+            <p>With both controllers. Quest 2 and Quest Pro can't decode the video stream (AV1) and are blocked.</p>
           </div>
           <div class="need-card">
-            <div class="big">Home Wi-Fi</div>
-            <p>A regular home connection, 5&nbsp;GHz preferred. Office and hotel networks often block streaming.</p>
+            <div class="big">Good Wi-Fi</div>
+            <p>5&nbsp;GHz, close to the router, roughly 50&nbsp;Mbit/s. Office and hotel networks often block streaming.</p>
           </div>
           <div class="need-card">
-            <div class="big">5 minutes</div>
-            <p>Nothing to sign up for, nothing to install. Open a page, press Connect, you're in.</p>
+            <div class="big">A metre of space</div>
+            <p>You'll be standing and reaching forward. Nothing to sign up for, nothing to install.</p>
           </div>
         </div>
       </div>
@@ -329,35 +323,26 @@
     <section>
       <div class="container">
         <span class="label-tag">Steps</span>
-        <h2>From headset to robot.</h2>
+        <h2>From headset to saved demos.</h2>
         <ol class="steps">
           <li>
-            <span class="t">Open the browser inside your headset</span>
-            Put on the headset and launch the built-in browser app.
+            <span class="t">Open simxr.app in the headset browser</span>
+            Put on the headset, open the built-in browser and type <strong>simxr.app</strong>.
           </li>
           <li>
-            <span class="t">Go to simxr.app</span>
-            Type <strong>simxr.app</strong> in the address bar. You'll see the live scene catalog.
+            <span class="t">Pick a server that says Ready</span>
+            There are two servers, <strong>US · Oregon</strong> and <strong>EU · Frankfurt</strong>. The one
+            marked <span class="status-pill">Recommended for you</span> is closest to you. Tap
+            <strong>Connect</strong> and allow VR when the browser asks.
           </li>
           <li>
-            <span class="t">Connect to the US server</span>
-            Find the card marked <span class="status-pill">● Live</span> and tap
-            <strong>Connect</strong>, then confirm <strong>Enter&nbsp;VR</strong> when the browser asks.
+            <span class="t">Record demos</span>
+            Do the task above as many times as you like. Each success is saved the moment it happens.
           </li>
           <li>
-            <span class="t">Look around, then reach out</span>
-            You're standing in the room. Put the controllers down and use your bare hands —
-            the robot's hands follow yours. Controllers work too, but hands are the magic.
-          </li>
-          <li>
-            <span class="t">Try the task</span>
-            Complete the task for the live scene — for the current room, that's the
-            steering-wheel handoff described below.
-          </li>
-          <li>
-            <span class="t">Done? Just exit</span>
-            Take off the headset or exit VR. The scene resets itself for the next operator
-            about a minute later.
+            <span class="t">Exit when you're done</span>
+            Press the Meta button and quit VR (or close the tab). Back on simxr.app you'll see
+            <strong>how many demos were saved</strong> in your session, and when the cloud backup is done.
           </li>
         </ol>
       </div>
@@ -367,9 +352,10 @@
       <div class="container">
         <span class="label-tag">Good to know</span>
         <ul class="notes">
-          <li><strong>One operator at a time.</strong> If the card shows <strong>“In session”</strong>, someone else is connected — try again in a few minutes.</li>
-          <li><strong>The server is in Oregon, US.</strong> From North America the experience is smooth; from Europe you may notice slight latency — still fine for a first look.</li>
-          <li><strong>Sessions may be recorded as robot demonstration data</strong> — the robot's motions, not video of you. Ask us for the data agreement if you'd like the details.</li>
+          <li><strong>One operator per server.</strong> If a server shows <strong>“In use”</strong>, try the other one or wait a few minutes — the page updates by itself.</li>
+          <li><strong>Slow and steady wins.</strong> A jar held at the edge tilts and slips; hold it in the middle and set it down gently.</li>
+          <li><strong>What is recorded:</strong> the robot's motions and its camera view inside the simulation — never video of you. Sessions are anonymous.</li>
+          <li><strong>Left the session by accident?</strong> Connect again — demos you already saved are kept.</li>
         </ul>
       </div>
     </section>
@@ -384,26 +370,34 @@
           </thead>
           <tbody>
             <tr>
-              <td>Card shows “In session”</td>
-              <td>The server is busy with another operator — retry in ~5 minutes.</td>
+              <td>Both servers say “In use”</td>
+              <td>Other operators are recording — wait a few minutes, the page refreshes on its own.</td>
             </tr>
             <tr>
-              <td>Black screen after connecting</td>
-              <td>Exit VR, wait 2 minutes (the scene may be restarting), then reconnect.</td>
+              <td>“Starting up” on a server card</td>
+              <td>The scene is (re)starting; it takes 1–3 minutes. Use the other server meanwhile.</td>
+            </tr>
+            <tr>
+              <td>Black screen or frozen picture</td>
+              <td>Press the Meta button, quit VR and connect again. Saved demos are kept.</td>
+            </tr>
+            <tr>
+              <td>The robot's hands don't follow mine</td>
+              <td>Make sure both controllers are on and tracked; quit VR and reconnect if it persists.</td>
             </tr>
             <tr>
               <td>Connects but no image, on office or hotel Wi-Fi</td>
-              <td>Corporate networks often block the video stream (UDP). Switch to a phone hotspot.</td>
+              <td>Corporate networks often block the video stream (UDP). Try home Wi-Fi or a phone hotspot.</td>
             </tr>
             <tr>
-              <td>First connect after a long idle feels slow</td>
-              <td>Give it ~30 seconds — the first handshake warms up the stream.</td>
+              <td>The page says my headset is not supported</td>
+              <td>Quest 2 and Quest Pro can't play this stream. Please use a Quest 3 or 3S.</td>
             </tr>
           </tbody>
         </table>
         <p style="margin-top: 1.75rem;">
-          Still stuck? Email <a href="mailto:mk@simxr.tech">mk@simxr.tech</a> — include your
-          headset model and rough location, we usually reply fast.
+          Still stuck? Email <a href="mailto:mk@simxr.tech">mk@simxr.tech</a> with your headset model,
+          the server you used and roughly what time it happened.
         </p>
       </div>
     </section>

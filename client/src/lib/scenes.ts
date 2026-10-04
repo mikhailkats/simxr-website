@@ -45,6 +45,16 @@ export interface Healthz {
   max_session_duration_sec?: number; // soft cap on a single session, if enforced server-side
   wait_time_seconds?: number;        // estimated time until next slot opens (server's best guess)
   queue_length?: number;             // visitors currently waiting (v2; absent in v1.5)
+
+  // Operator runtime (healthz v2, 2026-10-04). Absent on v1.5 servers.
+  //   scene_state: offline | starting (Kit booting, ~1-4 min) | ready | busy
+  //                (an operator is recording) | stalled (scene hung, the
+  //                watchdog restarts it)
+  scene_state?: "offline" | "starting" | "ready" | "busy" | "stalled";
+  starting_scene?: string;           // scene id while starting / stalled
+  session_demos?: number;            // demos saved in the running operator session
+  operator_api?: number;             // 1 = server understands `simxr hello/ping/bye/reset`
+  server_label?: string | null;      // the box's own "EU · Frankfurt"-style label (registry label is the fallback)
 }
 
 // Derived per-card visual state. Computed from Scene.status + Healthz.
