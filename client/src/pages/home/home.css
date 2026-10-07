@@ -560,3 +560,16 @@
   .cy .team-row { grid-template-columns: 1fr; gap: var(--sp-32); }
   .cy .team-row h2 { font-size: var(--fs-30); letter-spacing: var(--tr-30); }
 }
+
+/* operator reach: three numbers under the scaling statement */
+.cy .reach { margin: var(--sp-48) 0 0; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--rule-strong); border-bottom: 1px solid var(--rule); }
+.cy .reach > div { padding: var(--sp-24) var(--sp-24) var(--sp-24) 0; display: grid; gap: var(--sp-8); align-content: start; }
+.cy .reach > div + div { border-left: 1px solid var(--rule); padding-left: var(--sp-24); }
+.cy .reach dt { font-size: var(--fs-48); letter-spacing: var(--tr-48); color: var(--accent); }
+.cy .reach dd { margin: 0; font-size: var(--fs-14); line-height: var(--lh-small); color: var(--body); max-width: 34ch; }
+@media (max-width: 900px) {
+  .cy .reach { grid-template-columns: 1fr; margin-top: var(--sp-32); }
+  .cy .reach > div { padding: var(--sp-16) 0; }
+  .cy .reach > div + div { border-left: 0; border-top: 1px solid var(--rule); padding-left: 0; }
+  .cy .reach dt { font-size: var(--fs-38); letter-spacing: var(--tr-38); }
+}
