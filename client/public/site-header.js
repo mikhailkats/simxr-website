@@ -16,7 +16,8 @@
  */
 (function () {
   var LINKS = [
-    { label: "Platform", href: "/" },
+    { label: "What we do", href: "/what-we-do/" },
+    { label: "Sprint", href: "/sprint/" },
     { label: "Asset Packs", href: "/packs/" },
     { label: "Hire Operators", href: "/network/" },
     { label: "For Operators", href: "/operator/" },

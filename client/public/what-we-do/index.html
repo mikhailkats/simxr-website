@@ -194,7 +194,8 @@
   /* Local header in the cyanotype system. Links mirror /site-header.js —
      keep the two in sync until the whole site migrates. */
   .site-head { border-bottom: 1px solid var(--rule); background: var(--ground); }
-  .site-head .row { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-24); padding: var(--sp-16) 0; }
+  .site-head .row { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-24); padding: var(--sp-16) var(--sp-32); }
+  @media (max-width: 640px) { .site-head .row { padding: var(--sp-16) var(--sp-24); } }
   .wordmark {
     font-family: 'Familjen Grotesk', sans-serif; font-weight: 700;
     font-size: var(--fs-20); letter-spacing: var(--tr-20); color: var(--ink); text-decoration: none; line-height: 1;
@@ -413,6 +414,13 @@
   .case { padding: var(--sp-32); display: flex; flex-direction: column; gap: var(--sp-16); min-width: 0; }
   .case + .case { border-left: 1px solid var(--rule); }
   .case-pilot { background: var(--wash); }
+  /* third case spans the row: text left, film and ledger right */
+  .case.case-wide { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--rule); display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-64); align-items: start; }
+  .case-wide > div { display: flex; flex-direction: column; gap: var(--sp-16); min-width: 0; }
+  .case-wide .case-media { margin: 0; }
+  .case-wide h3 { max-width: 22ch; }
+  .case-wide .case-ledger > div { grid-template-columns: 11em 1fr; }
+  @media (max-width: 900px) { .case.case-wide { grid-template-columns: 1fr; gap: var(--sp-32); } }
   .case-eyebrow { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: var(--fs-12); letter-spacing: var(--tr-label); text-transform: uppercase; color: var(--accent); }
   .case h3 { font-size: var(--fs-30); letter-spacing: var(--tr-30); line-height: var(--lh-head); max-width: 20ch; }
   .case p { margin: 0; font-size: var(--fs-16); color: var(--body); max-width: none; }
@@ -609,7 +617,7 @@
             <a href="#inquiry" class="btn"><span>Bring us a failing job</span></a>
             <a href="#proof" class="cta-link">Watch the 90-second case</a>
           </div>
-          <p class="hero-proof"><a href="#proof"><b>0 &rarr; 65&nbsp;%</b> across four tasks for a humanoid manufacturer &middot; <b>0 &rarr; 90&nbsp;%</b> from fifty VR demonstrations &mdash; in simulation, on protocols you can rerun.</a></p>
+          <p class="hero-proof"><a href="#proof"><b>0 &rarr; 65&nbsp;%</b> across four tasks for a humanoid manufacturer &middot; <b>0 &rarr; 90&nbsp;%</b> from fifty VR demonstrations &middot; <b>68 of 100</b> on a walk-and-place job in a scanned room &mdash; in simulation, on protocols you can rerun.</a></p>
         </div>
 
         <div class="hero-side">
@@ -929,7 +937,7 @@
     <section class="sec-lg" id="proof">
       <div class="wrap">
         <span class="label">Cases</span>
-        <h2>Two jobs the robot could not do. Two numbers.</h2>
+        <h2>Three jobs. Three measured results.</h2>
 
         <div class="cases">
           <article class="case">
@@ -984,6 +992,48 @@
               <div><dt>Deliveries</dt><dd>4 of 4 accepted by the customer&rsquo;s validator</dd></div>
               <div><dt>Post-training</dt><dd>0&nbsp;% &rarr; 65&nbsp;% across four tasks, customer&rsquo;s criterion, in simulation; 80&ndash;85&nbsp;% with acceptance-side defects corrected</dd></div>
             </dl>
+          </article>
+
+          <article class="case case-wide" id="case-03">
+            <div>
+              <span class="case-eyebrow">Case 03 &middot; Locomanipulation</span>
+              <h3>A humanoid carries breakfast across a scanned room.</h3>
+              <div class="case-stats">
+                <div><span class="case-n">68<small> of 100</small></span><span class="case-l">attempts succeed, on a job the robot could not do before</span></div>
+                <div><span class="case-n">15</span><span class="case-l">VR demonstrations, one operator</span></div>
+                <div><span class="case-n">500</span><span class="case-l">generated episodes, with the walk added</span></div>
+              </div>
+              <p>
+                Pick up a jam jar, walk across the room and stand it on a breakfast tray: a job the robot could
+                not do. We scanned the salon of a French ch&acirc;teau as a 3D Gaussian splat, rebuilt it as a
+                physics-ready scene and made the jar from a single photograph. One operator at home showed the
+                pick-and-place in VR through simxr.app.
+              </p>
+              <p>
+                Fifteen demonstrations became 500 training episodes, with the walk across the room added in
+                simulation. Post-trained on them, the model now drives a Unitree&nbsp;G1 through the whole job
+                on its own, and succeeds in 68 of 100 attempts from random starts &mdash; in simulation.
+              </p>
+              <ul class="case-chips">
+                <li>scanned scene</li><li>validated dataset</li><li>post-trained checkpoint</li><li>evaluation protocol</li>
+              </ul>
+            </div>
+            <div>
+              <div class="case-media">
+                <video class="case-film" controls preload="none" playsinline muted poster="/home/chain-poster.jpg">
+                  <source src="/home/chain-76s.mp4" type="video/mp4" />
+                  Your browser cannot play this video. <a href="/home/chain-76s.mp4">Download the 76-second film (11&nbsp;MB).</a>
+                </video>
+                <span class="case-caption">76 seconds &middot; from the scanned room to the robot doing the job &middot; no sound</span>
+              </div>
+              <dl class="case-ledger">
+                <div><dt>Scene</dt><dd>A real room as a 3D Gaussian splat, objects from photographs</dd></div>
+                <div><dt>Demonstrations</dt><dd>15, recorded in VR by one operator at home</dd></div>
+                <div><dt>Generated</dt><dd>500 episodes; the robot walks about six metres in each</dd></div>
+                <div><dt>Robot and model</dt><dd>Unitree&nbsp;G1 &middot; GR00T&nbsp;N1.5, post-trained &middot; head and wrist cameras</dd></div>
+                <div><dt>Result</dt><dd>68 of 100 attempts from random starts, in simulation</dd></div>
+              </dl>
+            </div>
           </article>
         </div>
 
