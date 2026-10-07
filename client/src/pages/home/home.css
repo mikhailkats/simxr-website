@@ -562,7 +562,7 @@
 }
 
 /* operator reach: three numbers under the scaling statement */
-.cy .reach { margin: var(--sp-48) 0 0; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--rule-strong); border-bottom: 1px solid var(--rule); }
+.cy .reach { margin: var(--sp-48) 0 0; display: grid; grid-template-columns: repeat(2, 1fr); border-top: 1px solid var(--rule-strong); border-bottom: 1px solid var(--rule); }
 .cy .reach > div { padding: var(--sp-24) var(--sp-24) var(--sp-24) 0; display: grid; gap: var(--sp-8); align-content: start; }
 .cy .reach > div + div { border-left: 1px solid var(--rule); padding-left: var(--sp-24); }
 .cy .reach dt { font-size: var(--fs-48); letter-spacing: var(--tr-48); color: var(--accent); }
