@@ -4,5 +4,6 @@ Disallow: /connect
 Disallow: /demo
 Disallow: /v2
 Disallow: /recordings
+Disallow: /home-classic
 
 Sitemap: https://simxr.tech/sitemap.xml

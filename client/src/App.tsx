@@ -39,6 +39,10 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 // design rationale and the linked CC handoff doc for the original TZ.
 const Demo = lazy(() => import("./pages/Demo"));
 
+// HomeClassic — the previous simxr.tech landing page, kept reachable by
+// direct link at /home-classic. Not in the navigation, not indexed.
+const HomeClassic = lazy(() => import("./pages/HomeClassic"));
+
 function isAppDomain(): boolean {
   if (typeof window === "undefined") return false;
   const h = window.location.hostname;
@@ -97,6 +101,16 @@ function Router() {
       <Route path={"/demo/"}>
         <Suspense fallback={null}>
           <Demo />
+        </Suspense>
+      </Route>
+      <Route path={"/home-classic"}>
+        <Suspense fallback={null}>
+          <HomeClassic />
+        </Suspense>
+      </Route>
+      <Route path={"/home-classic/"}>
+        <Suspense fallback={null}>
+          <HomeClassic />
         </Suspense>
       </Route>
       <Route path={"/404"} component={NotFound} />

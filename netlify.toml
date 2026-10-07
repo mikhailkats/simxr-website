@@ -191,6 +191,17 @@
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
 
+# /home-classic — the previous landing page, kept by direct link only.
+[[headers]]
+  for = "/home-classic"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/home-classic/"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
 [[headers]]
   for = "/connect-classic/*"
   [headers.values]
